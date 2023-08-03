@@ -7,11 +7,14 @@ public class Malicious extends Conduct {
 
   private float honestyRate;
 
-  public Malicious() {}
+  public Malicious() {
+    this.defineConduct();
+  }
 
   /**
-   * Indica se o comportamento do nó malicioso será honesto ou desonesto.
+   * Define se o comportamento do nó malicioso será honesto ou desonesto.
    */
+  @Override
   public void defineConduct() {
     // Gerando um número aleatório entre 0 e 100.
     float randomNumber = new Random().nextFloat() * 100;

@@ -13,6 +13,11 @@ public abstract class Conduct {
   public Conduct() {}
 
   /**
+   * Define o comportamento do nó.
+   */
+  public abstract void defineConduct();
+
+  /**
    * Avalia o serviço que foi prestado pelo dispositivo, de acordo com o tipo de
    * comportamento do nó.
    */
