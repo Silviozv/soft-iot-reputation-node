@@ -5,9 +5,10 @@ import java.util.Random;
 
 public class Malicious extends Conduct {
 
-  private float honestyRate;
+  private final float honestyRate;
 
-  public Malicious() {
+  public Malicious(float honestyRate) {
+    this.honestyRate = honestyRate;
     this.defineConduct();
   }
 
@@ -24,5 +25,9 @@ public class Malicious extends Conduct {
     } else {
       this.setConductType(ConductType.HONEST);
     }
+  }
+
+  public float getHonestyRate() {
+    return honestyRate;
   }
 }
