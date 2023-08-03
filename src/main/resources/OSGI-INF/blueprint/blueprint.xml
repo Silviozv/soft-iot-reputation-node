@@ -5,17 +5,7 @@
     xsi:schemaLocation="http://aries.apache.org/blueprint/xmlns/blueprint-cm/v1.1.0 http://aries.apache.org/schemas/blueprint-cm/blueprint-cm-1.1.0.xsd
                         http://www.osgi.org/xmlns/blueprint/v1.0.0 https://www.osgi.org/xmlns/blueprint/v1.0.0/blueprint.xsd">
 
-    <!-- <cm:property-placeholder
-        persistent-id="soft.iot.dlt.load.monitor"
-        update-strategy="reload">
-        <cm:default-properties>
-            <cm:property name="SAMPLING_INTERVAL" value="1000" />
-            <cm:property name="LOAD_LIMIT" value="10" />
-            <cm:property name="LB_ENTRY_TIMEOUT" value="8" />
-        </cm:default-properties>
-    </cm:property-placeholder> -->
-
-    <bean id="MQTTClient" class="br.uefs.larsid.dlt.iot.soft.mqtt.MQTTClient"
+    <bean id="mqttClient" class="br.uefs.larsid.iot.soft.utils.MQTTClient"
         init-method="start" destroy-method="stop">
         <property name="debugModeValue" value="${debugModeValue}" />
         <property name="ip" value="${ip}" />
@@ -26,13 +16,13 @@
 
     <bean id="nodeType" class="br.uefs.larsid.iot.soft.models.NodeType"
         init-method="start" destroy-method="stop">
-        <property name="MQTTClient" ref="MQTTClient" />
+        <property name="MQTTClient" ref="mqttClient" />
         <property name="nodeType" value="${nodeType}" />
         <property name="honestyRate" value="${honestyRate}" />
     </bean>
 
     <cm:property-placeholder
-        persistent-id="br.uefs.larsid.dlt.soft_iot.fog_broker"
+        persistent-id="br.uefs.larsid.soft_iot.node_type"
         update-strategy="reload">
         <cm:default-properties>
             <cm:property name="ip" value="localhost" />
