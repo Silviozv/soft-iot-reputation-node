@@ -29,12 +29,25 @@ public class ListenerDevices implements IMqttMessageListener {
    * Se inscreve no tópico no qual o dispositivo irá responder às publicações
    * do nó.
    
-   * @param deviceId String - ID do dispositivo que irá responder.
+   * @param deviceId String - ID do dispositivo para inscrever no tópico.
    */
   public void subscribe(String deviceId) {
     String topic = String.format("dev/%s/RES", deviceId);
+    logger.info("Subscribing to: " + topic);
 
     this.MQTTClient.subscribe(QOS, this, topic);
+  }
+
+  /**
+   * Se desinscreve do tópico de um dispositivo.
+   *
+   * @param deviceId String - ID do dispositivo para desinscrever do tópico.
+   */
+  public void unsubscribe(String deviceId) {
+    String topic = String.format("dev/%s/RES", deviceId);
+    logger.info("Unsubscribing from: " + topic);
+
+    this.MQTTClient.unsubscribe(topic);
   }
 
   @Override
