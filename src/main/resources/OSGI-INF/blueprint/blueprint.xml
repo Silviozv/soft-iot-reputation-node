@@ -5,6 +5,9 @@
     xsi:schemaLocation="http://aries.apache.org/blueprint/xmlns/blueprint-cm/v1.1.0 http://aries.apache.org/schemas/blueprint-cm/blueprint-cm-1.1.0.xsd
                         http://www.osgi.org/xmlns/blueprint/v1.0.0 https://www.osgi.org/xmlns/blueprint/v1.0.0/blueprint.xsd">
 
+    <reference id="deviceManagerService"
+        interface="br.uefs.larsid.extended.mapping.devices.services.IDevicePropertiesManager" />
+
     <bean id="mqttClient" class="br.uefs.larsid.iot.soft.utils.MQTTClient"
         init-method="start" destroy-method="stop">
         <property name="debugModeValue" value="${debugModeValue}" />
@@ -19,6 +22,8 @@
         <property name="MQTTClient" ref="mqttClient" />
         <property name="nodeType" value="${nodeType}" />
         <property name="honestyRate" value="${honestyRate}" />
+        <property name="checkDeviceTaskTime" value="${checkDeviceTaskTime}" />
+        <property name="deviceManager" ref="deviceManagerService" />
     </bean>
 
     <cm:property-placeholder
@@ -31,6 +36,7 @@
             <cm:property name="pass" value="karaf" />
             <cm:property name="nodeType" value="1" />
             <cm:property name="honestyRate" value="50" />
+            <cm:property name="checkDeviceTaskTime" value="5" />
             <cm:property name="debugModeValue" value="true" />
         </cm:default-properties>
     </cm:property-placeholder>
