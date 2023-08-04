@@ -4,6 +4,7 @@ import br.uefs.larsid.extended.mapping.devices.services.IDevicePropertiesManager
 import br.uefs.larsid.iot.soft.models.conducts.Conduct;
 import br.uefs.larsid.iot.soft.models.conducts.Honest;
 import br.uefs.larsid.iot.soft.models.conducts.Malicious;
+import br.uefs.larsid.iot.soft.mqtt.ListenerDevices;
 import br.uefs.larsid.iot.soft.services.NodeTypeService;
 import br.uefs.larsid.iot.soft.tasks.CheckDevicesTask;
 import br.uefs.larsid.iot.soft.utils.MQTTClient;
@@ -22,8 +23,9 @@ public class NodeType implements NodeTypeService {
   private Conduct node;
   private int checkDeviceTaskTime;
   private List<Device> devices;
-  private int amountDevices;
+  private int amountDevices = 0;
   private IDevicePropertiesManager deviceManager;
+  private ListenerDevices listenerDevices;
   private static final Logger logger = Logger.getLogger(
     NodeType.class.getName()
   );
@@ -48,20 +50,20 @@ public class NodeType implements NodeTypeService {
         break;
     }
 
-    devices = new ArrayList<>();
-
     this.MQTTClient.connect();
-    // Tarefa para atualização da lista de dispositivos em um tempo configurável.
+
+    devices = new ArrayList<>();
+    listenerDevices = new ListenerDevices(this.MQTTClient);
     new Timer()
       .scheduleAtFixedRate(
         new CheckDevicesTask(this),
         0,
         checkDeviceTaskTime * 1000
       );
-    // TODO: Se inscrever nos tópicos de respostas dos dispositivos.
+
     // TODO: Requisitar de tempos em tempos (ter como base o load-balancer) o valor de um tipo (aleatório) de sensor.
 
-    // Apenas para testes.
+    // TODO: Remover depois, apenas para testes.
     this.node.evaluateDevice();
   }
 
@@ -69,8 +71,9 @@ public class NodeType implements NodeTypeService {
    * Executa o que foi definido na função quando o bundle for finalizado.
    */
   public void stop() {
+    this.devices.forEach(d -> this.listenerDevices.unsubscribe(d.getId()));
+
     this.MQTTClient.disconnect();
-    // TODO: Desinscrever dos tópicos
   }
 
   /**
@@ -79,9 +82,30 @@ public class NodeType implements NodeTypeService {
    * @throws IOException
    */
   public void updateDeviceList() throws IOException {
-    devices.clear();
-    devices.addAll(deviceManager.getAllDevices());
-    this.amountDevices = devices.size();
+    this.devices.clear();
+    this.devices.addAll(deviceManager.getAllDevices());
+
+    if (this.amountDevices < this.devices.size()) {
+      this.subscribeToDevicesTopics(this.devices.size() - this.amountDevices);
+      this.amountDevices = this.devices.size();
+    }
+  }
+
+  /**
+   * Se inscreve nos tópicos dos novos dispositivos.
+   *
+   * @param amountNewDevices int - Número de novos dispositivos que se
+   * conectaram ao nó.
+   */
+  private void subscribeToDevicesTopics(int amountNewDevices) {
+    int offset = 1;
+
+    for (int i = 0; i < amountNewDevices; i++) {
+      String deviceId = this.devices.get(this.devices.size() - offset).getId();
+      listenerDevices.subscribe(deviceId);
+
+      offset++;
+    }
   }
 
   public MQTTClient getMQTTClient() {
