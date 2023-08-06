@@ -8,6 +8,7 @@ import br.uefs.larsid.iot.soft.mqtt.ListenerDevices;
 import br.uefs.larsid.iot.soft.services.NodeTypeService;
 import br.uefs.larsid.iot.soft.tasks.CheckDevicesTask;
 import br.uefs.larsid.iot.soft.tasks.RequestDataTask;
+import br.uefs.larsid.iot.soft.tasks.WaitDeviceResponseTask;
 import br.uefs.larsid.iot.soft.utils.MQTTClient;
 import br.ufba.dcc.wiser.soft_iot.entities.Device;
 import br.ufba.dcc.wiser.soft_iot.entities.Sensor;
@@ -16,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.Timer;
+import java.util.TimerTask;
 import java.util.logging.Logger;
 
 public class NodeType implements NodeTypeService {
@@ -30,6 +32,7 @@ public class NodeType implements NodeTypeService {
   private int amountDevices = 0;
   private IDevicePropertiesManager deviceManager;
   private ListenerDevices listenerDevices;
+  private TimerTask waitDeviceResponseTask;
   private static final Logger logger = Logger.getLogger(
     NodeType.class.getName()
   );
@@ -56,8 +59,8 @@ public class NodeType implements NodeTypeService {
 
     this.MQTTClient.connect();
 
-    devices = new ArrayList<>();
-    listenerDevices = new ListenerDevices(this.MQTTClient);
+    this.devices = new ArrayList<>();
+    this.listenerDevices = new ListenerDevices(this.MQTTClient, this);
     new Timer()
       .scheduleAtFixedRate(
         new CheckDevicesTask(this),
@@ -70,9 +73,8 @@ public class NodeType implements NodeTypeService {
         0,
         requestDataTaskTime * 1000
       );
-
     // TODO: Remover depois, apenas para testes.
-    this.node.evaluateDevice();
+    // this.node.evaluateDevice();
   }
 
   /**
@@ -117,6 +119,13 @@ public class NodeType implements NodeTypeService {
         .getBytes();
 
       this.MQTTClient.publish(topic, payload, 1);
+
+      // TODO: Colocar o tempo de espera como propriedade do arquivo de configuração (tem que ser menor do que o requestDataTaskTime).
+      this.waitDeviceResponseTask =
+        new WaitDeviceResponseTask(deviceId, (10 * 1000));
+
+      this.waitDeviceResponseTask.run();
+      // new Timer().scheduleAtFixedRate(this.waitDeviceResponseTask, 0, 1000);
     }
   }
 
@@ -131,7 +140,7 @@ public class NodeType implements NodeTypeService {
 
     for (int i = 0; i < amountNewDevices; i++) {
       String deviceId = this.devices.get(this.devices.size() - offset).getId();
-      listenerDevices.subscribe(deviceId);
+      this.listenerDevices.subscribe(deviceId);
 
       offset++;
     }
@@ -195,5 +204,13 @@ public class NodeType implements NodeTypeService {
 
   public int getAmountDevices() {
     return amountDevices;
+  }
+
+  public TimerTask getWaitDeviceResponseTask() {
+    return waitDeviceResponseTask;
+  }
+
+  public void setWaitDeviceResponseTask(TimerTask waitDeviceResponseTask) {
+    this.waitDeviceResponseTask = waitDeviceResponseTask;
   }
 }
