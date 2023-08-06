@@ -7,11 +7,14 @@ import br.uefs.larsid.iot.soft.models.conducts.Malicious;
 import br.uefs.larsid.iot.soft.mqtt.ListenerDevices;
 import br.uefs.larsid.iot.soft.services.NodeTypeService;
 import br.uefs.larsid.iot.soft.tasks.CheckDevicesTask;
+import br.uefs.larsid.iot.soft.tasks.RequestDataTask;
 import br.uefs.larsid.iot.soft.utils.MQTTClient;
 import br.ufba.dcc.wiser.soft_iot.entities.Device;
+import br.ufba.dcc.wiser.soft_iot.entities.Sensor;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.Timer;
 import java.util.logging.Logger;
 
@@ -22,6 +25,7 @@ public class NodeType implements NodeTypeService {
   private float honestyRate;
   private Conduct node;
   private int checkDeviceTaskTime;
+  private int requestDataTaskTime;
   private List<Device> devices;
   private int amountDevices = 0;
   private IDevicePropertiesManager deviceManager;
@@ -60,8 +64,12 @@ public class NodeType implements NodeTypeService {
         0,
         checkDeviceTaskTime * 1000
       );
-
-    // TODO: Requisitar de tempos em tempos (ter como base o load-balancer) o valor de um tipo (aleatório) de sensor.
+    new Timer()
+      .scheduleAtFixedRate(
+        new RequestDataTask(this),
+        0,
+        requestDataTaskTime * 1000
+      );
 
     // TODO: Remover depois, apenas para testes.
     this.node.evaluateDevice();
@@ -88,6 +96,27 @@ public class NodeType implements NodeTypeService {
     if (this.amountDevices < this.devices.size()) {
       this.subscribeToDevicesTopics(this.devices.size() - this.amountDevices);
       this.amountDevices = this.devices.size();
+    }
+  }
+
+  /**
+   * Requisita dados de um dos sensores de um dispositivo aleatório que está
+   * conectado ao nó.
+   */
+  public void requestDataFromRandomDevice() {
+    if (this.amountDevices > 0) {
+      int randomIndex = new Random().nextInt(this.amountDevices);
+      String deviceId = this.devices.get(randomIndex).getId();
+      String topic = String.format("dev/%s", deviceId);
+
+      List<Sensor> sensors = this.devices.get(randomIndex).getSensors();
+      randomIndex = new Random().nextInt(sensors.size());
+
+      byte[] payload = String
+        .format("GET VALUE %s", sensors.get(randomIndex).getId())
+        .getBytes();
+
+      this.MQTTClient.publish(topic, payload, 1);
     }
   }
 
@@ -154,5 +183,17 @@ public class NodeType implements NodeTypeService {
 
   public void setCheckDeviceTaskTime(int checkDeviceTaskTime) {
     this.checkDeviceTaskTime = checkDeviceTaskTime;
+  }
+
+  public int getRequestDataTaskTime() {
+    return requestDataTaskTime;
+  }
+
+  public void setRequestDataTaskTime(int requestDataTaskTime) {
+    this.requestDataTaskTime = requestDataTaskTime;
+  }
+
+  public int getAmountDevices() {
+    return amountDevices;
   }
 }
