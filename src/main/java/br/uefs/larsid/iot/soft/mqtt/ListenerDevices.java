@@ -1,5 +1,6 @@
 package br.uefs.larsid.iot.soft.mqtt;
 
+import br.uefs.larsid.iot.soft.models.NodeType;
 import br.uefs.larsid.iot.soft.utils.MQTTClient;
 import java.util.logging.Logger;
 import org.eclipse.paho.client.mqttv3.IMqttMessageListener;
@@ -12,6 +13,7 @@ public class ListenerDevices implements IMqttMessageListener {
   /*--------------------------------------------------------------------------*/
 
   private MQTTClient MQTTClient;
+  private NodeType node;
   private static final Logger logger = Logger.getLogger(
     ListenerDevices.class.getName()
   );
@@ -20,9 +22,11 @@ public class ListenerDevices implements IMqttMessageListener {
    * Método construtor.
    *
    * @param MQTTClient MQTTClient -  Cliente MQTT.
+   * @param node NodeType - Nó que executa o ListenerDevice.
    */
-  public ListenerDevices(MQTTClient MQTTClient) {
+  public ListenerDevices(MQTTClient MQTTClient, NodeType node) {
     this.MQTTClient = MQTTClient;
+    this.node = node;
   }
 
   /**
@@ -56,6 +60,11 @@ public class ListenerDevices implements IMqttMessageListener {
     final String mqttMessage = new String(message.getPayload());
 
     logger.info(mqttMessage);
+
+    logger.info("Recebeu e avaliou.");
+    if (this.node.getWaitDeviceResponseTask() != null) {
+      this.node.getWaitDeviceResponseTask().cancel();
+    }
     // TODO: Enviar a avaliação do dispositivo aqui.
   }
 }
