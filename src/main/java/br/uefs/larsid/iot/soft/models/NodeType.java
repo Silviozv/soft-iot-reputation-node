@@ -105,18 +105,27 @@ public class NodeType implements NodeTypeService {
    */
   public void requestDataFromRandomDevice() {
     if (this.amountDevices > 0) {
+      logger.info("A");
       int randomIndex = new Random().nextInt(this.amountDevices);
+      logger.info("AA " + randomIndex + " Device " + this.amountDevices);
       String deviceId = this.devices.get(randomIndex).getId();
+      logger.info("AAA " + deviceId);
       String topic = String.format("dev/%s", deviceId);
+      logger.info("B");
 
       List<Sensor> sensors = this.devices.get(randomIndex).getSensors();
       randomIndex = new Random().nextInt(sensors.size());
+      logger.info("C");
 
       byte[] payload = String
         .format("GET VALUE %s", sensors.get(randomIndex).getId())
         .getBytes();
+      logger.info("D");
 
       this.MQTTClient.publish(topic, payload, 1);
+      logger.info("E");
+    } else {
+      logger.warning("There are no devices connected to request data.");
     }
   }
 
