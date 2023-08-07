@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Logger;
 
 public class NodeType implements NodeTypeService {
@@ -33,6 +34,7 @@ public class NodeType implements NodeTypeService {
   private IDevicePropertiesManager deviceManager;
   private ListenerDevices listenerDevices;
   private TimerTask waitDeviceResponseTask;
+  private ReentrantLock mutex = new ReentrantLock();
   private static final Logger logger = Logger.getLogger(
     NodeType.class.getName()
   );
@@ -92,12 +94,17 @@ public class NodeType implements NodeTypeService {
    * @throws IOException
    */
   public void updateDeviceList() throws IOException {
-    this.devices.clear();
-    this.devices.addAll(deviceManager.getAllDevices());
+    try {
+      this.mutex.lock();
+      this.devices.clear();
+      this.devices.addAll(deviceManager.getAllDevices());
 
-    if (this.amountDevices < this.devices.size()) {
-      this.subscribeToDevicesTopics(this.devices.size() - this.amountDevices);
-      this.amountDevices = this.devices.size();
+      if (this.amountDevices < this.devices.size()) {
+        this.subscribeToDevicesTopics(this.devices.size() - this.amountDevices);
+        this.amountDevices = this.devices.size();
+      }
+    } finally {
+      this.mutex.unlock();
     }
   }
 
@@ -107,25 +114,32 @@ public class NodeType implements NodeTypeService {
    */
   public void requestDataFromRandomDevice() {
     if (this.amountDevices > 0) {
-      int randomIndex = new Random().nextInt(this.amountDevices);
-      String deviceId = this.devices.get(randomIndex).getId();
-      String topic = String.format("dev/%s", deviceId);
+      try {
+        this.mutex.lock();
 
-      List<Sensor> sensors = this.devices.get(randomIndex).getSensors();
-      randomIndex = new Random().nextInt(sensors.size());
+        int randomIndex = new Random().nextInt(this.amountDevices);
+        String deviceId = this.devices.get(randomIndex).getId();
+        String topic = String.format("dev/%s", deviceId);
 
-      byte[] payload = String
-        .format("GET VALUE %s", sensors.get(randomIndex).getId())
-        .getBytes();
+        List<Sensor> sensors = this.devices.get(randomIndex).getSensors();
+        randomIndex = new Random().nextInt(sensors.size());
 
-      this.MQTTClient.publish(topic, payload, 1);
+        byte[] payload = String
+          .format("GET VALUE %s", sensors.get(randomIndex).getId())
+          .getBytes();
 
-      // TODO: Colocar o tempo de espera como propriedade do arquivo de configuração (tem que ser menor do que o requestDataTaskTime).
-      this.waitDeviceResponseTask =
-        new WaitDeviceResponseTask(deviceId, (10 * 1000));
+        this.MQTTClient.publish(topic, payload, 1);
+        // TODO: Colocar o tempo de espera como propriedade do arquivo de configuração (tem que ser menor do que o requestDataTaskTime).
+        this.waitDeviceResponseTask =
+          new WaitDeviceResponseTask(deviceId, (10 * 1000));
 
-      this.waitDeviceResponseTask.run();
-      // new Timer().scheduleAtFixedRate(this.waitDeviceResponseTask, 0, 1000);
+        this.waitDeviceResponseTask.run();
+        // new Timer().scheduleAtFixedRate(this.waitDeviceResponseTask, 0, 1000);
+      } finally {
+        this.mutex.unlock();
+      }
+    } else {
+      logger.warning("There are no devices connected to request data.");
     }
   }
 

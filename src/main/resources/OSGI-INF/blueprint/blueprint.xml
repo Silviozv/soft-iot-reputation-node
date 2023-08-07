@@ -38,7 +38,7 @@
             <cm:property name="nodeType" value="1" />
             <cm:property name="honestyRate" value="50" />
             <cm:property name="checkDeviceTaskTime" value="5" />
-            <cm:property name="requestDataTaskTime" value="30" />
+            <cm:property name="requestDataTaskTime" value="10" />
             <cm:property name="debugModeValue" value="true" />
         </cm:default-properties>
     </cm:property-placeholder>
