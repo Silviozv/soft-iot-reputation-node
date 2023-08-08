@@ -8,6 +8,9 @@
     <reference id="deviceManagerService"
         interface="br.uefs.larsid.extended.mapping.devices.services.IDevicePropertiesManager" />
 
+    <reference id="ledgerWriterService" interface="dlt.client.tangle.services.ILedgerWriter" />
+    <reference id="ledgerReaderService" interface="dlt.client.tangle.services.ILedgerReader"/>
+
     <bean id="mqttClient" class="br.uefs.larsid.iot.soft.utils.MQTTClient"
         init-method="start" destroy-method="stop">
         <property name="debugModeValue" value="${debugModeValue}" />
