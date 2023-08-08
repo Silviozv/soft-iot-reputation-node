@@ -8,6 +8,7 @@ import br.uefs.larsid.iot.soft.mqtt.ListenerDevices;
 import br.uefs.larsid.iot.soft.services.NodeTypeService;
 import br.uefs.larsid.iot.soft.tasks.CheckDevicesTask;
 import br.uefs.larsid.iot.soft.tasks.RequestDataTask;
+import br.uefs.larsid.iot.soft.tasks.WaitDeviceResponseTask;
 import br.uefs.larsid.iot.soft.utils.MQTTClient;
 import br.ufba.dcc.wiser.soft_iot.entities.Device;
 import br.ufba.dcc.wiser.soft_iot.entities.Sensor;
@@ -16,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Logger;
 
@@ -27,10 +29,12 @@ public class NodeType implements NodeTypeService {
   private Conduct node;
   private int checkDeviceTaskTime;
   private int requestDataTaskTime;
+  private int waitDeviceResponseTaskTime;
   private List<Device> devices;
   private int amountDevices = 0;
   private IDevicePropertiesManager deviceManager;
   private ListenerDevices listenerDevices;
+  private TimerTask waitDeviceResponseTask;
   private ReentrantLock mutex = new ReentrantLock();
   private static final Logger logger = Logger.getLogger(
     NodeType.class.getName()
@@ -49,6 +53,9 @@ public class NodeType implements NodeTypeService {
         break;
       case 2:
         node = new Malicious(honestyRate);
+        logger.info(
+          "Malicious node behavior: " + node.getConductType().toString()
+        );
         break;
       default:
         logger.severe("Error. No node type for this option.");
@@ -58,23 +65,20 @@ public class NodeType implements NodeTypeService {
 
     this.MQTTClient.connect();
 
-    devices = new ArrayList<>();
-    listenerDevices = new ListenerDevices(this.MQTTClient);
+    this.devices = new ArrayList<>();
+    this.listenerDevices = new ListenerDevices(this.MQTTClient, this);
     new Timer()
       .scheduleAtFixedRate(
         new CheckDevicesTask(this),
         0,
-        checkDeviceTaskTime * 1000
+        this.checkDeviceTaskTime * 1000
       );
     new Timer()
       .scheduleAtFixedRate(
         new RequestDataTask(this),
         0,
-        requestDataTaskTime * 1000
+        this.requestDataTaskTime * 1000
       );
-
-    // TODO: Remover depois, apenas para testes.
-    this.node.evaluateDevice();
   }
 
   /**
@@ -127,6 +131,14 @@ public class NodeType implements NodeTypeService {
           .getBytes();
 
         this.MQTTClient.publish(topic, payload, 1);
+        this.waitDeviceResponseTask =
+          new WaitDeviceResponseTask(
+            deviceId,
+            (this.waitDeviceResponseTaskTime * 1000),
+            this
+          );
+
+        new Timer().scheduleAtFixedRate(this.waitDeviceResponseTask, 0, 1000);
       } finally {
         this.mutex.unlock();
       }
@@ -146,7 +158,7 @@ public class NodeType implements NodeTypeService {
 
     for (int i = 0; i < amountNewDevices; i++) {
       String deviceId = this.devices.get(this.devices.size() - offset).getId();
-      listenerDevices.subscribe(deviceId);
+      this.listenerDevices.subscribe(deviceId);
 
       offset++;
     }
@@ -210,5 +222,21 @@ public class NodeType implements NodeTypeService {
 
   public int getAmountDevices() {
     return amountDevices;
+  }
+
+  public TimerTask getWaitDeviceResponseTask() {
+    return waitDeviceResponseTask;
+  }
+
+  public void setWaitDeviceResponseTask(TimerTask waitDeviceResponseTask) {
+    this.waitDeviceResponseTask = waitDeviceResponseTask;
+  }
+
+  public int getWaitDeviceResponseTaskTime() {
+    return waitDeviceResponseTaskTime;
+  }
+
+  public void setWaitDeviceResponseTaskTime(int waitDeviceResponseTaskTime) {
+    this.waitDeviceResponseTaskTime = waitDeviceResponseTaskTime;
   }
 }

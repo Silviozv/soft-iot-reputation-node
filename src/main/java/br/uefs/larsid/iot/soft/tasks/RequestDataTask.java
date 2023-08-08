@@ -15,6 +15,11 @@ public class RequestDataTask extends TimerTask {
     RequestDataTask.class.getName()
   );
 
+  /**
+   * Método construtor
+   *
+   * @param node NodeType - Nó que realizará a requisição.
+   */
   public RequestDataTask(NodeType node) {
     this.node = node;
   }
