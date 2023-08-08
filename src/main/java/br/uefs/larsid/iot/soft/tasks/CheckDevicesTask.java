@@ -16,6 +16,12 @@ public class CheckDevicesTask extends TimerTask {
     CheckDevicesTask.class.getName()
   );
 
+  /**
+   * Método construtor.
+   *
+   * @param node NodeType - Nó que verificará os dispositivos que estão
+   * conectados.
+   */
   public CheckDevicesTask(NodeType node) {
     this.node = node;
   }
