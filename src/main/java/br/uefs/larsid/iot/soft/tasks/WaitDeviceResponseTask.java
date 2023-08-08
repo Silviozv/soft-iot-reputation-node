@@ -32,14 +32,13 @@ public class WaitDeviceResponseTask extends TimerTask {
 
   @Override
   public void run() {
-    logger.info("Waiting for " + this.deviceId + " response.");
-
-    timer++;
-    logger.info(String.valueOf(timer));
+    logger.info(
+      String.format("Waiting for %s response: %d...", this.deviceId, ++timer)
+    );
 
     if ((timer * 1000) >= timeoutWaitDeviceResponse) {
-      this.cancel();
       logger.warning("Timeout for waiting for " + this.deviceId + " response.");
+      this.cancel();
       //TODO: Avaliar o dispositivo como zero.
     }
   }
