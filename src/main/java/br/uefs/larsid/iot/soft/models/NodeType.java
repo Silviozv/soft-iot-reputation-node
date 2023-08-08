@@ -53,6 +53,9 @@ public class NodeType implements NodeTypeService {
         break;
       case 2:
         node = new Malicious(honestyRate);
+        logger.info(
+          "Malicious node behavior: " + node.getConductType().toString()
+        );
         break;
       default:
         logger.severe("Error. No node type for this option.");
