@@ -29,6 +29,7 @@ public class NodeType implements NodeTypeService {
   private Conduct node;
   private int checkDeviceTaskTime;
   private int requestDataTaskTime;
+  private int waitDeviceResponseTaskTime;
   private List<Device> devices;
   private int amountDevices = 0;
   private IDevicePropertiesManager deviceManager;
@@ -67,13 +68,13 @@ public class NodeType implements NodeTypeService {
       .scheduleAtFixedRate(
         new CheckDevicesTask(this),
         0,
-        checkDeviceTaskTime * 1000
+        this.checkDeviceTaskTime * 1000
       );
     new Timer()
       .scheduleAtFixedRate(
         new RequestDataTask(this),
         0,
-        requestDataTaskTime * 1000
+        this.requestDataTaskTime * 1000
       );
     // TODO: Remover depois, apenas para testes.
     // this.node.evaluateDevice();
@@ -129,12 +130,13 @@ public class NodeType implements NodeTypeService {
           .getBytes();
 
         this.MQTTClient.publish(topic, payload, 1);
-        // TODO: Colocar o tempo de espera como propriedade do arquivo de configuração (tem que ser menor do que o requestDataTaskTime).
         this.waitDeviceResponseTask =
-          new WaitDeviceResponseTask(deviceId, (10 * 1000));
+          new WaitDeviceResponseTask(
+            deviceId,
+            (this.waitDeviceResponseTaskTime * 1000)
+          );
 
-        this.waitDeviceResponseTask.run();
-        // new Timer().scheduleAtFixedRate(this.waitDeviceResponseTask, 0, 1000);
+        new Timer().scheduleAtFixedRate(this.waitDeviceResponseTask, 0, 1000);
       } finally {
         this.mutex.unlock();
       }
@@ -226,5 +228,13 @@ public class NodeType implements NodeTypeService {
 
   public void setWaitDeviceResponseTask(TimerTask waitDeviceResponseTask) {
     this.waitDeviceResponseTask = waitDeviceResponseTask;
+  }
+
+  public int getWaitDeviceResponseTaskTime() {
+    return waitDeviceResponseTaskTime;
+  }
+
+  public void setWaitDeviceResponseTaskTime(int waitDeviceResponseTaskTime) {
+    this.waitDeviceResponseTaskTime = waitDeviceResponseTaskTime;
   }
 }
