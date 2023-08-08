@@ -76,8 +76,6 @@ public class NodeType implements NodeTypeService {
         0,
         this.requestDataTaskTime * 1000
       );
-    // TODO: Remover depois, apenas para testes.
-    // this.node.evaluateDevice();
   }
 
   /**
@@ -133,7 +131,8 @@ public class NodeType implements NodeTypeService {
         this.waitDeviceResponseTask =
           new WaitDeviceResponseTask(
             deviceId,
-            (this.waitDeviceResponseTaskTime * 1000)
+            (this.waitDeviceResponseTaskTime * 1000),
+            this
           );
 
         new Timer().scheduleAtFixedRate(this.waitDeviceResponseTask, 0, 1000);

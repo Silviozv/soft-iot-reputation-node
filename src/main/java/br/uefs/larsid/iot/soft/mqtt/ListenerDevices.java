@@ -13,7 +13,7 @@ public class ListenerDevices implements IMqttMessageListener {
   /*--------------------------------------------------------------------------*/
 
   private MQTTClient MQTTClient;
-  private NodeType node;
+  private final NodeType node;
   private static final Logger logger = Logger.getLogger(
     ListenerDevices.class.getName()
   );
@@ -61,10 +61,10 @@ public class ListenerDevices implements IMqttMessageListener {
 
     logger.info(mqttMessage);
 
-    logger.info("Recebeu e avaliou.");
     if (this.node.getWaitDeviceResponseTask() != null) {
       this.node.getWaitDeviceResponseTask().cancel();
     }
-    // TODO: Enviar a avaliação do dispositivo aqui.
+    // Avaliação de serviço prestado corretamente.
+    this.node.getNode().evaluateDevice(1);
   }
 }
