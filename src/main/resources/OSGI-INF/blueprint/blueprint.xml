@@ -9,7 +9,8 @@
         interface="br.uefs.larsid.extended.mapping.devices.services.IDevicePropertiesManager" />
 
     <reference id="ledgerWriterService" interface="dlt.client.tangle.services.ILedgerWriter" />
-    <reference id="ledgerReaderService" interface="dlt.client.tangle.services.ILedgerReader"/>
+    <reference id="ledgerReaderService" interface="dlt.client.tangle.services.ILedgerReader" />
+    <reference id="idManagerService" interface="dlt.id.manager.services.IIDManagerService"/>
 
     <bean id="mqttClient" class="br.uefs.larsid.iot.soft.utils.MQTTClient"
         init-method="start" destroy-method="stop">
@@ -18,6 +19,11 @@
         <property name="port" value="${port}" />
         <property name="userName" value="${user}" />
         <property name="password" value="${pass}" />
+    </bean>
+
+    <bean id="ledgerConnector" class="br.uefs.larsid.iot.soft.models.tangle.LedgerConnector">
+        <property name="ledgerReader" ref="ledgerReaderService" />
+        <property name="ledgerWriter" ref="ledgerWriterService" />
     </bean>
 
     <bean id="nodeType" class="br.uefs.larsid.iot.soft.models.NodeType"
@@ -29,6 +35,8 @@
         <property name="requestDataTaskTime" value="${requestDataTaskTime}" />
         <property name="waitDeviceResponseTaskTime" value="${waitDeviceResponseTaskTime}" />
         <property name="deviceManager" ref="deviceManagerService" />
+        <property name="ledgerConnector" ref="ledgerConnector" />
+        <property name="idManager" ref="idManagerService" />
     </bean>
 
     <cm:property-placeholder
@@ -42,8 +50,8 @@
             <cm:property name="nodeType" value="1" />
             <cm:property name="honestyRate" value="50" />
             <cm:property name="checkDeviceTaskTime" value="5" />
-            <cm:property name="requestDataTaskTime" value="30" />
-            <cm:property name="waitDeviceResponseTaskTime" value="10" />
+            <cm:property name="requestDataTaskTime" value="10" /> <!-- TODO: Voltar para 30 -->
+            <cm:property name="waitDeviceResponseTaskTime" value="3" /> <!-- TODO: Voltar para 10 -->
             <cm:property name="debugModeValue" value="true" />
         </cm:default-properties>
     </cm:property-placeholder>
