@@ -1,6 +1,7 @@
 package br.uefs.larsid.iot.soft.models.conducts;
 
 import br.uefs.larsid.iot.soft.enums.ConductType;
+import br.uefs.larsid.iot.soft.models.tangle.LedgerConnector;
 import java.util.Random;
 import java.util.logging.Logger;
 
@@ -11,7 +12,13 @@ public class Malicious extends Conduct {
     Malicious.class.getName()
   );
 
-  public Malicious(float honestyRate) {
+  // TODO: Adicionar comentário
+  public Malicious(
+    LedgerConnector ledgerConnector,
+    String id,
+    float honestyRate
+  ) {
+    super(ledgerConnector, id);
     this.honestyRate = honestyRate;
     this.defineConduct();
   }
@@ -35,11 +42,12 @@ public class Malicious extends Conduct {
    * Avalia o serviço que foi prestado pelo dispositivo, de acordo com o tipo de
    * comportamento do nó.
    *
+   * @param deviceId String - Id do dispositivo que será avaliado.
    * @param value int - Valor da avaliação. Se o tipo de conduta for 'MALICIOUS'
    * este parâmetro é ignorado.
    */
   @Override
-  public void evaluateDevice(int value) {
+  public void evaluateDevice(String deviceId, int value) {
     switch (this.getConductType()) {
       case HONEST:
         switch (value) {
