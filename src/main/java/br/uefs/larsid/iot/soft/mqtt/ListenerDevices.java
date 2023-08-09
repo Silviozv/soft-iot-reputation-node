@@ -2,6 +2,8 @@ package br.uefs.larsid.iot.soft.mqtt;
 
 import br.uefs.larsid.iot.soft.models.NodeType;
 import br.uefs.larsid.iot.soft.utils.MQTTClient;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import java.util.logging.Logger;
 import org.eclipse.paho.client.mqttv3.IMqttMessageListener;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
@@ -61,10 +63,24 @@ public class ListenerDevices implements IMqttMessageListener {
 
     logger.info(mqttMessage);
 
+    JsonObject jsonResponse = new Gson()
+      .fromJson(mqttMessage, JsonObject.class);
+    String deviceId = jsonResponse
+      .get("HEADER")
+      .getAsJsonObject()
+      .get("NAME")
+      .getAsString();
+
+    logger.info("DeviceId " + deviceId); // TODO: Remover
+
     if (this.node.getWaitDeviceResponseTask() != null) {
       this.node.getWaitDeviceResponseTask().cancel();
     }
     // Avaliação de serviço prestado corretamente.
-    this.node.getNode().evaluateDevice(1);
+    try {
+      this.node.getNode().evaluateDevice(deviceId, 1);
+    } catch (Exception e) {
+      logger.warning("Could not add transaction on tangle network.");
+    }
   }
 }
