@@ -1,13 +1,19 @@
 package br.uefs.larsid.iot.soft.models.conducts;
 
 import br.uefs.larsid.iot.soft.enums.ConductType;
+import br.uefs.larsid.iot.soft.models.tangle.LedgerConnector;
+import dlt.client.tangle.enums.TransactionType;
+import dlt.client.tangle.model.transactions.Evaluation;
+import dlt.client.tangle.model.transactions.Transaction;
 import java.util.logging.Logger;
 
 public class Honest extends Conduct {
 
   private static final Logger logger = Logger.getLogger(Honest.class.getName());
 
-  public Honest() {
+  // TODO: Adicionar comentário
+  public Honest(LedgerConnector ledgerConnector, String id) {
+    super(ledgerConnector, id);
     this.defineConduct();
   }
 
@@ -23,10 +29,13 @@ public class Honest extends Conduct {
    * Avalia o serviço que foi prestado pelo dispositivo, de acordo com o tipo de
    * comportamento do nó.
    *
+   * @param deviceId String - Id do dispositivo que será avaliado.
    * @param value int - Valor da avaliação.
+   * @throws InterruptedException
    */
   @Override
-  public void evaluateDevice(int value) {
+  public void evaluateDevice(String deviceId, int value)
+    throws InterruptedException {
     switch (value) {
       case 0:
         logger.info("Did not provide the service.");
@@ -38,5 +47,15 @@ public class Honest extends Conduct {
         logger.warning("Unable to evaluate the device");
         break;
     }
+    // TODO: Registar na tangle a avaliação
+    Transaction transactionEvaluation = new Evaluation(
+      this.getId(),
+      deviceId,
+      TransactionType.REP_EVALUATION,
+      value
+    );
+
+    // Adicionando avaliação na Tangle.
+    this.getLedgerConnector().put(transactionEvaluation);
   }
 }
