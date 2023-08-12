@@ -47,7 +47,7 @@ public class Honest extends Conduct {
         logger.warning("Unable to evaluate the device");
         break;
     }
-    // TODO: Registar na tangle a avaliação
+
     Transaction transactionEvaluation = new Evaluation(
       this.getId(),
       deviceId,
