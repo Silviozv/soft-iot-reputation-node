@@ -71,7 +71,7 @@ public class ListenerDevices implements IMqttMessageListener {
       .get("NAME")
       .getAsString();
 
-    logger.info("DeviceId " + deviceId); // TODO: Remover
+    logger.info("Device Id: " + deviceId);
 
     if (this.node.getWaitDeviceResponseTask() != null) {
       this.node.getWaitDeviceResponseTask().cancel();
