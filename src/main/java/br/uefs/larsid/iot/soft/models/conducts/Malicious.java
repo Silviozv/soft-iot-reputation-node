@@ -15,7 +15,13 @@ public class Malicious extends Conduct {
     Malicious.class.getName()
   );
 
-  // TODO: Adicionar comentário
+  /**
+   * Método construtor.
+   * 
+   * @param ledgerConnector LedgerConnector - Conector para comunicação com a Tangle.
+   * @param id String - Identificador único do nó.
+   * @param honestyRate float - Taxa de honestidade do nó malicioso.
+   */
   public Malicious(
     LedgerConnector ledgerConnector,
     String id,

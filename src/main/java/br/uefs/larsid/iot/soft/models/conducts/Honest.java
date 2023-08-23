@@ -11,7 +11,12 @@ public class Honest extends Conduct {
 
   private static final Logger logger = Logger.getLogger(Honest.class.getName());
 
-  // TODO: Adicionar comentário
+  /**
+   * Método construtor.
+   * 
+   * @param ledgerConnector LedgerConnector - Conector para comunicação com a Tangle.
+   * @param id String - Identificador único do nó.
+   */
   public Honest(LedgerConnector ledgerConnector, String id) {
     super(ledgerConnector, id);
     this.defineConduct();

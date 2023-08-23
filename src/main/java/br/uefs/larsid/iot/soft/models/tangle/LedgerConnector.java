@@ -13,19 +13,42 @@ public class LedgerConnector {
   private ILedgerReader ledgerReader;
   private ILedgerWriter ledgerWriter;
 
-  // TODO: Adicionar comentários
+  /**
+   * Inscreve em um tópico para escutar as transações que são realizadas.
+   * 
+   * @param topic String - Tópico.
+   * @param iLedgerSubscriber ILedgerSubscriber - Objeto para inscrição.
+   */
   public void subscribe(String topic, ILedgerSubscriber iLedgerSubscriber) {
     this.ledgerReader.subscribe(topic, iLedgerSubscriber);
   }
 
+  /**
+   * Se desinscreve de um tópico.
+   * 
+   * @param topic String - Tópico.
+   * @param iLedgerSubscriber ILedgerSubscriber - Objeto para inscrição.
+   */
   public void unsubscribe(String topic, ILedgerSubscriber iLedgerSubscriber) {
     this.ledgerReader.unsubscribe(topic, iLedgerSubscriber);
   }
 
+  /**
+   * Põe uma transação para ser publicada na Tangle.
+   * 
+   * @param transaction Transaction - Transação que será publicada.
+   * @throws InterruptedException
+   */
   public void put(Transaction transaction) throws InterruptedException {
     this.ledgerWriter.put(transaction);
   }
 
+  /**
+   * Obtém uma transação a partir do hash da mesma.
+   * 
+   * @param hash String - Hash da transação.
+   * @return Transaction.
+   */
   public Transaction getTransactionByHash(String hash) {
     return this.ledgerWriter.getTransactionByHash(hash);
   }

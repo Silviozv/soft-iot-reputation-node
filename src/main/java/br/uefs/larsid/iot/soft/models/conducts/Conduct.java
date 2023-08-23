@@ -9,7 +9,12 @@ public abstract class Conduct {
   private final LedgerConnector ledgerConnector;
   private final String id;
 
-  // TODO: Adicionar comentário
+  /**
+   * Método construtor.
+   * 
+   * @param ledgerConnector LedgerConnector - Conector para comunicação com a Tangle.
+   * @param id String - Identificador único do nó.
+   */
   public Conduct(LedgerConnector ledgerConnector, String id) {
     this.ledgerConnector = ledgerConnector;
     this.id = id;
