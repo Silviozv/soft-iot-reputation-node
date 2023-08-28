@@ -4,6 +4,7 @@ import br.uefs.larsid.extended.mapping.devices.services.IDevicePropertiesManager
 import br.uefs.larsid.iot.soft.models.conducts.Conduct;
 import br.uefs.larsid.iot.soft.models.conducts.Honest;
 import br.uefs.larsid.iot.soft.models.conducts.Malicious;
+import br.uefs.larsid.iot.soft.models.tangle.LedgerConnector;
 import br.uefs.larsid.iot.soft.mqtt.ListenerDevices;
 import br.uefs.larsid.iot.soft.services.NodeTypeService;
 import br.uefs.larsid.iot.soft.tasks.CheckDevicesTask;
@@ -12,6 +13,7 @@ import br.uefs.larsid.iot.soft.tasks.WaitDeviceResponseTask;
 import br.uefs.larsid.iot.soft.utils.MQTTClient;
 import br.ufba.dcc.wiser.soft_iot.entities.Device;
 import br.ufba.dcc.wiser.soft_iot.entities.Sensor;
+import dlt.id.manager.services.IIDManagerService;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,6 +38,8 @@ public class NodeType implements NodeTypeService {
   private ListenerDevices listenerDevices;
   private TimerTask waitDeviceResponseTask;
   private ReentrantLock mutex = new ReentrantLock();
+  private LedgerConnector ledgerConnector;
+  private IIDManagerService idManager;
   private static final Logger logger = Logger.getLogger(
     NodeType.class.getName()
   );
@@ -49,10 +53,15 @@ public class NodeType implements NodeTypeService {
     // TODO: Adicioanr os demais tipos de nós.
     switch (nodeType) {
       case 1:
-        node = new Honest();
+        node = new Honest(this.ledgerConnector, this.idManager.getID());
         break;
       case 2:
-        node = new Malicious(honestyRate);
+        node =
+          new Malicious(
+            this.ledgerConnector,
+            this.idManager.getID(),
+            this.honestyRate
+          );
         logger.info(
           "Malicious node behavior: " + node.getConductType().toString()
         );
@@ -238,5 +247,21 @@ public class NodeType implements NodeTypeService {
 
   public void setWaitDeviceResponseTaskTime(int waitDeviceResponseTaskTime) {
     this.waitDeviceResponseTaskTime = waitDeviceResponseTaskTime;
+  }
+
+  public LedgerConnector getLedgerConnector() {
+    return ledgerConnector;
+  }
+
+  public void setLedgerConnector(LedgerConnector ledgerConnector) {
+    this.ledgerConnector = ledgerConnector;
+  }
+
+  public IIDManagerService getIdManager() {
+    return idManager;
+  }
+
+  public void setIdManager(IIDManagerService idManager) {
+    this.idManager = idManager;
   }
 }

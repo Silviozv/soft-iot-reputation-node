@@ -42,8 +42,13 @@ public class WaitDeviceResponseTask extends TimerTask {
 
     if ((timer * 1000) >= timeoutWaitDeviceResponse) {
       logger.warning("Timeout for waiting for " + this.deviceId + " response.");
+
       // Avaliação de serviço prestado incorretamente.
-      this.node.getNode().evaluateDevice(0);
+      try {
+        this.node.getNode().evaluateDevice(this.deviceId, 0);
+      } catch (InterruptedException e) {
+        logger.warning("Could not add transaction on tangle network.");
+      }
       this.cancel();
     }
   }

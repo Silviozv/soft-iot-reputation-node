@@ -1,6 +1,10 @@
 package br.uefs.larsid.iot.soft.models.conducts;
 
 import br.uefs.larsid.iot.soft.enums.ConductType;
+import br.uefs.larsid.iot.soft.models.tangle.LedgerConnector;
+import dlt.client.tangle.enums.TransactionType;
+import dlt.client.tangle.model.transactions.Evaluation;
+import dlt.client.tangle.model.transactions.Transaction;
 import java.util.Random;
 import java.util.logging.Logger;
 
@@ -11,7 +15,19 @@ public class Malicious extends Conduct {
     Malicious.class.getName()
   );
 
-  public Malicious(float honestyRate) {
+  /**
+   * Método construtor.
+   * 
+   * @param ledgerConnector LedgerConnector - Conector para comunicação com a Tangle.
+   * @param id String - Identificador único do nó.
+   * @param honestyRate float - Taxa de honestidade do nó malicioso.
+   */
+  public Malicious(
+    LedgerConnector ledgerConnector,
+    String id,
+    float honestyRate
+  ) {
+    super(ledgerConnector, id);
     this.honestyRate = honestyRate;
     this.defineConduct();
   }
@@ -35,11 +51,14 @@ public class Malicious extends Conduct {
    * Avalia o serviço que foi prestado pelo dispositivo, de acordo com o tipo de
    * comportamento do nó.
    *
+   * @param deviceId String - Id do dispositivo que será avaliado.
    * @param value int - Valor da avaliação. Se o tipo de conduta for 'MALICIOUS'
    * este parâmetro é ignorado.
+   * @throws InterruptedException
    */
   @Override
-  public void evaluateDevice(int value) {
+  public void evaluateDevice(String deviceId, int value)
+    throws InterruptedException {
     switch (this.getConductType()) {
       case HONEST:
         switch (value) {
@@ -56,6 +75,7 @@ public class Malicious extends Conduct {
         break;
       case MALICIOUS:
         logger.info("Did not provide the service.");
+        value = 0;
         break;
       case SELFISH:
         logger.info("TODO");
@@ -70,6 +90,16 @@ public class Malicious extends Conduct {
         logger.severe("Error! ConductType not found.");
         break;
     }
+
+    Transaction transactionEvaluation = new Evaluation(
+      this.getId(),
+      deviceId,
+      TransactionType.REP_EVALUATION,
+      value
+    );
+
+    // Adicionando avaliação na Tangle.
+    this.getLedgerConnector().put(transactionEvaluation);
   }
 
   public float getHonestyRate() {
