@@ -9,7 +9,6 @@ permissions: write-all
 
 jobs:
   release:
-    needs: wget
     runs-on: ubuntu-latest
     permissions:
       contents: read
