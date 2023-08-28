@@ -47,9 +47,6 @@ jobs:
       
       - name: Installing SOFT-IoT-DLT-ID-Manager
         run: mvn install:install-file -Dfile=./SOFT-IoT-DLT-ID-Manager-1.0-SNAPSHOT.jar -DgroupId=io.github.larsid -DartifactId=SOFT-IoT-DLT-ID-Manager -Dversion=1.0-SNAPSHOT -Dpackaging=jar
-      
-      - name: Checking download
-        run: ls -la 
 
       - name: Building the bundle
         run: mvn clean install
