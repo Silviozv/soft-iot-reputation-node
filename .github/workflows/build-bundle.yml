@@ -38,6 +38,15 @@ jobs:
         uses: wei/wget@v1
         with:
           args: https://github.com/larsid/soft-iot-dlt-id-manager/releases/download/v1.1.0/SOFT-IoT-DLT-ID-Manager-1.0-SNAPSHOT.jar
+
+      - name: Installing  soft-iot-mapping-devices
+        run: mvn install:install-file -Dfile=./soft-iot-mapping-devices-1.0-SNAPSHOT.jar -DgroupId=io.github.larsid -DartifactId=soft-iot-mapping-devices -Dversion=1.0-SNAPSHOT -Dpackaging=jar
+      
+      - name: Installing SOFT-IoT-DLT-Client-Tangle
+        run: mvn install:install-file -Dfile=./SOFT-IoT-DLT-Client-Tangle-1.0-SNAPSHOT.jar -DgroupId=io.github.larsid -DartifactId=SOFT-IoT-DLT-Client-Tangle -Dversion=1.0-SNAPSHOT -Dpackaging=jar
+      
+      - name: Installing SOFT-IoT-DLT-ID-Manager
+        run: mvn install:install-file -Dfile=./SOFT-IoT-DLT-ID-Manager-1.0-SNAPSHOT.jar -DgroupId=io.github.larsid -DartifactId=SOFT-IoT-DLT-ID-Manager -Dversion=1.0-SNAPSHOT -Dpackaging=jar
       
       - name: Checking download
         run: ls -la 
