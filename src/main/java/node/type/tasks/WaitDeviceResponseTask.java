@@ -1,8 +1,9 @@
-package br.uefs.larsid.iot.soft.tasks;
+package node.type.tasks;
 
-import br.uefs.larsid.iot.soft.models.NodeType;
 import java.util.TimerTask;
 import java.util.logging.Logger;
+
+import node.type.models.NodeType;
 
 /**
  * Classe responsável por verificar se houve resposta do dispositivo à

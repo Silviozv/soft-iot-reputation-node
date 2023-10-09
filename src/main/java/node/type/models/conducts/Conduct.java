@@ -1,7 +1,7 @@
-package br.uefs.larsid.iot.soft.models.conducts;
+package node.type.models.conducts;
 
-import br.uefs.larsid.iot.soft.enums.ConductType;
-import br.uefs.larsid.iot.soft.models.tangle.LedgerConnector;
+import node.type.enums.ConductType;
+import node.type.models.tangle.LedgerConnector;
 
 public abstract class Conduct {
 

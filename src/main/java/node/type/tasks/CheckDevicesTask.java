@@ -1,9 +1,10 @@
-package br.uefs.larsid.iot.soft.tasks;
+package node.type.tasks;
 
-import br.uefs.larsid.iot.soft.models.NodeType;
 import java.io.IOException;
 import java.util.TimerTask;
 import java.util.logging.Logger;
+
+import node.type.models.NodeType;
 
 /**
  * Classe responsável pela tarefa de atualizar a lista de dispositivos

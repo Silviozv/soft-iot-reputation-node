@@ -1,4 +1,4 @@
-package br.uefs.larsid.iot.soft.utils;
+package node.type.utils;
 
 import java.util.Arrays;
 import java.util.logging.Logger;

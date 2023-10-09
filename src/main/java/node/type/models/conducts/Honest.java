@@ -1,10 +1,12 @@
-package br.uefs.larsid.iot.soft.models.conducts;
+package node.type.models.conducts;
+// TODO: Corrigir package em todas as classes.
 
-import br.uefs.larsid.iot.soft.enums.ConductType;
-import br.uefs.larsid.iot.soft.models.tangle.LedgerConnector;
-import dlt.client.tangle.enums.TransactionType;
-import dlt.client.tangle.model.transactions.Evaluation;
-import dlt.client.tangle.model.transactions.Transaction;
+import dlt.client.tangle.hornet.enums.TransactionType;
+import dlt.client.tangle.hornet.model.transactions.Evaluation;
+import dlt.client.tangle.hornet.model.transactions.Transaction;
+import node.type.enums.ConductType;
+import node.type.models.tangle.LedgerConnector;
+
 import java.util.logging.Logger;
 
 public class Honest extends Conduct {
@@ -13,7 +15,7 @@ public class Honest extends Conduct {
 
   /**
    * Método construtor.
-   * 
+   *
    * @param ledgerConnector LedgerConnector - Conector para comunicação com a Tangle.
    * @param id String - Identificador único do nó.
    */

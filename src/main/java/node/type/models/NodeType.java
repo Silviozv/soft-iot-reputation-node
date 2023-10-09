@@ -1,19 +1,20 @@
-package br.uefs.larsid.iot.soft.models;
+package node.type.models;
 
 import br.uefs.larsid.extended.mapping.devices.services.IDevicePropertiesManager;
-import br.uefs.larsid.iot.soft.models.conducts.Conduct;
-import br.uefs.larsid.iot.soft.models.conducts.Honest;
-import br.uefs.larsid.iot.soft.models.conducts.Malicious;
-import br.uefs.larsid.iot.soft.models.tangle.LedgerConnector;
-import br.uefs.larsid.iot.soft.mqtt.ListenerDevices;
-import br.uefs.larsid.iot.soft.services.NodeTypeService;
-import br.uefs.larsid.iot.soft.tasks.CheckDevicesTask;
-import br.uefs.larsid.iot.soft.tasks.RequestDataTask;
-import br.uefs.larsid.iot.soft.tasks.WaitDeviceResponseTask;
-import br.uefs.larsid.iot.soft.utils.MQTTClient;
 import br.ufba.dcc.wiser.soft_iot.entities.Device;
 import br.ufba.dcc.wiser.soft_iot.entities.Sensor;
 import dlt.id.manager.services.IIDManagerService;
+import node.type.models.conducts.Conduct;
+import node.type.models.conducts.Honest;
+import node.type.models.conducts.Malicious;
+import node.type.models.tangle.LedgerConnector;
+import node.type.mqtt.ListenerDevices;
+import node.type.services.NodeTypeService;
+import node.type.tasks.CheckDevicesTask;
+import node.type.tasks.RequestDataTask;
+import node.type.tasks.WaitDeviceResponseTask;
+import node.type.utils.MQTTClient;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
