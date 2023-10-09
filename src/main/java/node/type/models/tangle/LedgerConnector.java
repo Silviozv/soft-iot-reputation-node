@@ -1,4 +1,4 @@
-package br.uefs.larsid.iot.soft.models.tangle;
+package node.type.models.tangle;
 
 import dlt.client.tangle.hornet.model.transactions.Transaction;
 import dlt.client.tangle.hornet.services.ILedgerReader;

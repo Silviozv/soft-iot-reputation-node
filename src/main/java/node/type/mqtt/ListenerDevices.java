@@ -1,7 +1,8 @@
-package br.uefs.larsid.iot.soft.mqtt;
+package node.type.mqtt;
 
-import br.uefs.larsid.iot.soft.models.NodeType;
-import br.uefs.larsid.iot.soft.utils.MQTTClient;
+import node.type.models.NodeType;
+import node.type.utils.MQTTClient;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import java.util.logging.Logger;
