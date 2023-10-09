@@ -1,4 +1,5 @@
 package br.uefs.larsid.iot.soft.models.conducts;
+// TODO: Corrigir package em todas as classes.
 
 import br.uefs.larsid.iot.soft.enums.ConductType;
 import br.uefs.larsid.iot.soft.models.tangle.LedgerConnector;
