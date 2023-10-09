@@ -1,9 +1,14 @@
 package br.uefs.larsid.iot.soft.models.tangle;
 
-import dlt.client.tangle.model.transactions.Transaction;
-import dlt.client.tangle.services.ILedgerReader;
-import dlt.client.tangle.services.ILedgerSubscriber;
-import dlt.client.tangle.services.ILedgerWriter;
+import dlt.client.tangle.hornet.model.transactions.Transaction;
+import dlt.client.tangle.hornet.services.ILedgerReader;
+import dlt.client.tangle.hornet.services.ILedgerSubscriber;
+import dlt.client.tangle.hornet.services.ILedgerWriter;
+
+// import dlt.client.tangle.model.transactions.Transaction;
+// import dlt.client.tangle.services.ILedgerReader;
+// import dlt.client.tangle.services.ILedgerSubscriber;
+// import dlt.client.tangle.services.ILedgerWriter;
 
 /**
  * @author Allan Capistrano
@@ -40,17 +45,17 @@ public class LedgerConnector {
    * @throws InterruptedException
    */
   public void put(Transaction transaction) throws InterruptedException {
-    this.ledgerWriter.put(transaction);
+    this.ledgerWriter.put(transaction); // TODO: Ver o motivo de não está escrevendo corretamente a transação
   }
 
   /**
-   * Obtém uma transação a partir do hash da mesma.
+   * Obtém uma transação a partir do ID da mesma.
    * 
-   * @param hash String - Hash da transação.
+   * @param id String - ID da transação.
    * @return Transaction.
    */
-  public Transaction getTransactionByHash(String hash) {
-    return this.ledgerWriter.getTransactionByHash(hash);
+  public Transaction getTransactionById(String id) {
+    return this.ledgerReader.getTransactionById(id);
   }
 
   public ILedgerWriter getLedgerWriter() {
