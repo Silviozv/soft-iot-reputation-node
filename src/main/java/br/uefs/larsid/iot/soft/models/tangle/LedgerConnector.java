@@ -40,7 +40,7 @@ public class LedgerConnector {
    * @throws InterruptedException
    */
   public void put(Transaction transaction) throws InterruptedException {
-    this.ledgerWriter.put(transaction); // TODO: Ver o motivo de não está escrevendo corretamente a transação
+    this.ledgerWriter.put(transaction);
   }
 
   /**

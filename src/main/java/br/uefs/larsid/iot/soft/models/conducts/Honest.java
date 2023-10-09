@@ -62,6 +62,6 @@ public class Honest extends Conduct {
     );
 
     // Adicionando avaliação na Tangle.
-    this.getLedgerConnector().put(transactionEvaluation); // TODO: Ver o motivo de não está escrevendo corretamente a transação
+    this.getLedgerConnector().put(transactionEvaluation);
   }
 }
