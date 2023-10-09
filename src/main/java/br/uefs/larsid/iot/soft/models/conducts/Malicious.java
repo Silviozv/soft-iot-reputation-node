@@ -5,10 +5,6 @@ import br.uefs.larsid.iot.soft.models.tangle.LedgerConnector;
 import dlt.client.tangle.hornet.enums.TransactionType;
 import dlt.client.tangle.hornet.model.transactions.Evaluation;
 import dlt.client.tangle.hornet.model.transactions.Transaction;
-
-// import dlt.client.tangle.enums.TransactionType;
-// import dlt.client.tangle.model.transactions.Evaluation;
-// import dlt.client.tangle.model.transactions.Transaction;
 import java.util.Random;
 import java.util.logging.Logger;
 
@@ -21,7 +17,7 @@ public class Malicious extends Conduct {
 
   /**
    * Método construtor.
-   * 
+   *
    * @param ledgerConnector LedgerConnector - Conector para comunicação com a Tangle.
    * @param id String - Identificador único do nó.
    * @param honestyRate float - Taxa de honestidade do nó malicioso.

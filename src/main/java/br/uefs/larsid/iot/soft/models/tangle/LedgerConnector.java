@@ -5,11 +5,6 @@ import dlt.client.tangle.hornet.services.ILedgerReader;
 import dlt.client.tangle.hornet.services.ILedgerSubscriber;
 import dlt.client.tangle.hornet.services.ILedgerWriter;
 
-// import dlt.client.tangle.model.transactions.Transaction;
-// import dlt.client.tangle.services.ILedgerReader;
-// import dlt.client.tangle.services.ILedgerSubscriber;
-// import dlt.client.tangle.services.ILedgerWriter;
-
 /**
  * @author Allan Capistrano
  */
@@ -20,7 +15,7 @@ public class LedgerConnector {
 
   /**
    * Inscreve em um tópico para escutar as transações que são realizadas.
-   * 
+   *
    * @param topic String - Tópico.
    * @param iLedgerSubscriber ILedgerSubscriber - Objeto para inscrição.
    */
@@ -30,7 +25,7 @@ public class LedgerConnector {
 
   /**
    * Se desinscreve de um tópico.
-   * 
+   *
    * @param topic String - Tópico.
    * @param iLedgerSubscriber ILedgerSubscriber - Objeto para inscrição.
    */
@@ -40,7 +35,7 @@ public class LedgerConnector {
 
   /**
    * Põe uma transação para ser publicada na Tangle.
-   * 
+   *
    * @param transaction Transaction - Transação que será publicada.
    * @throws InterruptedException
    */
@@ -50,7 +45,7 @@ public class LedgerConnector {
 
   /**
    * Obtém uma transação a partir do ID da mesma.
-   * 
+   *
    * @param id String - ID da transação.
    * @return Transaction.
    */
