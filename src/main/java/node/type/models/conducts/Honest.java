@@ -1,13 +1,14 @@
 package node.type.models.conducts;
+
 // TODO: Corrigir package em todas as classes.
 
 import dlt.client.tangle.hornet.enums.TransactionType;
 import dlt.client.tangle.hornet.model.transactions.Evaluation;
+import dlt.client.tangle.hornet.model.transactions.IndexTransaction;
 import dlt.client.tangle.hornet.model.transactions.Transaction;
+import java.util.logging.Logger;
 import node.type.enums.ConductType;
 import node.type.models.tangle.LedgerConnector;
-
-import java.util.logging.Logger;
 
 public class Honest extends Conduct {
 
@@ -63,6 +64,7 @@ public class Honest extends Conduct {
     );
 
     // Adicionando avaliação na Tangle.
-    this.getLedgerConnector().put(transactionEvaluation);
+    this.getLedgerConnector()
+      .put(new IndexTransaction(deviceId, transactionEvaluation));
   }
 }

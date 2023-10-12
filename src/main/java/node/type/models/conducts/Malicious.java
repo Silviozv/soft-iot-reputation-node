@@ -2,12 +2,12 @@ package node.type.models.conducts;
 
 import dlt.client.tangle.hornet.enums.TransactionType;
 import dlt.client.tangle.hornet.model.transactions.Evaluation;
+import dlt.client.tangle.hornet.model.transactions.IndexTransaction;
 import dlt.client.tangle.hornet.model.transactions.Transaction;
-import node.type.enums.ConductType;
-import node.type.models.tangle.LedgerConnector;
-
 import java.util.Random;
 import java.util.logging.Logger;
+import node.type.enums.ConductType;
+import node.type.models.tangle.LedgerConnector;
 
 public class Malicious extends Conduct {
 
@@ -100,7 +100,8 @@ public class Malicious extends Conduct {
     );
 
     // Adicionando avaliação na Tangle.
-    this.getLedgerConnector().put(transactionEvaluation);
+    this.getLedgerConnector()
+      .put(new IndexTransaction(deviceId, transactionEvaluation));
   }
 
   public float getHonestyRate() {

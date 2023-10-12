@@ -1,5 +1,6 @@
 package node.type.models.tangle;
 
+import dlt.client.tangle.hornet.model.transactions.IndexTransaction;
 import dlt.client.tangle.hornet.model.transactions.Transaction;
 import dlt.client.tangle.hornet.services.ILedgerReader;
 import dlt.client.tangle.hornet.services.ILedgerSubscriber;
@@ -36,11 +37,13 @@ public class LedgerConnector {
   /**
    * Põe uma transação para ser publicada na Tangle.
    *
-   * @param transaction Transaction - Transação que será publicada.
+   * @param indexTransaction IndexTransaction - Transação que será publicada,
+   * juntamente com seu índice.
    * @throws InterruptedException
    */
-  public void put(Transaction transaction) throws InterruptedException {
-    this.ledgerWriter.put(transaction);
+  public void put(IndexTransaction indexTransaction)
+    throws InterruptedException {
+    this.ledgerWriter.put(indexTransaction);
   }
 
   /**
