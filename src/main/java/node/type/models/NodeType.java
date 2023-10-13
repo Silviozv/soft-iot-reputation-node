@@ -13,6 +13,7 @@ import java.util.TimerTask;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Logger;
 import node.type.models.conducts.Conduct;
+import node.type.models.conducts.Disturbing;
 import node.type.models.conducts.Honest;
 import node.type.models.conducts.Malicious;
 import node.type.models.conducts.Selfish;
@@ -69,6 +70,9 @@ public class NodeType implements NodeTypeService {
         break;
       case 3:
         node = new Selfish(ledgerConnector, this.idManager.getID());
+        break;
+      case 5:
+        node = new Disturbing(ledgerConnector, this.idManager.getID());
         break;
       default:
         logger.severe("Error. No node type for this option.");
