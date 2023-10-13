@@ -1,14 +1,18 @@
 package node.type.mqtt;
 
-import node.type.models.NodeType;
-import node.type.utils.MQTTClient;
-
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import java.util.logging.Logger;
+import node.type.models.NodeType;
+import node.type.utils.MQTTClient;
 import org.eclipse.paho.client.mqttv3.IMqttMessageListener;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 
+/**
+ *
+ * @author Allan Capistrano
+ * @version 1.0.0
+ */
 public class ListenerDevices implements IMqttMessageListener {
 
   /*-------------------------Constantes---------------------------------------*/

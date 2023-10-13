@@ -3,6 +3,12 @@ package node.type.models.conducts;
 import node.type.enums.ConductType;
 import node.type.models.tangle.LedgerConnector;
 
+/**
+ * Comportamento base para os tipos de nó.
+ *
+ * @author Allan Capistrano
+ * @version 1.0.0
+ */
 public abstract class Conduct {
 
   private ConductType conductType;
@@ -11,8 +17,9 @@ public abstract class Conduct {
 
   /**
    * Método construtor.
-   * 
-   * @param ledgerConnector LedgerConnector - Conector para comunicação com a Tangle.
+   *
+   * @param ledgerConnector LedgerConnector - Conector para comunicação com a
+   * Tangle.
    * @param id String - Identificador único do nó.
    */
   public Conduct(LedgerConnector ledgerConnector, String id) {

@@ -9,6 +9,12 @@ import java.util.logging.Logger;
 import node.type.enums.ConductType;
 import node.type.models.tangle.LedgerConnector;
 
+/**
+ * Nó tipo malicioso.
+ * 
+ * @author Allan Capistrano
+ * @version 1.0.0
+ */
 public class Malicious extends Conduct {
 
   private final float honestyRate;
@@ -19,7 +25,8 @@ public class Malicious extends Conduct {
   /**
    * Método construtor.
    *
-   * @param ledgerConnector LedgerConnector - Conector para comunicação com a Tangle.
+   * @param ledgerConnector LedgerConnector - Conector para comunicação com a 
+   * Tangle.
    * @param id String - Identificador único do nó.
    * @param honestyRate float - Taxa de honestidade do nó malicioso.
    */

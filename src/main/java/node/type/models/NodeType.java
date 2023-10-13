@@ -25,6 +25,11 @@ import node.type.tasks.RequestDataTask;
 import node.type.tasks.WaitDeviceResponseTask;
 import node.type.utils.MQTTClient;
 
+/**
+ * 
+ * @author Allan Capistrano
+ * @version 1.0.0
+ */
 public class NodeType implements NodeTypeService {
 
   private MQTTClient MQTTClient;
@@ -52,7 +57,7 @@ public class NodeType implements NodeTypeService {
    * Executa o que foi definido na função quando o bundle for inicializado.
    */
   public void start() {
-    // TODO: Adicioanr os demais tipos de nós.
+    // TODO: Adicionar os demais tipos de nós.
     switch (nodeType) {
       case 1:
         node = new Honest(this.ledgerConnector, this.idManager.getID());

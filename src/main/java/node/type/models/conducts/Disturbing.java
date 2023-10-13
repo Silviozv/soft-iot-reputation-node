@@ -8,6 +8,12 @@ import java.util.logging.Logger;
 import node.type.enums.ConductType;
 import node.type.models.tangle.LedgerConnector;
 
+/**
+ * Nó do tipo perturbador.
+ * 
+ * @author Allan Capistrano
+ * @version 1.0.0
+ */
 public class Disturbing extends Conduct {
 
   private static final Logger logger = Logger.getLogger(
@@ -17,7 +23,8 @@ public class Disturbing extends Conduct {
   /**
    * Método construtor.
    *
-   * @param ledgerConnector LedgerConnector - Conector para comunicação com a Tangle.
+   * @param ledgerConnector LedgerConnector - Conector para comunicação com a 
+   * Tangle.
    * @param id String - Identificador único do nó.
    */
   public Disturbing(LedgerConnector ledgerConnector, String id) {

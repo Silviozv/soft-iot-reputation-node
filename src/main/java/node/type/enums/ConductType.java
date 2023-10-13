@@ -1,5 +1,14 @@
 package node.type.enums;
 
+/**
+ *
+ * @author Allan Capistrano
+ * @version 1.0.0
+ */
 public enum ConductType {
-  HONEST, MALICIOUS, SELFISH, CORRUPT, DISTURBING
+  HONEST,
+  MALICIOUS,
+  SELFISH,
+  CORRUPT,
+  DISTURBING,
 }

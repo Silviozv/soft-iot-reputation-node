@@ -2,12 +2,14 @@ package node.type.tasks;
 
 import java.util.TimerTask;
 import java.util.logging.Logger;
-
 import node.type.models.NodeType;
 
 /**
  * Classe responsável pela tarefa de requisitar dados de um dos sensores de um
  * dispositivo aleatório que estão conectado ao nó.
+ *
+ * @author Allan Capistrano
+ * @version 1.0.0
  */
 public class RequestDataTask extends TimerTask {
 
