@@ -31,6 +31,7 @@ public abstract class Conduct {
    *
    * @param deviceId String - Id do dispositivo que será avaliado.
    * @param value int - Valor da avaliação.
+   * @throws InterruptedException
    */
   public abstract void evaluateDevice(String deviceId, int value)
     throws InterruptedException;
