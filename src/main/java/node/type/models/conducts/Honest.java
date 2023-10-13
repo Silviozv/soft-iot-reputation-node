@@ -10,6 +10,12 @@ import java.util.logging.Logger;
 import node.type.enums.ConductType;
 import node.type.models.tangle.LedgerConnector;
 
+/**
+ * Nó do tipo honesto.
+ *
+ * @author Allan Capistrano
+ * @version 1.0.0
+ */
 public class Honest extends Conduct {
 
   private static final Logger logger = Logger.getLogger(Honest.class.getName());
@@ -17,7 +23,8 @@ public class Honest extends Conduct {
   /**
    * Método construtor.
    *
-   * @param ledgerConnector LedgerConnector - Conector para comunicação com a Tangle.
+   * @param ledgerConnector LedgerConnector - Conector para comunicação com a
+   * Tangle.
    * @param id String - Identificador único do nó.
    */
   public Honest(LedgerConnector ledgerConnector, String id) {

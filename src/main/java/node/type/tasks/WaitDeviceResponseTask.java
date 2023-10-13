@@ -2,12 +2,14 @@ package node.type.tasks;
 
 import java.util.TimerTask;
 import java.util.logging.Logger;
-
 import node.type.models.NodeType;
 
 /**
  * Classe responsável por verificar se houve resposta do dispositivo à
  * requisição feita pelo nó.
+ *
+ * @author Allan Capistrano
+ * @version 1.0.0
  */
 public class WaitDeviceResponseTask extends TimerTask {
 
@@ -21,8 +23,9 @@ public class WaitDeviceResponseTask extends TimerTask {
   /**
    * Método construtor.
    *
-   * @param deviceId
-   * @param timeoutWaitDeviceResponse
+   * @param deviceId String - ID do dispositivo.
+   * @param timeoutWaitDeviceResponse int - Tempo máximo para aguardar a
+   * resposta do dispositivo.
    */
   public WaitDeviceResponseTask(
     String deviceId,

@@ -13,6 +13,7 @@ import java.util.TimerTask;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Logger;
 import node.type.models.conducts.Conduct;
+import node.type.models.conducts.Disturbing;
 import node.type.models.conducts.Honest;
 import node.type.models.conducts.Malicious;
 import node.type.models.conducts.Selfish;
@@ -24,6 +25,11 @@ import node.type.tasks.RequestDataTask;
 import node.type.tasks.WaitDeviceResponseTask;
 import node.type.utils.MQTTClient;
 
+/**
+ * 
+ * @author Allan Capistrano
+ * @version 1.0.0
+ */
 public class NodeType implements NodeTypeService {
 
   private MQTTClient MQTTClient;
@@ -51,7 +57,7 @@ public class NodeType implements NodeTypeService {
    * Executa o que foi definido na função quando o bundle for inicializado.
    */
   public void start() {
-    // TODO: Adicioanr os demais tipos de nós.
+    // TODO: Adicionar os demais tipos de nós.
     switch (nodeType) {
       case 1:
         node = new Honest(this.ledgerConnector, this.idManager.getID());
@@ -69,6 +75,9 @@ public class NodeType implements NodeTypeService {
         break;
       case 3:
         node = new Selfish(ledgerConnector, this.idManager.getID());
+        break;
+      case 5:
+        node = new Disturbing(ledgerConnector, this.idManager.getID());
         break;
       default:
         logger.severe("Error. No node type for this option.");

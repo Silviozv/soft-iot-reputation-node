@@ -7,7 +7,9 @@ import dlt.client.tangle.hornet.services.ILedgerSubscriber;
 import dlt.client.tangle.hornet.services.ILedgerWriter;
 
 /**
+ * 
  * @author Allan Capistrano
+ * @version 1.0.0
  */
 public class LedgerConnector {
 

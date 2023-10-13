@@ -4,22 +4,20 @@ import dlt.client.tangle.hornet.enums.TransactionType;
 import dlt.client.tangle.hornet.model.transactions.Evaluation;
 import dlt.client.tangle.hornet.model.transactions.IndexTransaction;
 import dlt.client.tangle.hornet.model.transactions.Transaction;
-import java.util.Random;
 import java.util.logging.Logger;
 import node.type.enums.ConductType;
 import node.type.models.tangle.LedgerConnector;
 
 /**
- * Nó tipo malicioso.
+ * Nó do tipo perturbador.
  * 
  * @author Allan Capistrano
  * @version 1.0.0
  */
-public class Malicious extends Conduct {
+public class Disturbing extends Conduct {
 
-  private final float honestyRate;
   private static final Logger logger = Logger.getLogger(
-    Malicious.class.getName()
+    Disturbing.class.getName()
   );
 
   /**
@@ -28,31 +26,36 @@ public class Malicious extends Conduct {
    * @param ledgerConnector LedgerConnector - Conector para comunicação com a 
    * Tangle.
    * @param id String - Identificador único do nó.
-   * @param honestyRate float - Taxa de honestidade do nó malicioso.
    */
-  public Malicious(
-    LedgerConnector ledgerConnector,
-    String id,
-    float honestyRate
-  ) {
+  public Disturbing(LedgerConnector ledgerConnector, String id) {
     super(ledgerConnector, id);
-    this.honestyRate = honestyRate;
-    this.defineConduct(); // TODO: Criar task para alterar o comportamento desse tipo de nó de tempos em tempos.
+    this.setConductType(ConductType.HONEST);
   }
 
   /**
-   * Define se o comportamento do nó malicioso será honesto ou desonesto.
+   * Define o comportamento do nó perturbador.
    */
   @Override
   public void defineConduct() {
-    // Gerando um número aleatório entre 0 e 100.
-    float randomNumber = new Random().nextFloat() * 100;
+    this.changeConduct();
+  }
 
-    if (randomNumber > honestyRate) {
-      this.setConductType(ConductType.MALICIOUS);
-    } else {
-      this.setConductType(ConductType.HONEST);
-    }
+  /**
+   * Altera a conduta do nó:
+   * Se ele for honesto -> muda para malicioso;
+   * Se ele for malicioso -> muda para honesto.
+   */
+  private void changeConduct() {
+    this.setConductType(
+        this.getConductType() == ConductType.HONEST
+          ? ConductType.MALICIOUS
+          : ConductType.HONEST
+      );
+
+    logger.info(
+      "Changing Disturbing node behavior to: " +
+      this.getConductType().toString()
+    );
   }
 
   /**
@@ -100,9 +103,5 @@ public class Malicious extends Conduct {
     // Adicionando avaliação na Tangle.
     this.getLedgerConnector()
       .put(new IndexTransaction(deviceId, transactionEvaluation));
-  }
-
-  public float getHonestyRate() {
-    return honestyRate;
   }
 }
