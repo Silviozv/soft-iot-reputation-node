@@ -30,7 +30,7 @@ public class Malicious extends Conduct {
   ) {
     super(ledgerConnector, id);
     this.honestyRate = honestyRate;
-    this.defineConduct();
+    this.defineConduct(); // TODO: Criar task para alterar o comportamento desse tipo de nó de tempos em tempos.
   }
 
   /**
