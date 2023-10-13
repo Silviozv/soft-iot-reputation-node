@@ -76,16 +76,7 @@ public class Malicious extends Conduct {
         break;
       case MALICIOUS:
         logger.info("Did not provide the service.");
-        value = 0;
-        break;
-      case SELFISH:
-        logger.info("TODO");
-        break;
-      case CORRUPT:
-        logger.info("TODO");
-        break;
-      case DISTURBING:
-        logger.info("TODO");
+        value = 0; // Alterando o valor da avaliação para 'serviço não prestado'.
         break;
       default:
         logger.severe("Error! ConductType not found.");
