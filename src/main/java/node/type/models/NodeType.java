@@ -4,17 +4,6 @@ import br.uefs.larsid.extended.mapping.devices.services.IDevicePropertiesManager
 import br.ufba.dcc.wiser.soft_iot.entities.Device;
 import br.ufba.dcc.wiser.soft_iot.entities.Sensor;
 import dlt.id.manager.services.IIDManagerService;
-import node.type.models.conducts.Conduct;
-import node.type.models.conducts.Honest;
-import node.type.models.conducts.Malicious;
-import node.type.models.tangle.LedgerConnector;
-import node.type.mqtt.ListenerDevices;
-import node.type.services.NodeTypeService;
-import node.type.tasks.CheckDevicesTask;
-import node.type.tasks.RequestDataTask;
-import node.type.tasks.WaitDeviceResponseTask;
-import node.type.utils.MQTTClient;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,6 +12,17 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Logger;
+import node.type.models.conducts.Conduct;
+import node.type.models.conducts.Honest;
+import node.type.models.conducts.Malicious;
+import node.type.models.conducts.Selfish;
+import node.type.models.tangle.LedgerConnector;
+import node.type.mqtt.ListenerDevices;
+import node.type.services.NodeTypeService;
+import node.type.tasks.CheckDevicesTask;
+import node.type.tasks.RequestDataTask;
+import node.type.tasks.WaitDeviceResponseTask;
+import node.type.utils.MQTTClient;
 
 public class NodeType implements NodeTypeService {
 
@@ -66,6 +66,9 @@ public class NodeType implements NodeTypeService {
         logger.info(
           "Malicious node behavior: " + node.getConductType().toString()
         );
+        break;
+      case 3:
+        node = new Selfish(ledgerConnector, this.idManager.getID());
         break;
       default:
         logger.severe("Error. No node type for this option.");
