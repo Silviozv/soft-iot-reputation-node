@@ -40,7 +40,7 @@
     </bean>
 
     <cm:property-placeholder
-        persistent-id="br.uefs.larsid.soft_iot.node_type"
+        persistent-id="br.uefs.larsid.soft_iot.reputation_node"
         update-strategy="reload">
         <cm:default-properties>
             <cm:property name="ip" value="localhost" />

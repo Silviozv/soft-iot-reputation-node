@@ -6,11 +6,11 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>br.uefs.larsid.iot.soft</groupId>
-    <artifactId>soft-iot-node-type</artifactId>
+    <artifactId>soft-iot-reputation-node</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>bundle</packaging>
 
-    <name>SOFT-IoT-Node-Type</name>
+    <name>SOFT-IoT-Reputation-Node</name>
 
     <build>
         <plugins>
