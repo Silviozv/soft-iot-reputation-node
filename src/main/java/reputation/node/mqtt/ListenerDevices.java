@@ -1,10 +1,12 @@
-package node.type.mqtt;
+package reputation.node.mqtt;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import java.util.logging.Logger;
-import node.type.models.NodeType;
-import node.type.utils.MQTTClient;
+
+import reputation.node.models.Node;
+import reputation.node.utils.MQTTClient;
+
 import org.eclipse.paho.client.mqttv3.IMqttMessageListener;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 
@@ -20,7 +22,7 @@ public class ListenerDevices implements IMqttMessageListener {
   /*--------------------------------------------------------------------------*/
 
   private MQTTClient MQTTClient;
-  private final NodeType node;
+  private final Node node;
   private static final Logger logger = Logger.getLogger(
     ListenerDevices.class.getName()
   );
@@ -31,7 +33,7 @@ public class ListenerDevices implements IMqttMessageListener {
    * @param MQTTClient MQTTClient -  Cliente MQTT.
    * @param node NodeType - Nó que executa o ListenerDevice.
    */
-  public ListenerDevices(MQTTClient MQTTClient, NodeType node) {
+  public ListenerDevices(MQTTClient MQTTClient, Node node) {
     this.MQTTClient = MQTTClient;
     this.node = node;
   }

@@ -1,4 +1,4 @@
-package node.type.services;
+package reputation.node.services;
 
 public interface NodeTypeService {
   

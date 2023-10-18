@@ -1,4 +1,4 @@
-package node.type.models;
+package reputation.node.models;
 
 import br.uefs.larsid.extended.mapping.devices.services.IDevicePropertiesManager;
 import br.ufba.dcc.wiser.soft_iot.entities.Device;
@@ -12,25 +12,26 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Logger;
-import node.type.models.conducts.Conduct;
-import node.type.models.conducts.Disturbing;
-import node.type.models.conducts.Honest;
-import node.type.models.conducts.Malicious;
-import node.type.models.conducts.Selfish;
-import node.type.models.tangle.LedgerConnector;
-import node.type.mqtt.ListenerDevices;
-import node.type.services.NodeTypeService;
-import node.type.tasks.CheckDevicesTask;
-import node.type.tasks.RequestDataTask;
-import node.type.tasks.WaitDeviceResponseTask;
-import node.type.utils.MQTTClient;
+
+import reputation.node.models.conducts.Conduct;
+import reputation.node.models.conducts.Disturbing;
+import reputation.node.models.conducts.Honest;
+import reputation.node.models.conducts.Malicious;
+import reputation.node.models.conducts.Selfish;
+import reputation.node.models.tangle.LedgerConnector;
+import reputation.node.mqtt.ListenerDevices;
+import reputation.node.services.NodeTypeService;
+import reputation.node.tasks.CheckDevicesTask;
+import reputation.node.tasks.RequestDataTask;
+import reputation.node.tasks.WaitDeviceResponseTask;
+import reputation.node.utils.MQTTClient;
 
 /**
  * 
  * @author Allan Capistrano
  * @version 1.0.0
  */
-public class NodeType implements NodeTypeService {
+public class Node implements NodeTypeService {
 
   private MQTTClient MQTTClient;
   private int nodeType;
@@ -48,10 +49,10 @@ public class NodeType implements NodeTypeService {
   private LedgerConnector ledgerConnector;
   private IIDManagerService idManager;
   private static final Logger logger = Logger.getLogger(
-    NodeType.class.getName()
+    Node.class.getName()
   );
 
-  public NodeType() {}
+  public Node() {}
 
   /**
    * Executa o que foi definido na função quando o bundle for inicializado.
