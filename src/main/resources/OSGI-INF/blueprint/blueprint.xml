@@ -8,9 +8,8 @@
     <reference id="deviceManagerService"
         interface="br.uefs.larsid.extended.mapping.devices.services.IDevicePropertiesManager" />
 
-    <reference id="ledgerReaderService" interface="dlt.client.tangle.hornet.services.ILedgerReader" />
-    <reference id="ledgerWriterService" interface="dlt.client.tangle.hornet.services.ILedgerWriter" />
-    <reference id="idManagerService" interface="dlt.id.manager.services.IIDManagerService"/>
+    <reference id="nodeTypeService"
+        interface="node.type.services.INodeType" />
 
     <bean id="mqttClient" class="reputation.node.utils.MQTTClient"
         init-method="start" destroy-method="stop">
@@ -21,22 +20,14 @@
         <property name="password" value="${pass}" />
     </bean>
 
-    <bean id="ledgerConnector" class="reputation.node.models.tangle.LedgerConnector">
-        <property name="ledgerReader" ref="ledgerReaderService" />
-        <property name="ledgerWriter" ref="ledgerWriterService" />
-    </bean>
-
-    <bean id="nodeType" class="reputation.node.models.Node"
+    <bean id="node" class="reputation.node.models.Node"
         init-method="start" destroy-method="stop">
         <property name="MQTTClient" ref="mqttClient" />
-        <property name="nodeType" value="${nodeType}" />
-        <property name="honestyRate" value="${honestyRate}" />
+        <property name="nodeType" ref="nodeTypeService" />
         <property name="checkDeviceTaskTime" value="${checkDeviceTaskTime}" />
         <property name="requestDataTaskTime" value="${requestDataTaskTime}" />
         <property name="waitDeviceResponseTaskTime" value="${waitDeviceResponseTaskTime}" />
         <property name="deviceManager" ref="deviceManagerService" />
-        <property name="ledgerConnector" ref="ledgerConnector" />
-        <property name="idManager" ref="idManagerService" />
     </bean>
 
     <cm:property-placeholder
@@ -47,8 +38,6 @@
             <cm:property name="port" value="1883" />
             <cm:property name="user" value="karaf" />
             <cm:property name="pass" value="karaf" />
-            <cm:property name="nodeType" value="1" />
-            <cm:property name="honestyRate" value="50" />
             <cm:property name="checkDeviceTaskTime" value="5" />
             <cm:property name="requestDataTaskTime" value="30" />
             <cm:property name="waitDeviceResponseTaskTime" value="10" />

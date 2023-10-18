@@ -3,7 +3,6 @@ package reputation.node.models;
 import br.uefs.larsid.extended.mapping.devices.services.IDevicePropertiesManager;
 import br.ufba.dcc.wiser.soft_iot.entities.Device;
 import br.ufba.dcc.wiser.soft_iot.entities.Sensor;
-import dlt.id.manager.services.IIDManagerService;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,13 +11,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Logger;
-
-import reputation.node.models.conducts.Conduct;
-import reputation.node.models.conducts.Disturbing;
-import reputation.node.models.conducts.Honest;
-import reputation.node.models.conducts.Malicious;
-import reputation.node.models.conducts.Selfish;
-import reputation.node.models.tangle.LedgerConnector;
+import node.type.services.INodeType;
 import reputation.node.mqtt.ListenerDevices;
 import reputation.node.services.NodeTypeService;
 import reputation.node.tasks.CheckDevicesTask;
@@ -27,16 +20,14 @@ import reputation.node.tasks.WaitDeviceResponseTask;
 import reputation.node.utils.MQTTClient;
 
 /**
- * 
+ *
  * @author Allan Capistrano
  * @version 1.0.0
  */
 public class Node implements NodeTypeService {
 
   private MQTTClient MQTTClient;
-  private int nodeType;
-  private float honestyRate;
-  private Conduct node;
+  private INodeType nodeType;
   private int checkDeviceTaskTime;
   private int requestDataTaskTime;
   private int waitDeviceResponseTaskTime;
@@ -46,11 +37,7 @@ public class Node implements NodeTypeService {
   private ListenerDevices listenerDevices;
   private TimerTask waitDeviceResponseTask;
   private ReentrantLock mutex = new ReentrantLock();
-  private LedgerConnector ledgerConnector;
-  private IIDManagerService idManager;
-  private static final Logger logger = Logger.getLogger(
-    Node.class.getName()
-  );
+  private static final Logger logger = Logger.getLogger(Node.class.getName());
 
   public Node() {}
 
@@ -58,34 +45,6 @@ public class Node implements NodeTypeService {
    * Executa o que foi definido na função quando o bundle for inicializado.
    */
   public void start() {
-    // TODO: Adicionar os demais tipos de nós.
-    switch (nodeType) {
-      case 1:
-        node = new Honest(this.ledgerConnector, this.idManager.getID());
-        break;
-      case 2:
-        node =
-          new Malicious(
-            this.ledgerConnector,
-            this.idManager.getID(),
-            this.honestyRate
-          );
-        logger.info(
-          "Malicious node behavior: " + node.getConductType().toString()
-        );
-        break;
-      case 3:
-        node = new Selfish(ledgerConnector, this.idManager.getID());
-        break;
-      case 5:
-        node = new Disturbing(ledgerConnector, this.idManager.getID());
-        break;
-      default:
-        logger.severe("Error. No node type for this option.");
-        this.stop();
-        break;
-    }
-
     this.MQTTClient.connect();
 
     this.devices = new ArrayList<>();
@@ -195,28 +154,12 @@ public class Node implements NodeTypeService {
     MQTTClient = mQTTClient;
   }
 
-  public int getNodeType() {
+  public INodeType getNodeType() {
     return nodeType;
   }
 
-  public void setNodeType(int nodeType) {
+  public void setNodeType(INodeType nodeType) {
     this.nodeType = nodeType;
-  }
-
-  public float getHonestyRate() {
-    return honestyRate;
-  }
-
-  public void setHonestyRate(float honestyRate) {
-    this.honestyRate = honestyRate;
-  }
-
-  public Conduct getNode() {
-    return node;
-  }
-
-  public void setNode(Conduct node) {
-    this.node = node;
   }
 
   public IDevicePropertiesManager getDeviceManager() {
@@ -261,21 +204,5 @@ public class Node implements NodeTypeService {
 
   public void setWaitDeviceResponseTaskTime(int waitDeviceResponseTaskTime) {
     this.waitDeviceResponseTaskTime = waitDeviceResponseTaskTime;
-  }
-
-  public LedgerConnector getLedgerConnector() {
-    return ledgerConnector;
-  }
-
-  public void setLedgerConnector(LedgerConnector ledgerConnector) {
-    this.ledgerConnector = ledgerConnector;
-  }
-
-  public IIDManagerService getIdManager() {
-    return idManager;
-  }
-
-  public void setIdManager(IIDManagerService idManager) {
-    this.idManager = idManager;
   }
 }
