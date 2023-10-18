@@ -1,8 +1,9 @@
-package node.type.tasks;
+package reputation.node.tasks;
 
 import java.util.TimerTask;
 import java.util.logging.Logger;
-import node.type.models.NodeType;
+
+import reputation.node.models.Node;
 
 /**
  * Classe responsável por verificar se houve resposta do dispositivo à
@@ -15,7 +16,7 @@ public class WaitDeviceResponseTask extends TimerTask {
 
   private int timer, timeoutWaitDeviceResponse;
   private final String deviceId;
-  private final NodeType node;
+  private final Node node;
   private static final Logger logger = Logger.getLogger(
     WaitDeviceResponseTask.class.getName()
   );
@@ -30,7 +31,7 @@ public class WaitDeviceResponseTask extends TimerTask {
   public WaitDeviceResponseTask(
     String deviceId,
     int timeoutWaitDeviceResponse,
-    NodeType node
+    Node node
   ) {
     this.timer = 0;
     this.timeoutWaitDeviceResponse = timeoutWaitDeviceResponse;

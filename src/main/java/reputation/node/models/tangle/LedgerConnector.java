@@ -1,4 +1,4 @@
-package node.type.models.tangle;
+package reputation.node.models.tangle;
 
 import dlt.client.tangle.hornet.model.transactions.IndexTransaction;
 import dlt.client.tangle.hornet.model.transactions.Transaction;

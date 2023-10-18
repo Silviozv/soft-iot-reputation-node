@@ -1,8 +1,9 @@
-package node.type.models.conducts;
+package reputation.node.models.conducts;
 
 import java.util.logging.Logger;
-import node.type.enums.ConductType;
-import node.type.models.tangle.LedgerConnector;
+
+import reputation.node.enums.ConductType;
+import reputation.node.models.tangle.LedgerConnector;
 
 /**
  * Nó do tipo egoísta.

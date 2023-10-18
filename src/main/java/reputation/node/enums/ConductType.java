@@ -1,4 +1,4 @@
-package node.type.enums;
+package reputation.node.enums;
 
 /**
  *

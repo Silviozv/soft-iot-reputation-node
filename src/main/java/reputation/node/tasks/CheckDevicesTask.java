@@ -1,9 +1,10 @@
-package node.type.tasks;
+package reputation.node.tasks;
 
 import java.io.IOException;
 import java.util.TimerTask;
 import java.util.logging.Logger;
-import node.type.models.NodeType;
+
+import reputation.node.models.Node;
 
 /**
  * Classe responsável pela tarefa de atualizar a lista de dispositivos
@@ -14,7 +15,7 @@ import node.type.models.NodeType;
  */
 public class CheckDevicesTask extends TimerTask {
 
-  private final NodeType node;
+  private final Node node;
   private static final Logger logger = Logger.getLogger(
     CheckDevicesTask.class.getName()
   );
@@ -25,7 +26,7 @@ public class CheckDevicesTask extends TimerTask {
    * @param node NodeType - Nó que verificará os dispositivos que estão
    * conectados.
    */
-  public CheckDevicesTask(NodeType node) {
+  public CheckDevicesTask(Node node) {
     this.node = node;
   }
 

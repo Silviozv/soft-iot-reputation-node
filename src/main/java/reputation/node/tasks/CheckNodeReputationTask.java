@@ -1,4 +1,4 @@
-package node.type.tasks;
+package reputation.node.tasks;
 
 /**
  * Task para verificar de tempos em tempos a reputação do próprio nó.

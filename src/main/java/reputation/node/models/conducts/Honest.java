@@ -1,4 +1,4 @@
-package node.type.models.conducts;
+package reputation.node.models.conducts;
 
 // TODO: Corrigir package em todas as classes.
 
@@ -7,8 +7,9 @@ import dlt.client.tangle.hornet.model.transactions.Evaluation;
 import dlt.client.tangle.hornet.model.transactions.IndexTransaction;
 import dlt.client.tangle.hornet.model.transactions.Transaction;
 import java.util.logging.Logger;
-import node.type.enums.ConductType;
-import node.type.models.tangle.LedgerConnector;
+
+import reputation.node.enums.ConductType;
+import reputation.node.models.tangle.LedgerConnector;
 
 /**
  * Nó do tipo honesto.

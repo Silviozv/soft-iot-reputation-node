@@ -1,12 +1,13 @@
-package node.type.models.conducts;
+package reputation.node.models.conducts;
 
 import dlt.client.tangle.hornet.enums.TransactionType;
 import dlt.client.tangle.hornet.model.transactions.Evaluation;
 import dlt.client.tangle.hornet.model.transactions.IndexTransaction;
 import dlt.client.tangle.hornet.model.transactions.Transaction;
 import java.util.logging.Logger;
-import node.type.enums.ConductType;
-import node.type.models.tangle.LedgerConnector;
+
+import reputation.node.enums.ConductType;
+import reputation.node.models.tangle.LedgerConnector;
 
 /**
  * Nó do tipo perturbador.

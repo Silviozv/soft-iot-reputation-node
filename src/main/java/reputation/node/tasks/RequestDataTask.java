@@ -1,8 +1,9 @@
-package node.type.tasks;
+package reputation.node.tasks;
 
 import java.util.TimerTask;
 import java.util.logging.Logger;
-import node.type.models.NodeType;
+
+import reputation.node.models.Node;
 
 /**
  * Classe responsável pela tarefa de requisitar dados de um dos sensores de um
@@ -13,7 +14,7 @@ import node.type.models.NodeType;
  */
 public class RequestDataTask extends TimerTask {
 
-  private final NodeType node;
+  private final Node node;
   private static final Logger logger = Logger.getLogger(
     RequestDataTask.class.getName()
   );
@@ -23,7 +24,7 @@ public class RequestDataTask extends TimerTask {
    *
    * @param node NodeType - Nó que realizará a requisição.
    */
-  public RequestDataTask(NodeType node) {
+  public RequestDataTask(Node node) {
     this.node = node;
   }
 
