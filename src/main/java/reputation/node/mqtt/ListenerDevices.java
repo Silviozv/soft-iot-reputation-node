@@ -13,7 +13,7 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 /**
  *
  * @author Allan Capistrano
- * @version 1.0.0
+ * @version 1.1.0
  */
 public class ListenerDevices implements IMqttMessageListener {
 
