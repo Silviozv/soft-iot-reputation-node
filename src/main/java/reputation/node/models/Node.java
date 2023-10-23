@@ -3,6 +3,11 @@ package reputation.node.models;
 import br.uefs.larsid.extended.mapping.devices.services.IDevicePropertiesManager;
 import br.ufba.dcc.wiser.soft_iot.entities.Device;
 import br.ufba.dcc.wiser.soft_iot.entities.Sensor;
+import dlt.client.tangle.hornet.enums.TransactionType;
+import dlt.client.tangle.hornet.model.transactions.IndexTransaction;
+import dlt.client.tangle.hornet.model.transactions.Transaction;
+import dlt.client.tangle.hornet.model.transactions.reputation.ReputationService;
+import dlt.client.tangle.hornet.services.ILedgerSubscriber;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +19,9 @@ import java.util.logging.Logger;
 import node.type.services.INodeType;
 import reputation.node.mqtt.ListenerDevices;
 import reputation.node.services.NodeTypeService;
+import reputation.node.tangle.LedgerConnector;
 import reputation.node.tasks.CheckDevicesTask;
+import reputation.node.tasks.NeedServiceTask;
 import reputation.node.tasks.RequestDataTask;
 import reputation.node.tasks.WaitDeviceResponseTask;
 import reputation.node.utils.MQTTClient;
@@ -22,16 +29,18 @@ import reputation.node.utils.MQTTClient;
 /**
  *
  * @author Allan Capistrano
- * @version 1.1.0
+ * @version 1.2.0
  */
-public class Node implements NodeTypeService {
+public class Node implements NodeTypeService, ILedgerSubscriber {
 
   private MQTTClient MQTTClient;
   private INodeType nodeType;
   private int checkDeviceTaskTime;
   private int requestDataTaskTime;
+  private int requestServiceTaskTime;
   private int waitDeviceResponseTaskTime;
   private List<Device> devices;
+  private LedgerConnector ledgerConnector;
   private int amountDevices = 0;
   private IDevicePropertiesManager deviceManager;
   private ListenerDevices listenerDevices;
@@ -61,6 +70,29 @@ public class Node implements NodeTypeService {
         0,
         this.requestDataTaskTime * 1000
       );
+
+    // TODO: Colocar todos os subscribes em um método.
+    this.ledgerConnector.subscribe(TransactionType.REP_SVC.toString(), this);
+    // this.ledgerConnector.subscribe(TransactionType.REP_SVC_REPLY.name(), this);
+    // this.ledgerConnector.subscribe(
+    //     TransactionType.REP_SVC_REQ.name(),
+    //     this
+    //   );
+    // this.ledgerConnector.subscribe(
+    //     TransactionType.REP_SVC_RES.name(),
+    //     this
+    //   );
+    // this.ledgerConnector.subscribe(
+    //     TransactionType.REP_EVALUATION.name(),
+    //     this
+    //   );
+
+    new Timer()
+      .scheduleAtFixedRate(
+        new NeedServiceTask(this),
+        0,
+        this.requestServiceTaskTime * 1000
+      );
   }
 
   /**
@@ -69,7 +101,29 @@ public class Node implements NodeTypeService {
   public void stop() {
     this.devices.forEach(d -> this.listenerDevices.unsubscribe(d.getId()));
 
+    this.ledgerConnector.unsubscribe(TransactionType.REP_SVC.name(), this);
+    // this.ledgerConnector.unsubscribe(TransactionType.REP_SVC_REPLY.name(), this);
+    // this.ledgerConnector.unsubscribe(
+    //     TransactionType.REP_SVC_REQ.name(),
+    //     this
+    //   );
+    // this.ledgerConnector.unsubscribe(
+    //     TransactionType.REP_SVC_RES.name(),
+    //     this
+    //   );
+    // this.ledgerConnector.unsubscribe(
+    //     TransactionType.REP_EVALUATION.name(),
+    //     this
+    //   );
+
     this.MQTTClient.disconnect();
+  }
+
+  @Override
+  public void update(Object object, Object object2) {
+    logger.info("UPDATE METHOD");
+    logger.info(((Transaction) object).getType().name());
+    logger.info((String) object2);
   }
 
   /**
@@ -130,6 +184,23 @@ public class Node implements NodeTypeService {
   }
 
   /**
+   * Envia uma transação indicando que o nó precisa do serviço de um outro nó.
+   *
+   * @throws InterruptedException
+   */
+  public void requestServiceFromNode() throws InterruptedException {
+    Transaction transaction = new ReputationService(
+      this.getNodeType().getNodeId(),
+      this.getNodeType().getNodeGroup(),
+      TransactionType.REP_SVC
+    );
+
+    this.ledgerConnector.put(
+        new IndexTransaction(TransactionType.REP_SVC.name(), transaction)
+      );
+  }
+
+  /**
    * Se inscreve nos tópicos dos novos dispositivos.
    *
    * @param amountNewDevices int - Número de novos dispositivos que se
@@ -186,6 +257,14 @@ public class Node implements NodeTypeService {
     this.requestDataTaskTime = requestDataTaskTime;
   }
 
+  public int getRequestServiceTaskTime() {
+    return requestServiceTaskTime;
+  }
+
+  public void setRequestServiceTaskTime(int requestServiceTaskTime) {
+    this.requestServiceTaskTime = requestServiceTaskTime;
+  }
+
   public int getAmountDevices() {
     return amountDevices;
   }
@@ -204,5 +283,13 @@ public class Node implements NodeTypeService {
 
   public void setWaitDeviceResponseTaskTime(int waitDeviceResponseTaskTime) {
     this.waitDeviceResponseTaskTime = waitDeviceResponseTaskTime;
+  }
+
+  public LedgerConnector getLedgerConnector() {
+    return ledgerConnector;
+  }
+
+  public void setLedgerConnector(LedgerConnector ledgerConnector) {
+    this.ledgerConnector = ledgerConnector;
   }
 }
