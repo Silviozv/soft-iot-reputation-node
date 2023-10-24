@@ -27,6 +27,7 @@ public class WaitDeviceResponseTask extends TimerTask {
    * @param deviceId String - ID do dispositivo.
    * @param timeoutWaitDeviceResponse int - Tempo máximo para aguardar a
    * resposta do dispositivo.
+   * @param node Node - Nó o qual está esperando a resposta.
    */
   public WaitDeviceResponseTask(
     String deviceId,
