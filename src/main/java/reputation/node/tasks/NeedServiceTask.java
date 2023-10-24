@@ -28,12 +28,14 @@ public class NeedServiceTask extends TimerTask {
 
   @Override
   public void run() {
-    logger.info("Requesting service from node");
+    if (!this.node.isRequestingService()) {
+      logger.info("Requesting service from node");
 
-    try {
-      this.node.requestServiceFromNode();
-    } catch (InterruptedException e) {
-      logger.warning("Could not request a service from a node.");
+      try {
+        this.node.requestServiceFromNode();
+      } catch (InterruptedException e) {
+        logger.warning("Could not request a service from a node.");
+      }
     }
   }
 }
