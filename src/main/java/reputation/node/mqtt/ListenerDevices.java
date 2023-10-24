@@ -3,12 +3,10 @@ package reputation.node.mqtt;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import java.util.logging.Logger;
-
-import reputation.node.models.Node;
-import reputation.node.utils.MQTTClient;
-
 import org.eclipse.paho.client.mqttv3.IMqttMessageListener;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
+import reputation.node.models.Node;
+import reputation.node.utils.MQTTClient;
 
 /**
  *
@@ -85,7 +83,7 @@ public class ListenerDevices implements IMqttMessageListener {
     }
     // Avaliação de serviço prestado corretamente.
     try {
-      this.node.getNodeType().getNode().evaluateDevice(deviceId, 1);
+      this.node.getNodeType().getNode().evaluateServiceProvider(deviceId, 1);
     } catch (Exception e) {
       logger.warning("Could not add transaction on tangle network.");
     }

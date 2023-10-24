@@ -5,7 +5,7 @@ import java.util.logging.Logger;
 import reputation.node.models.Node;
 
 /**
- * Classe responsável por verificar se houve resposta de um nó à requisição de 
+ * Classe responsável por verificar se houve resposta de um nó à requisição de
  * serviço feita pelo nó.
  *
  * @author Allan Capistrano
@@ -49,7 +49,9 @@ public class WaitNodeResponseTask extends TimerTask {
 
       // Avaliação de serviço prestado incorretamente.
       try {
-        this.node.getNodeType().getNode().evaluateDevice(this.nodeId, 0); // TODO: Trocar para evaluateNode
+        this.node.getNodeType()
+          .getNode()
+          .evaluateServiceProvider(this.nodeId, 0);
       } catch (InterruptedException e) {
         logger.warning("Could not add transaction on tangle network.");
       }

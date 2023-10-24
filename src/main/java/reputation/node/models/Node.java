@@ -7,7 +7,6 @@ import dlt.client.tangle.hornet.enums.TransactionType;
 import dlt.client.tangle.hornet.model.transactions.IndexTransaction;
 import dlt.client.tangle.hornet.model.transactions.TargetedTransaction;
 import dlt.client.tangle.hornet.model.transactions.Transaction;
-import dlt.client.tangle.hornet.model.transactions.reputation.Evaluation;
 import dlt.client.tangle.hornet.model.transactions.reputation.ReputationService;
 import dlt.client.tangle.hornet.model.transactions.reputation.ReputationServiceReply;
 import dlt.client.tangle.hornet.model.transactions.reputation.ReputationServiceRequest;
@@ -207,23 +206,19 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
               break;
             case REP_SVC_RES:
-              /* Como recebeu o serviço, finaliza o timer, e avalia o nó prestador. */
+              /* Como recebeu o serviço, finaliza o timer, e avalia o nó 
+              prestador. */
               if (this.waitNodeResponseTask != null) {
                 this.waitNodeResponseTask.cancel();
               }
 
-              // TODO: Criar um evaluate node para cada comportamento do nó.
-
-              transaction =
-                new Evaluation(
-                  nodeId,
-                  sourceReceivedTransaction,
-                  nodeGroup,
-                  TransactionType.REP_EVALUATION,
-                  1 // TODO: Alterar para depender do comportamento do nó.
-                );
-
-              transactionType = TransactionType.REP_EVALUATION.name();
+              try {
+                this.getNodeType()
+                  .getNode()
+                  .evaluateServiceProvider(sourceReceivedTransaction, 1);
+              } catch (InterruptedException e) {
+                logger.warning("Could not add transaction on tangle network.");
+              }
 
               requestingService = false;
 
@@ -248,8 +243,6 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
         }
       }
     }
-    // logger.info(((Transaction) object).getType().name());
-    // logger.info((String) object2);
   }
 
   /**
