@@ -117,6 +117,12 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     this.MQTTClient.disconnect();
   }
 
+  /**
+   * Método que lida com as transações da blockchain recebidas através do ZQM.
+   * 
+   * @param object Object - Transação (precisa de casting para Transaction).
+   * @param object2 Object - Id da transação (precisa de casting para String).
+   */
   @Override
   public void update(Object object, Object object2) {
     String sourceReceivedTransaction = ((Transaction) object).getSource();
