@@ -80,21 +80,11 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
         this.requestDataTaskTime * 1000
       );
 
-    // TODO: Colocar todos os subscribes em um método.
-    this.ledgerConnector.subscribe(TransactionType.REP_SVC.toString(), this);
-    // this.ledgerConnector.subscribe(TransactionType.REP_SVC_REPLY.name(), this);
-    // this.ledgerConnector.subscribe(
-    //     TransactionType.REP_SVC_REQ.name(),
-    //     this
-    //   );
-    // this.ledgerConnector.subscribe(
-    //     TransactionType.REP_SVC_RES.name(),
-    //     this
-    //   );
-    // this.ledgerConnector.subscribe(
-    //     TransactionType.REP_EVALUATION.name(),
-    //     this
-    //   );
+    this.ledgerConnector.subscribe(TransactionType.REP_SVC.name(), this);
+    this.ledgerConnector.subscribe(TransactionType.REP_SVC_REPLY.name(), this);
+    this.ledgerConnector.subscribe(TransactionType.REP_SVC_REQ.name(), this);
+    this.ledgerConnector.subscribe(TransactionType.REP_SVC_RES.name(), this);
+    this.ledgerConnector.subscribe(TransactionType.REP_EVALUATION.name(), this);
 
     new Timer()
       .scheduleAtFixedRate(
@@ -113,19 +103,16 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     this.devices.forEach(d -> this.listenerDevices.unsubscribe(d.getId()));
 
     this.ledgerConnector.unsubscribe(TransactionType.REP_SVC.name(), this);
-    // this.ledgerConnector.unsubscribe(TransactionType.REP_SVC_REPLY.name(), this);
-    // this.ledgerConnector.unsubscribe(
-    //     TransactionType.REP_SVC_REQ.name(),
-    //     this
-    //   );
-    // this.ledgerConnector.unsubscribe(
-    //     TransactionType.REP_SVC_RES.name(),
-    //     this
-    //   );
-    // this.ledgerConnector.unsubscribe(
-    //     TransactionType.REP_EVALUATION.name(),
-    //     this
-    //   );
+    this.ledgerConnector.unsubscribe(
+        TransactionType.REP_SVC_REPLY.name(),
+        this
+      );
+    this.ledgerConnector.unsubscribe(TransactionType.REP_SVC_REQ.name(), this);
+    this.ledgerConnector.unsubscribe(TransactionType.REP_SVC_RES.name(), this);
+    this.ledgerConnector.unsubscribe(
+        TransactionType.REP_EVALUATION.name(),
+        this
+      );
 
     this.MQTTClient.disconnect();
   }
@@ -145,6 +132,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       if (receivedTransaction.getType() == TransactionType.REP_SVC) {
         /* Só responde se tiver pelo menos um dispositivo conectado ao nó. */
         if (this.amountDevices > 0) {
+          logger.info("Received a REP_SVC transaction.");
+
           transaction =
             new ReputationServiceReply(
               nodeId,
@@ -162,6 +151,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
           switch (receivedTargetedTransaction.getType()) {
             case REP_SVC_REPLY:
               if (!this.requestingService) {
+                logger.info("Received a REP_SVC_REPLY transaction");
+
                 transaction =
                   new ReputationServiceRequest(
                     nodeId,
@@ -173,18 +164,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
                 transactionType = TransactionType.REP_SVC_REQ.name();
 
-                /* Timer para esperar a resposta do serviço requisitado. */
-                this.waitNodeResponseTask =
-                  new WaitNodeResponseTask(
-                    sourceReceivedTransaction,
-                    (this.waitNodeResponseTaskTime * 1000),
-                    this
-                  );
-
-                new Timer()
-                  .scheduleAtFixedRate(this.waitNodeResponseTask, 0, 1000);
-
-                requestingService = true;
+                this.requestingService = true;
               }
 
               break;
@@ -192,6 +172,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
               String deviceId = this.getRandomDeviceId();
 
               if (deviceId != null) {
+                logger.info("Received a REP_SVC_REQ transaction.");
+
                 transaction =
                   new ReputationServiceResponse(
                     nodeId,
@@ -206,21 +188,27 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
               break;
             case REP_SVC_RES:
-              /* Como recebeu o serviço, finaliza o timer, e avalia o nó 
-              prestador. */
-              if (this.waitNodeResponseTask != null) {
-                this.waitNodeResponseTask.cancel();
+              logger.info("Received a RECEIVED REP_SVC_RES transaction.");
+
+              if (this.requestingService) {
+                /* Como recebeu o serviço, finaliza o timer, e avalia o nó 
+                prestador. */
+                if (this.waitNodeResponseTask != null) {
+                  this.waitNodeResponseTask.cancel();
+                }
+
+                try {
+                  this.getNodeType()
+                    .getNode()
+                    .evaluateServiceProvider(sourceReceivedTransaction, 1);
+                } catch (InterruptedException e) {
+                  logger.warning(
+                    "Could not add transaction on tangle network."
+                  );
+                }
               }
 
-              try {
-                this.getNodeType()
-                  .getNode()
-                  .evaluateServiceProvider(sourceReceivedTransaction, 1);
-              } catch (InterruptedException e) {
-                logger.warning("Could not add transaction on tangle network.");
-              }
-
-              requestingService = false;
+              this.requestingService = false;
 
               break;
             default:
@@ -240,6 +228,18 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
             "Could not sent the" + transactionType + " transaction."
           );
           logger.warning(ie.getStackTrace().toString());
+        }
+
+        if (transactionType.equals(TransactionType.REP_SVC_REQ.name())) {
+          /* Timer para esperar a resposta do serviço requisitado. */
+          this.waitNodeResponseTask =
+            new WaitNodeResponseTask(
+              sourceReceivedTransaction,
+              (this.waitNodeResponseTaskTime * 1000),
+              this
+            );
+
+          new Timer().scheduleAtFixedRate(this.waitNodeResponseTask, 0, 1000);
         }
       }
     }
@@ -445,6 +445,10 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
   public boolean isRequestingService() {
     return requestingService;
+  }
+
+  public void setRequestingService(boolean requestingService) {
+    this.requestingService = requestingService;
   }
 
   public TimerTask getWaitNodeResponseTask() {
