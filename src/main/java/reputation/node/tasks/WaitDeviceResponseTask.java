@@ -2,7 +2,6 @@ package reputation.node.tasks;
 
 import java.util.TimerTask;
 import java.util.logging.Logger;
-
 import reputation.node.models.Node;
 
 /**
@@ -27,6 +26,7 @@ public class WaitDeviceResponseTask extends TimerTask {
    * @param deviceId String - ID do dispositivo.
    * @param timeoutWaitDeviceResponse int - Tempo máximo para aguardar a
    * resposta do dispositivo.
+   * @param node Node - Nó o qual está esperando a resposta.
    */
   public WaitDeviceResponseTask(
     String deviceId,
@@ -50,7 +50,9 @@ public class WaitDeviceResponseTask extends TimerTask {
 
       // Avaliação de serviço prestado incorretamente.
       try {
-        this.node.getNodeType().getNode().evaluateDevice(this.deviceId, 0);
+        this.node.getNodeType()
+          .getNode()
+          .evaluateServiceProvider(this.deviceId, 0);
       } catch (InterruptedException e) {
         logger.warning("Could not add transaction on tangle network.");
       }

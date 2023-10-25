@@ -7,9 +7,10 @@
 
     <reference id="deviceManagerService"
         interface="br.uefs.larsid.extended.mapping.devices.services.IDevicePropertiesManager" />
-
     <reference id="nodeTypeService"
         interface="node.type.services.INodeType" />
+    <reference id="ledgerReaderService" interface="dlt.client.tangle.hornet.services.ILedgerReader" />
+    <reference id="ledgerWriterService" interface="dlt.client.tangle.hornet.services.ILedgerWriter" />
 
     <bean id="mqttClient" class="reputation.node.utils.MQTTClient"
         init-method="start" destroy-method="stop">
@@ -26,8 +27,16 @@
         <property name="nodeType" ref="nodeTypeService" />
         <property name="checkDeviceTaskTime" value="${checkDeviceTaskTime}" />
         <property name="requestDataTaskTime" value="${requestDataTaskTime}" />
+        <property name="requestServiceTaskTime" value="${requestServiceTaskTime}" />
         <property name="waitDeviceResponseTaskTime" value="${waitDeviceResponseTaskTime}" />
+        <property name="waitNodeResponseTaskTime" value="${waitNodeResponseTaskTime}" />
         <property name="deviceManager" ref="deviceManagerService" />
+        <property name="ledgerConnector" ref="ledgerConnector" />
+    </bean>
+
+    <bean id="ledgerConnector" class="reputation.node.tangle.LedgerConnector">
+        <property name="ledgerReader" ref="ledgerReaderService" />
+        <property name="ledgerWriter" ref="ledgerWriterService" />
     </bean>
 
     <cm:property-placeholder
@@ -40,7 +49,9 @@
             <cm:property name="pass" value="karaf" />
             <cm:property name="checkDeviceTaskTime" value="5" />
             <cm:property name="requestDataTaskTime" value="30" />
+            <cm:property name="requestServiceTaskTime" value="10" /> <!-- TODO: Alterar depois para 45-->
             <cm:property name="waitDeviceResponseTaskTime" value="10" />
+            <cm:property name="waitNodeResponseTaskTime" value="10" /> <!-- TODO: Alterar depois para 15-->
             <cm:property name="debugModeValue" value="true" />
         </cm:default-properties>
     </cm:property-placeholder>
