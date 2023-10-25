@@ -14,7 +14,7 @@ import reputation.node.models.Node;
 public class WaitNodeResponseTask extends TimerTask {
 
   private int timer, timeoutWaitNodeResponse;
-  private final String nodeId;
+  private final String nodeServiceProviderId;
   private final Node node;
   private static final Logger logger = Logger.getLogger(
     WaitNodeResponseTask.class.getName()
@@ -23,35 +23,43 @@ public class WaitNodeResponseTask extends TimerTask {
   /**
    * Método construtor.
    *
-   * @param nodeId String - ID do nó que enviará a resposta
+   * @param nodeServiceProviderId String - ID do nó que enviará a resposta
    * @param timeoutWaitNodeResponse int - Tempo máximo para aguardar a
    * resposta do nó.
    * @param node Node - Nó o qual está esperando a resposta.
    */
   public WaitNodeResponseTask(
-    String nodeId,
+    String nodeServiceProviderId,
     int timeoutWaitNodeResponse,
     Node node
   ) {
     this.timeoutWaitNodeResponse = timeoutWaitNodeResponse;
-    this.nodeId = nodeId;
+    this.nodeServiceProviderId = nodeServiceProviderId;
     this.node = node;
   }
 
   @Override
   public void run() {
     logger.info(
-      String.format("Waiting for %s response: %d...", this.node, ++timer)
+      String.format(
+        "Waiting for %s response: %d...",
+        this.nodeServiceProviderId,
+        ++timer
+      )
     );
 
     if ((timer * 1000) >= this.timeoutWaitNodeResponse) {
-      logger.warning("Timeout for waiting for " + this.nodeId + " response.");
+      logger.warning(
+        "Timeout for waiting for " + this.nodeServiceProviderId + " response."
+      );
+
+      this.node.setRequestingService(false);
 
       // Avaliação de serviço prestado incorretamente.
       try {
         this.node.getNodeType()
           .getNode()
-          .evaluateServiceProvider(this.nodeId, 0);
+          .evaluateServiceProvider(this.nodeServiceProviderId, 0);
       } catch (InterruptedException e) {
         logger.warning("Could not add transaction on tangle network.");
       }
