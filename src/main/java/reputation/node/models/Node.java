@@ -4,14 +4,10 @@ import br.uefs.larsid.extended.mapping.devices.services.IDevicePropertiesManager
 import br.ufba.dcc.wiser.soft_iot.entities.Device;
 import br.ufba.dcc.wiser.soft_iot.entities.Sensor;
 import dlt.client.tangle.hornet.enums.TransactionType;
+import dlt.client.tangle.hornet.model.DeviceSensorId;
 import dlt.client.tangle.hornet.model.transactions.IndexTransaction;
-import dlt.client.tangle.hornet.model.transactions.TargetedTransaction;
 import dlt.client.tangle.hornet.model.transactions.Transaction;
 import dlt.client.tangle.hornet.model.transactions.reputation.ReputationService;
-import dlt.client.tangle.hornet.model.transactions.reputation.ReputationServiceReply;
-import dlt.client.tangle.hornet.model.transactions.reputation.ReputationServiceRequest;
-import dlt.client.tangle.hornet.model.transactions.reputation.ReputationServiceResponse;
-import dlt.client.tangle.hornet.services.ILedgerSubscriber;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,10 +22,8 @@ import reputation.node.mqtt.ListenerDevices;
 import reputation.node.services.NodeTypeService;
 import reputation.node.tangle.LedgerConnector;
 import reputation.node.tasks.CheckDevicesTask;
-import reputation.node.tasks.NeedServiceTask;
 import reputation.node.tasks.RequestDataTask;
 import reputation.node.tasks.WaitDeviceResponseTask;
-import reputation.node.tasks.WaitNodeResponseTask;
 import reputation.node.utils.MQTTClient;
 
 /**
@@ -37,24 +31,24 @@ import reputation.node.utils.MQTTClient;
  * @author Allan Capistrano
  * @version 1.2.0
  */
-public class Node implements NodeTypeService, ILedgerSubscriber {
+public class Node implements NodeTypeService {
 
   private MQTTClient MQTTClient;
   private INodeType nodeType;
   private int checkDeviceTaskTime;
   private int requestDataTaskTime;
-  private int requestServiceTaskTime;
+  private int requestServiceTaskTime; // TODO: Verificar se ainda vai precisar
   private int waitDeviceResponseTaskTime;
-  private int waitNodeResponseTaskTime;
+  private int waitNodeResponseTaskTime; // TODO: Verificar se ainda vai precisar
   private List<Device> devices;
   private LedgerConnector ledgerConnector;
   private int amountDevices = 0;
   private IDevicePropertiesManager deviceManager;
   private ListenerDevices listenerDevices;
   private TimerTask waitDeviceResponseTask;
-  private TimerTask waitNodeResponseTask;
+  private TimerTask waitNodeResponseTask; // TODO: Verificar se ainda vai precisar
   private ReentrantLock mutex = new ReentrantLock();
-  private boolean requestingService;
+  private boolean requestingService; // TODO: Verificar se ainda vai precisar
   private static final Logger logger = Logger.getLogger(Node.class.getName());
 
   public Node() {}
@@ -80,19 +74,6 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
         this.requestDataTaskTime * 1000
       );
 
-    this.ledgerConnector.subscribe(TransactionType.REP_SVC.name(), this);
-    this.ledgerConnector.subscribe(TransactionType.REP_SVC_REPLY.name(), this);
-    this.ledgerConnector.subscribe(TransactionType.REP_SVC_REQ.name(), this);
-    this.ledgerConnector.subscribe(TransactionType.REP_SVC_RES.name(), this);
-    this.ledgerConnector.subscribe(TransactionType.REP_EVALUATION.name(), this);
-
-    new Timer()
-      .scheduleAtFixedRate(
-        new NeedServiceTask(this),
-        0,
-        this.requestServiceTaskTime * 1000
-      );
-
     this.requestingService = false;
   }
 
@@ -102,153 +83,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
   public void stop() {
     this.devices.forEach(d -> this.listenerDevices.unsubscribe(d.getId()));
 
-    this.ledgerConnector.unsubscribe(TransactionType.REP_SVC.name(), this);
-    this.ledgerConnector.unsubscribe(
-        TransactionType.REP_SVC_REPLY.name(),
-        this
-      );
-    this.ledgerConnector.unsubscribe(TransactionType.REP_SVC_REQ.name(), this);
-    this.ledgerConnector.unsubscribe(TransactionType.REP_SVC_RES.name(), this);
-    this.ledgerConnector.unsubscribe(
-        TransactionType.REP_EVALUATION.name(),
-        this
-      );
-
     this.MQTTClient.disconnect();
-  }
-
-  /**
-   * Método que lida com as transações da blockchain recebidas através do ZQM.
-   * 
-   * @param object Object - Transação (precisa de casting para Transaction).
-   * @param object2 Object - Id da transação (precisa de casting para String).
-   */
-  @Override
-  public void update(Object object, Object object2) {
-    String sourceReceivedTransaction = ((Transaction) object).getSource();
-
-    if (!sourceReceivedTransaction.equals(this.getNodeType().getNodeId())) {
-      Transaction receivedTransaction = (Transaction) object;
-      String nodeId = this.getNodeType().getNodeId();
-      String nodeGroup = this.getNodeType().getNodeGroup();
-
-      Transaction transaction = null;
-      String transactionType = null;
-
-      if (receivedTransaction.getType() == TransactionType.REP_SVC) {
-        /* Só responde se tiver pelo menos um dispositivo conectado ao nó. */
-        if (this.amountDevices > 0) {
-          logger.info("Received a REP_SVC transaction.");
-
-          transaction =
-            new ReputationServiceReply(
-              nodeId,
-              sourceReceivedTransaction,
-              nodeGroup,
-              TransactionType.REP_SVC_REPLY
-            );
-
-          transactionType = TransactionType.REP_SVC_REPLY.name();
-        }
-      } else {
-        TargetedTransaction receivedTargetedTransaction = (TargetedTransaction) object;
-
-        if (receivedTargetedTransaction.getTarget().equals(nodeId)) {
-          switch (receivedTargetedTransaction.getType()) {
-            case REP_SVC_REPLY:
-              if (!this.requestingService) {
-                logger.info("Received a REP_SVC_REPLY transaction");
-
-                transaction =
-                  new ReputationServiceRequest(
-                    nodeId,
-                    sourceReceivedTransaction,
-                    nodeGroup,
-                    TransactionType.REP_SVC_REQ,
-                    NodeServiceType.RND_DEVICE_ID.name()
-                  );
-
-                transactionType = TransactionType.REP_SVC_REQ.name();
-
-                this.requestingService = true;
-              }
-
-              break;
-            case REP_SVC_REQ:
-              String deviceId = this.getRandomDeviceId();
-
-              if (deviceId != null) {
-                logger.info("Received a REP_SVC_REQ transaction.");
-
-                transaction =
-                  new ReputationServiceResponse(
-                    nodeId,
-                    sourceReceivedTransaction,
-                    nodeGroup,
-                    TransactionType.REP_SVC_RES,
-                    deviceId
-                  );
-
-                transactionType = TransactionType.REP_SVC_RES.name();
-              }
-
-              break;
-            case REP_SVC_RES:
-              logger.info("Received a RECEIVED REP_SVC_RES transaction.");
-
-              if (this.requestingService) {
-                /* Como recebeu o serviço, finaliza o timer, e avalia o nó 
-                prestador. */
-                if (this.waitNodeResponseTask != null) {
-                  this.waitNodeResponseTask.cancel();
-                }
-
-                try {
-                  this.getNodeType()
-                    .getNode()
-                    .evaluateServiceProvider(sourceReceivedTransaction, 1);
-                } catch (InterruptedException e) {
-                  logger.warning(
-                    "Could not add transaction on tangle network."
-                  );
-                }
-              }
-
-              this.requestingService = false;
-
-              break;
-            default:
-              break;
-          }
-        }
-      }
-
-      if (transaction != null && transactionType != null) {
-        try {
-          /* Enviando a transação. */
-          this.ledgerConnector.put(
-              new IndexTransaction(transactionType, transaction)
-            );
-        } catch (InterruptedException ie) {
-          logger.warning(
-            "Could not sent the" + transactionType + " transaction."
-          );
-          logger.warning(ie.getStackTrace().toString());
-        }
-
-        if (transactionType.equals(TransactionType.REP_SVC_REQ.name())) {
-          /* Timer para esperar a resposta do serviço requisitado. */
-          this.waitNodeResponseTask =
-            new WaitNodeResponseTask(
-              sourceReceivedTransaction,
-              (this.waitNodeResponseTaskTime * 1000),
-              this
-            );
-
-          new Timer().scheduleAtFixedRate(this.waitNodeResponseTask, 0, 1000);
-        }
-      }
-    }
   }
 
   /**
@@ -268,6 +103,16 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       }
     } finally {
       this.mutex.unlock();
+    }
+
+    // TODO: Remover
+    if (this.amountDevices > 0) {
+      try {
+        this.publishNodeServices();
+      } catch (InterruptedException ie) {
+        logger.warning("Could not sent the transaction.");
+        logger.warning(ie.getStackTrace().toString());
+      }
     }
   }
 
@@ -308,44 +153,155 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     }
   }
 
-  /**
-   * Retorna o ID de um dispositivo aleatório que está conectado ao nó.
-   *
-   * @return String
-   */
-  private String getRandomDeviceId() {
-    String deviceId = null;
-
+  // TODO: Está escrevendo errado o deviceSensorIdList
+  public void publishNodeServices() throws InterruptedException {
     if (this.amountDevices > 0) {
+      List<DeviceSensorId> deviceSensorIdList = new ArrayList<>();
+      Transaction transaction = null;
+      String transactionType = null;
+
       try {
         this.mutex.lock();
 
-        int randomIndex = new Random().nextInt(this.amountDevices);
+        for (NodeServiceType serviceType : NodeServiceType.values()) {
+          deviceSensorIdList.clear();
+          logger.info(serviceType.getDescription()); // TODO: Remover
 
-        deviceId = this.devices.get(randomIndex).getId();
+          for (Device d : this.devices) {
+            d
+              .getSensors()
+              .stream()
+              .filter(s -> s.getType().equals(serviceType.getDescription()))
+              .forEach(s ->
+                deviceSensorIdList.add(new DeviceSensorId(d.getId(), s.getId()))
+              );
+          }
+
+          deviceSensorIdList.forEach(d -> logger.info(d.getSensorId()));
+
+          switch (serviceType) {
+            case HUMIDITY_SENSOR:
+              logger.info("1"); // TODO: Remover
+
+              transaction =
+                new ReputationService(
+                  this.nodeType.getNodeId(),
+                  this.nodeType.getNodeGroup(),
+                  deviceSensorIdList,
+                  TransactionType.REP_SVC_HUMIDITY_SENSOR
+                );
+
+              logger.info(
+                ((ReputationService) transaction).getServices()
+                  .get(0)
+                  .getSensorId()
+              ); // TODO: Remover
+
+              transactionType = TransactionType.REP_SVC_HUMIDITY_SENSOR.name();
+
+              if (transaction != null && transactionType != null) {
+                this.ledgerConnector.put(
+                    new IndexTransaction(transactionType, transaction)
+                  );
+              }
+
+              break;
+            case PULSE_OXYMETER:
+              logger.info("2"); // TODO: Remover
+
+              transaction =
+                new ReputationService(
+                  this.nodeType.getNodeId(),
+                  this.nodeType.getNodeGroup(),
+                  deviceSensorIdList,
+                  TransactionType.REP_SVC_PULSE_OXYMETER
+                );
+
+              logger.info(
+                ((ReputationService) transaction).getServices()
+                  .get(0)
+                  .getSensorId()
+              ); // TODO: Remover
+
+              transactionType = TransactionType.REP_SVC_PULSE_OXYMETER.name();
+
+              if (transaction != null && transactionType != null) {
+                this.ledgerConnector.put(
+                    new IndexTransaction(transactionType, transaction)
+                  );
+              }
+
+              break;
+            case THERMOMETER:
+              logger.info("3"); // TODO: Remover
+
+              transaction =
+                new ReputationService(
+                  this.nodeType.getNodeId(),
+                  this.nodeType.getNodeGroup(),
+                  deviceSensorIdList,
+                  TransactionType.REP_SVC_THERMOMETER
+                );
+
+              logger.info(
+                ((ReputationService) transaction).getServices()
+                  .get(0)
+                  .getSensorId()
+              ); // TODO: Remover
+
+              transactionType = TransactionType.REP_SVC_THERMOMETER.name();
+
+              if (transaction != null && transactionType != null) {
+                this.ledgerConnector.put(
+                    new IndexTransaction(transactionType, transaction)
+                  );
+              }
+
+              break;
+            case WIND_DIRECTION_SENSOR:
+              logger.info("4"); // TODO: Remover
+
+              transaction =
+                new ReputationService(
+                  this.nodeType.getNodeId(),
+                  this.nodeType.getNodeGroup(),
+                  deviceSensorIdList,
+                  TransactionType.REP_SVC_WIND_DIRECTION_SENSOR
+                );
+
+              logger.info(
+                ((ReputationService) transaction).getServices()
+                  .get(0)
+                  .getSensorId()
+              ); // TODO: Remover
+
+              transactionType =
+                TransactionType.REP_SVC_WIND_DIRECTION_SENSOR.name();
+
+              if (transaction != null && transactionType != null) {
+                this.ledgerConnector.put(
+                    new IndexTransaction(transactionType, transaction)
+                  );
+              }
+
+              break;
+            default:
+              logger.severe("Unknown service type.");
+              break;
+          }
+
+          // if (transaction != null && transactionType != null) {
+          //   this.ledgerConnector.put(
+          //       new IndexTransaction(transactionType, transaction)
+          //     );
+          // }
+
+          logger.info("-----"); // TODO: Remover
+        }
       } finally {
         this.mutex.unlock();
       }
     }
-
-    return deviceId;
-  }
-
-  /**
-   * Envia uma transação indicando que o nó precisa do serviço de um outro nó.
-   *
-   * @throws InterruptedException
-   */
-  public void requestServiceFromNode() throws InterruptedException {
-    Transaction transaction = new ReputationService(
-      this.getNodeType().getNodeId(),
-      this.getNodeType().getNodeGroup(),
-      TransactionType.REP_SVC
-    );
-
-    this.ledgerConnector.put(
-        new IndexTransaction(TransactionType.REP_SVC.name(), transaction)
-      );
   }
 
   /**
