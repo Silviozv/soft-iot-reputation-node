@@ -22,6 +22,7 @@ import reputation.node.mqtt.ListenerDevices;
 import reputation.node.services.NodeTypeService;
 import reputation.node.tangle.LedgerConnector;
 import reputation.node.tasks.CheckDevicesTask;
+import reputation.node.tasks.PublishNodeServicesTask;
 import reputation.node.tasks.RequestDataTask;
 import reputation.node.tasks.WaitDeviceResponseTask;
 import reputation.node.utils.MQTTClient;
@@ -37,9 +38,8 @@ public class Node implements NodeTypeService {
   private INodeType nodeType;
   private int checkDeviceTaskTime;
   private int requestDataTaskTime;
-  private int requestServiceTaskTime; // TODO: Verificar se ainda vai precisar
   private int waitDeviceResponseTaskTime;
-  private int waitNodeResponseTaskTime; // TODO: Verificar se ainda vai precisar
+  private int publishNodeServicesTaskTime;
   private List<Device> devices;
   private LedgerConnector ledgerConnector;
   private int amountDevices = 0;
@@ -73,6 +73,12 @@ public class Node implements NodeTypeService {
         0,
         this.requestDataTaskTime * 1000
       );
+    new Timer()
+      .scheduleAtFixedRate(
+        new PublishNodeServicesTask(this),
+        0,
+        this.publishNodeServicesTaskTime * 1000
+      );
 
     this.requestingService = false;
   }
@@ -103,16 +109,6 @@ public class Node implements NodeTypeService {
       }
     } finally {
       this.mutex.unlock();
-    }
-
-    // TODO: Remover
-    if (this.amountDevices > 0) {
-      try {
-        this.publishNodeServices();
-      } catch (InterruptedException ie) {
-        logger.warning("Could not sent the transaction.");
-        logger.warning(ie.getStackTrace().toString());
-      }
     }
   }
 
@@ -153,20 +149,21 @@ public class Node implements NodeTypeService {
     }
   }
 
-  // TODO: Está escrevendo errado o deviceSensorIdList
+  /**
+   * Publica na blockchain quais são os serviços providos pelo nó.
+   * 
+   * @throws InterruptedException
+   */
   public void publishNodeServices() throws InterruptedException {
     if (this.amountDevices > 0) {
-      List<DeviceSensorId> deviceSensorIdList = new ArrayList<>();
       Transaction transaction = null;
       String transactionType = null;
 
-      try {
-        this.mutex.lock();
+      for (NodeServiceType serviceType : NodeServiceType.values()) {
+        List<DeviceSensorId> deviceSensorIdList = new ArrayList<>();
 
-        for (NodeServiceType serviceType : NodeServiceType.values()) {
-          deviceSensorIdList.clear();
-          logger.info(serviceType.getDescription()); // TODO: Remover
-
+        try {
+          this.mutex.lock();
           for (Device d : this.devices) {
             d
               .getSensors()
@@ -176,130 +173,75 @@ public class Node implements NodeTypeService {
                 deviceSensorIdList.add(new DeviceSensorId(d.getId(), s.getId()))
               );
           }
-
-          deviceSensorIdList.forEach(d -> logger.info(d.getSensorId()));
-
-          switch (serviceType) {
-            case HUMIDITY_SENSOR:
-              logger.info("1"); // TODO: Remover
-
-              transaction =
-                new ReputationService(
-                  this.nodeType.getNodeId(),
-                  this.nodeType.getNodeGroup(),
-                  deviceSensorIdList,
-                  TransactionType.REP_SVC_HUMIDITY_SENSOR
-                );
-
-              logger.info(
-                ((ReputationService) transaction).getServices()
-                  .get(0)
-                  .getSensorId()
-              ); // TODO: Remover
-
-              transactionType = TransactionType.REP_SVC_HUMIDITY_SENSOR.name();
-
-              if (transaction != null && transactionType != null) {
-                this.ledgerConnector.put(
-                    new IndexTransaction(transactionType, transaction)
-                  );
-              }
-
-              break;
-            case PULSE_OXYMETER:
-              logger.info("2"); // TODO: Remover
-
-              transaction =
-                new ReputationService(
-                  this.nodeType.getNodeId(),
-                  this.nodeType.getNodeGroup(),
-                  deviceSensorIdList,
-                  TransactionType.REP_SVC_PULSE_OXYMETER
-                );
-
-              logger.info(
-                ((ReputationService) transaction).getServices()
-                  .get(0)
-                  .getSensorId()
-              ); // TODO: Remover
-
-              transactionType = TransactionType.REP_SVC_PULSE_OXYMETER.name();
-
-              if (transaction != null && transactionType != null) {
-                this.ledgerConnector.put(
-                    new IndexTransaction(transactionType, transaction)
-                  );
-              }
-
-              break;
-            case THERMOMETER:
-              logger.info("3"); // TODO: Remover
-
-              transaction =
-                new ReputationService(
-                  this.nodeType.getNodeId(),
-                  this.nodeType.getNodeGroup(),
-                  deviceSensorIdList,
-                  TransactionType.REP_SVC_THERMOMETER
-                );
-
-              logger.info(
-                ((ReputationService) transaction).getServices()
-                  .get(0)
-                  .getSensorId()
-              ); // TODO: Remover
-
-              transactionType = TransactionType.REP_SVC_THERMOMETER.name();
-
-              if (transaction != null && transactionType != null) {
-                this.ledgerConnector.put(
-                    new IndexTransaction(transactionType, transaction)
-                  );
-              }
-
-              break;
-            case WIND_DIRECTION_SENSOR:
-              logger.info("4"); // TODO: Remover
-
-              transaction =
-                new ReputationService(
-                  this.nodeType.getNodeId(),
-                  this.nodeType.getNodeGroup(),
-                  deviceSensorIdList,
-                  TransactionType.REP_SVC_WIND_DIRECTION_SENSOR
-                );
-
-              logger.info(
-                ((ReputationService) transaction).getServices()
-                  .get(0)
-                  .getSensorId()
-              ); // TODO: Remover
-
-              transactionType =
-                TransactionType.REP_SVC_WIND_DIRECTION_SENSOR.name();
-
-              if (transaction != null && transactionType != null) {
-                this.ledgerConnector.put(
-                    new IndexTransaction(transactionType, transaction)
-                  );
-              }
-
-              break;
-            default:
-              logger.severe("Unknown service type.");
-              break;
-          }
-
-          // if (transaction != null && transactionType != null) {
-          //   this.ledgerConnector.put(
-          //       new IndexTransaction(transactionType, transaction)
-          //     );
-          // }
-
-          logger.info("-----"); // TODO: Remover
+        } finally {
+          this.mutex.unlock();
         }
-      } finally {
-        this.mutex.unlock();
+
+        deviceSensorIdList.forEach(d -> logger.info(d.getSensorId()));
+
+        switch (serviceType) {
+          case HUMIDITY_SENSOR:
+            transaction =
+              new ReputationService(
+                this.nodeType.getNodeId(),
+                this.nodeType.getNodeGroup(),
+                deviceSensorIdList,
+                TransactionType.REP_SVC_HUMIDITY_SENSOR
+              );
+
+            transactionType = TransactionType.REP_SVC_HUMIDITY_SENSOR.name();
+
+            break;
+          case PULSE_OXYMETER:
+            transaction =
+              new ReputationService(
+                this.nodeType.getNodeId(),
+                this.nodeType.getNodeGroup(),
+                deviceSensorIdList,
+                TransactionType.REP_SVC_PULSE_OXYMETER
+              );
+
+            transactionType = TransactionType.REP_SVC_PULSE_OXYMETER.name();
+
+            break;
+          case THERMOMETER:
+            transaction =
+              new ReputationService(
+                this.nodeType.getNodeId(),
+                this.nodeType.getNodeGroup(),
+                deviceSensorIdList,
+                TransactionType.REP_SVC_THERMOMETER
+              );
+
+            transactionType = TransactionType.REP_SVC_THERMOMETER.name();
+
+            break;
+          case WIND_DIRECTION_SENSOR:
+            transaction =
+              new ReputationService(
+                this.nodeType.getNodeId(),
+                this.nodeType.getNodeGroup(),
+                deviceSensorIdList,
+                TransactionType.REP_SVC_WIND_DIRECTION_SENSOR
+              );
+
+            transactionType =
+              TransactionType.REP_SVC_WIND_DIRECTION_SENSOR.name();
+
+            break;
+          default:
+            logger.severe("Unknown service type.");
+            break;
+        }
+
+        /*
+         * Enviando a transação para a blockchain.
+         */
+        if (transaction != null && transactionType != null) {
+          this.ledgerConnector.put(
+              new IndexTransaction(transactionType, transaction)
+            );
+        }
       }
     }
   }
@@ -361,14 +303,6 @@ public class Node implements NodeTypeService {
     this.requestDataTaskTime = requestDataTaskTime;
   }
 
-  public int getRequestServiceTaskTime() {
-    return requestServiceTaskTime;
-  }
-
-  public void setRequestServiceTaskTime(int requestServiceTaskTime) {
-    this.requestServiceTaskTime = requestServiceTaskTime;
-  }
-
   public int getAmountDevices() {
     return amountDevices;
   }
@@ -397,14 +331,6 @@ public class Node implements NodeTypeService {
     this.ledgerConnector = ledgerConnector;
   }
 
-  public int getWaitNodeResponseTaskTime() {
-    return waitNodeResponseTaskTime;
-  }
-
-  public void setWaitNodeResponseTaskTime(int waitNodeResponseTaskTime) {
-    this.waitNodeResponseTaskTime = waitNodeResponseTaskTime;
-  }
-
   public boolean isRequestingService() {
     return requestingService;
   }
@@ -419,5 +345,13 @@ public class Node implements NodeTypeService {
 
   public void setWaitNodeResponseTask(TimerTask waitNodeResponseTask) {
     this.waitNodeResponseTask = waitNodeResponseTask;
+  }
+
+  public int getPublishNodeServicesTaskTime() {
+    return publishNodeServicesTaskTime;
+  }
+
+  public void setPublishNodeServicesTaskTime(int publishNodeServicesTaskTime) {
+    this.publishNodeServicesTaskTime = publishNodeServicesTaskTime;
   }
 }
