@@ -23,6 +23,7 @@ import reputation.node.mqtt.ListenerDevices;
 import reputation.node.services.NodeTypeService;
 import reputation.node.tangle.LedgerConnector;
 import reputation.node.tasks.CheckDevicesTask;
+import reputation.node.tasks.CheckNodesServicesTask;
 import reputation.node.tasks.PublishNodeServicesTask;
 import reputation.node.tasks.RequestDataTask;
 import reputation.node.tasks.WaitDeviceResponseTask;
@@ -41,6 +42,7 @@ public class Node implements NodeTypeService {
   private int requestDataTaskTime;
   private int waitDeviceResponseTaskTime;
   private int publishNodeServicesTaskTime;
+  private int checkNodesServicesTaskTime;
   private List<Device> devices;
   private List<Transaction> nodesWithServices;
   private LedgerConnector ledgerConnector;
@@ -80,6 +82,12 @@ public class Node implements NodeTypeService {
         new PublishNodeServicesTask(this),
         0,
         this.publishNodeServicesTaskTime * 1000
+      );
+    new Timer()
+      .scheduleAtFixedRate(
+        new CheckNodesServicesTask(this),
+        0,
+        this.checkNodesServicesTaskTime * 1000
       );
   }
 
@@ -295,7 +303,7 @@ public class Node implements NodeTypeService {
         /**
          * Tempo limite de 1 hora.
          */
-        long timeLimit = System.currentTimeMillis() - 60 * 60 * 1000;
+        long timeLimit = System.currentTimeMillis() - 1 * 60 * 60 * 1000;
 
         /**
          * Removendo serviços duplicados de um mesmo nó, e as transações criadas
@@ -429,5 +437,13 @@ public class Node implements NodeTypeService {
 
   public void setNodesWithServices(List<Transaction> nodesWithServices) {
     this.nodesWithServices = nodesWithServices;
+  }
+
+  public int getCheckNodesServicesTaskTime() {
+    return checkNodesServicesTaskTime;
+  }
+
+  public void setCheckNodesServicesTaskTime(int checkNodesServicesTaskTime) {
+    this.checkNodesServicesTaskTime = checkNodesServicesTaskTime;
   }
 }
