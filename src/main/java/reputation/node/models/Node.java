@@ -31,7 +31,7 @@ import reputation.node.utils.MQTTClient;
 /**
  *
  * @author Allan Capistrano
- * @version 1.2.0
+ * @version 1.2.0 // TODO: Alterar quando finalizar o fluxo.
  */
 public class Node implements NodeTypeService {
 
@@ -48,10 +48,8 @@ public class Node implements NodeTypeService {
   private IDevicePropertiesManager deviceManager;
   private ListenerDevices listenerDevices;
   private TimerTask waitDeviceResponseTask;
-  private TimerTask waitNodeResponseTask; // TODO: Verificar se ainda vai precisar
   private ReentrantLock mutex = new ReentrantLock();
   private ReentrantLock mutexNodesServices = new ReentrantLock();
-  private boolean requestingService; // TODO: Verificar se ainda vai precisar
   private static final Logger logger = Logger.getLogger(Node.class.getName());
 
   public Node() {}
@@ -83,8 +81,6 @@ public class Node implements NodeTypeService {
         0,
         this.publishNodeServicesTaskTime * 1000
       );
-
-    this.requestingService = false;
   }
 
   /**
@@ -417,22 +413,6 @@ public class Node implements NodeTypeService {
 
   public void setLedgerConnector(LedgerConnector ledgerConnector) {
     this.ledgerConnector = ledgerConnector;
-  }
-
-  public boolean isRequestingService() {
-    return requestingService;
-  }
-
-  public void setRequestingService(boolean requestingService) {
-    this.requestingService = requestingService;
-  }
-
-  public TimerTask getWaitNodeResponseTask() {
-    return waitNodeResponseTask;
-  }
-
-  public void setWaitNodeResponseTask(TimerTask waitNodeResponseTask) {
-    this.waitNodeResponseTask = waitNodeResponseTask;
   }
 
   public int getPublishNodeServicesTaskTime() {
