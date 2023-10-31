@@ -321,7 +321,7 @@ public class Node implements NodeTypeService {
             )
             .values()
             .stream()
-            .filter(obj -> obj.getCreatedAt() >= timeLimit)
+            .filter(obj -> obj.getCreatedAt() >= timeLimit) // TODO: Adicionar filtro para não pegar a transação que o próprio nó enviou
             .collect(Collectors.toList());
       }
     } finally {
