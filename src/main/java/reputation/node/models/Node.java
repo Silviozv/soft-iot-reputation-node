@@ -16,6 +16,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import node.type.services.INodeType;
 import reputation.node.enums.NodeServiceType;
 import reputation.node.mqtt.ListenerDevices;
@@ -41,6 +42,7 @@ public class Node implements NodeTypeService {
   private int waitDeviceResponseTaskTime;
   private int publishNodeServicesTaskTime;
   private List<Device> devices;
+  private List<Transaction> nodesWithServices;
   private LedgerConnector ledgerConnector;
   private int amountDevices = 0;
   private IDevicePropertiesManager deviceManager;
@@ -48,6 +50,7 @@ public class Node implements NodeTypeService {
   private TimerTask waitDeviceResponseTask;
   private TimerTask waitNodeResponseTask; // TODO: Verificar se ainda vai precisar
   private ReentrantLock mutex = new ReentrantLock();
+  private ReentrantLock mutexNodesServices = new ReentrantLock();
   private boolean requestingService; // TODO: Verificar se ainda vai precisar
   private static final Logger logger = Logger.getLogger(Node.class.getName());
 
@@ -60,6 +63,7 @@ public class Node implements NodeTypeService {
     this.MQTTClient.connect();
 
     this.devices = new ArrayList<>();
+    this.nodesWithServices = new ArrayList<>();
     this.listenerDevices = new ListenerDevices(this.MQTTClient, this);
     new Timer()
       .scheduleAtFixedRate(
@@ -151,7 +155,7 @@ public class Node implements NodeTypeService {
 
   /**
    * Publica na blockchain quais são os serviços providos pelo nó.
-   * 
+   *
    * @throws InterruptedException
    */
   public void publishNodeServices() throws InterruptedException {
@@ -245,6 +249,88 @@ public class Node implements NodeTypeService {
             );
         }
       }
+    }
+  }
+
+  /**
+   * Obtém uma lista com as transações a respeito de um serviço que os demais
+   * nós prestam.
+   *
+   * @param serviceType NodeServiceType - Tipo do serviço.
+   */
+  public void getNodesServices(NodeServiceType serviceType) {
+    try {
+      this.mutexNodesServices.lock();
+
+      this.nodesWithServices.clear();
+
+      String index = "";
+
+      switch (serviceType) {
+        case HUMIDITY_SENSOR:
+          index = TransactionType.REP_SVC_HUMIDITY_SENSOR.name();
+          break;
+        case PULSE_OXYMETER:
+          index = TransactionType.REP_SVC_PULSE_OXYMETER.name();
+          break;
+        case THERMOMETER:
+          index = TransactionType.REP_SVC_THERMOMETER.name();
+          break;
+        case WIND_DIRECTION_SENSOR:
+          index = TransactionType.REP_SVC_WIND_DIRECTION_SENSOR.name();
+          break;
+        default:
+          logger.severe("Unknown service type.");
+          break;
+      }
+
+      if (!index.equals("")) {
+        List<Transaction> transactions =
+          this.ledgerConnector.getLedgerReader().getTransactionsByIndex(index);
+
+        /*
+         * Ordenação em ordem decrescente com relação a data/hora de criação da
+         * transação.
+         */
+        transactions.sort((t1, t2) ->
+          Long.compare(t2.getCreatedAt(), t1.getCreatedAt())
+        );
+
+        /**
+         * Tempo limite de 1 hora.
+         */
+        long timeLimit = System.currentTimeMillis() - 60 * 60 * 1000;
+
+        /**
+         * Removendo serviços duplicados de um mesmo nó, e as transações criadas
+         * a mais de 1 hora atrás.
+         */
+        this.nodesWithServices =
+          transactions
+            .stream()
+            .collect(
+              Collectors.toMap(
+                Transaction::getSource,
+                obj -> obj,
+                (existing, replacement) -> existing
+              )
+            )
+            .values()
+            .stream()
+            .filter(obj -> obj.getCreatedAt() >= timeLimit)
+            .collect(Collectors.toList());
+      }
+    } finally {
+      this.mutexNodesServices.unlock();
+    }
+
+    logger.info("-----------------"); // TODO: remover
+
+    for (Transaction transaction : this.nodesWithServices) { // TODO: remover
+      logger.info(((ReputationService) transaction).getSource());
+      logger.info(
+        Long.toString(((ReputationService) transaction).getCreatedAt())
+      );
     }
   }
 
@@ -355,5 +441,13 @@ public class Node implements NodeTypeService {
 
   public void setPublishNodeServicesTaskTime(int publishNodeServicesTaskTime) {
     this.publishNodeServicesTaskTime = publishNodeServicesTaskTime;
+  }
+
+  public List<Transaction> getNodesWithServices() {
+    return nodesWithServices;
+  }
+
+  public void setNodesWithServices(List<Transaction> nodesWithServices) {
+    this.nodesWithServices = nodesWithServices;
   }
 }
