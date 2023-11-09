@@ -7,7 +7,9 @@ import dlt.client.tangle.hornet.enums.TransactionType;
 import dlt.client.tangle.hornet.model.DeviceSensorId;
 import dlt.client.tangle.hornet.model.transactions.IndexTransaction;
 import dlt.client.tangle.hornet.model.transactions.Transaction;
+import dlt.client.tangle.hornet.model.transactions.reputation.HasReputationService;
 import dlt.client.tangle.hornet.model.transactions.reputation.ReputationService;
+import dlt.client.tangle.hornet.services.ILedgerSubscriber;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,6 +25,7 @@ import reputation.node.mqtt.ListenerDevices;
 import reputation.node.services.NodeTypeService;
 import reputation.node.tangle.LedgerConnector;
 import reputation.node.tasks.CheckDevicesTask;
+import reputation.node.tasks.CheckNodesServicesTask;
 import reputation.node.tasks.RequestDataTask;
 import reputation.node.tasks.WaitDeviceResponseTask;
 import reputation.node.utils.MQTTClient;
@@ -32,7 +35,7 @@ import reputation.node.utils.MQTTClient;
  * @author Allan Capistrano
  * @version 1.2.0 // TODO: Alterar quando finalizar o fluxo.
  */
-public class Node implements NodeTypeService {
+public class Node implements NodeTypeService, ILedgerSubscriber {
 
   private MQTTClient MQTTClient;
   private INodeType nodeType;
@@ -74,6 +77,14 @@ public class Node implements NodeTypeService {
         0,
         this.requestDataTaskTime * 1000
       );
+    new Timer()
+      .scheduleAtFixedRate(
+        new CheckNodesServicesTask(this),
+        0,
+        this.checkNodesServicesTaskTime * 1000
+      );
+
+    this.subscribeToTransactionsTopics();
   }
 
   /**
@@ -81,6 +92,8 @@ public class Node implements NodeTypeService {
    */
   public void stop() {
     this.devices.forEach(d -> this.listenerDevices.unsubscribe(d.getId()));
+
+    this.unsubscribeToTransactionsTopics();
 
     this.MQTTClient.disconnect();
   }
@@ -147,99 +160,107 @@ public class Node implements NodeTypeService {
    *
    * @throws InterruptedException
    */
-  public void publishNodeServices() throws InterruptedException { // TODO: Verificar se vai usar
+  private void publishNodeServices(String serviceType, String target) {
+    logger.info("B");
+    /* Só responde se tiver pelo menos um dispositivo conectado ao nó. */
     if (this.amountDevices > 0) {
+      logger.info("SERVICE TYPE: " + serviceType); // TODO: Remover
+
       Transaction transaction = null;
       String transactionType = null;
 
-      for (NodeServiceType serviceType : NodeServiceType.values()) {
-        List<DeviceSensorId> deviceSensorIdList = new ArrayList<>();
+      List<DeviceSensorId> deviceSensorIdList = new ArrayList<>();
 
+      try {
+        this.mutex.lock();
+        for (Device d : this.devices) {
+          d
+            .getSensors()
+            .stream()
+            .filter(s -> s.getType().equals(serviceType))
+            .forEach(s ->
+              deviceSensorIdList.add(new DeviceSensorId(d.getId(), s.getId()))
+            );
+        }
+      } finally {
+        this.mutex.unlock();
+      }
+
+      if (
+        serviceType.equals(NodeServiceType.HUMIDITY_SENSOR.getDescription())
+      ) {
+        transaction =
+          new ReputationService(
+            this.nodeType.getNodeId(),
+            this.nodeType.getNodeIp(),
+            target,
+            deviceSensorIdList,
+            this.nodeType.getNodeGroup(),
+            TransactionType.REP_SVC_HUMIDITY_SENSOR
+          );
+
+        transactionType = TransactionType.REP_SVC_HUMIDITY_SENSOR.name();
+      } else if (
+        serviceType.equals(NodeServiceType.PULSE_OXYMETER.getDescription())
+      ) {
+        transaction =
+          new ReputationService(
+            this.nodeType.getNodeId(),
+            this.nodeType.getNodeIp(),
+            target,
+            deviceSensorIdList,
+            this.nodeType.getNodeGroup(),
+            TransactionType.REP_SVC_PULSE_OXYMETER
+          );
+
+        transactionType = TransactionType.REP_SVC_PULSE_OXYMETER.name();
+      } else if (
+        serviceType.equals(NodeServiceType.THERMOMETER.getDescription())
+      ) {
+        transaction =
+          new ReputationService(
+            this.nodeType.getNodeId(),
+            this.nodeType.getNodeIp(),
+            target,
+            deviceSensorIdList,
+            this.nodeType.getNodeGroup(),
+            TransactionType.REP_SVC_THERMOMETER
+          );
+
+        transactionType = TransactionType.REP_SVC_THERMOMETER.name();
+      } else if (
+        serviceType.equals(
+          NodeServiceType.WIND_DIRECTION_SENSOR.getDescription()
+        )
+      ) {
+        transaction =
+          new ReputationService(
+            this.nodeType.getNodeId(),
+            this.nodeType.getNodeIp(),
+            target,
+            deviceSensorIdList,
+            this.nodeType.getNodeGroup(),
+            TransactionType.REP_SVC_WIND_DIRECTION_SENSOR
+          );
+
+        transactionType = TransactionType.REP_SVC_WIND_DIRECTION_SENSOR.name();
+      } else {
+        logger.severe("Unknown service type.");
+      }
+
+      /*
+       * Enviando a transação para a blockchain.
+       */
+      if (transaction != null && transactionType != null) {
         try {
-          this.mutex.lock();
-          for (Device d : this.devices) {
-            d
-              .getSensors()
-              .stream()
-              .filter(s -> s.getType().equals(serviceType.getDescription()))
-              .forEach(s ->
-                deviceSensorIdList.add(new DeviceSensorId(d.getId(), s.getId()))
-              );
-          }
-        } finally {
-          this.mutex.unlock();
-        }
-
-        switch (serviceType) {
-          case HUMIDITY_SENSOR:
-            transaction =
-              new ReputationService(
-                this.nodeType.getNodeId(),
-                this.nodeType.getNodeIp(),
-                "Target", // TODO: Temporário
-                deviceSensorIdList,
-                this.nodeType.getNodeGroup(),
-                TransactionType.REP_SVC_HUMIDITY_SENSOR
-              );
-
-            transactionType = TransactionType.REP_SVC_HUMIDITY_SENSOR.name();
-
-            break;
-          case PULSE_OXYMETER:
-            transaction =
-              new ReputationService(
-                this.nodeType.getNodeId(),
-                this.nodeType.getNodeIp(),
-                "Target",
-                deviceSensorIdList,
-                this.nodeType.getNodeGroup(),
-                TransactionType.REP_SVC_PULSE_OXYMETER
-              );
-
-            transactionType = TransactionType.REP_SVC_PULSE_OXYMETER.name();
-
-            break;
-          case THERMOMETER:
-            transaction =
-              new ReputationService(
-                this.nodeType.getNodeId(),
-                this.nodeType.getNodeIp(),
-                "Target", // TODO: Temporário
-                deviceSensorIdList,
-                this.nodeType.getNodeGroup(),
-                TransactionType.REP_SVC_THERMOMETER
-              );
-
-            transactionType = TransactionType.REP_SVC_THERMOMETER.name();
-
-            break;
-          case WIND_DIRECTION_SENSOR:
-            transaction =
-              new ReputationService(
-                this.nodeType.getNodeId(),
-                this.nodeType.getNodeIp(),
-                "Target", // TODO: Temporário
-                deviceSensorIdList,
-                this.nodeType.getNodeGroup(),
-                TransactionType.REP_SVC_WIND_DIRECTION_SENSOR
-              );
-
-            transactionType =
-              TransactionType.REP_SVC_WIND_DIRECTION_SENSOR.name();
-
-            break;
-          default:
-            logger.severe("Unknown service type.");
-            break;
-        }
-
-        /*
-         * Enviando a transação para a blockchain.
-         */
-        if (transaction != null && transactionType != null) {
           this.ledgerConnector.put(
               new IndexTransaction(transactionType, transaction)
             );
+        } catch (InterruptedException ie) {
+          logger.warning(
+            "Error trying to create a " + transactionType + " transaction."
+          );
+          logger.warning(ie.getStackTrace().toString());
         }
       }
     }
@@ -328,6 +349,20 @@ public class Node implements NodeTypeService {
   }
 
   /**
+   * Se inscreve nos tópicos ZMQ das transações .
+   */
+  private void subscribeToTransactionsTopics() {
+    this.ledgerConnector.subscribe(TransactionType.REP_HAS_SVC.name(), this);
+  }
+
+  /**
+   * Se desinscreve dos tópicos ZMQ das transações .
+   */
+  private void unsubscribeToTransactionsTopics() {
+    this.ledgerConnector.unsubscribe(TransactionType.REP_HAS_SVC.name(), this);
+  }
+
+  /**
    * Se inscreve nos tópicos dos novos dispositivos.
    *
    * @param amountNewDevices int - Número de novos dispositivos que se
@@ -341,6 +376,36 @@ public class Node implements NodeTypeService {
       this.listenerDevices.subscribe(deviceId);
 
       offset++;
+    }
+  }
+
+  @Override
+  public void update(Object object, Object object2) {
+    // String sourceReceivedTransaction = ((Transaction) object).getSource();
+
+    // if (!sourceReceivedTransaction.equals(this.getNodeType().getNodeId())) {
+    //   logger.info("OLA");
+    // } else {
+    //   logger.info("REMOVER");
+    // }
+
+    logger.info("UEEEE");
+    String sourceReceivedTransaction = ((Transaction) object).getSource();
+
+    // if (!sourceReceivedTransaction.equals(this.getNodeType().getNodeId())) {}
+
+    // TODO: Colocar dentro do 'if'
+    Transaction receivedTransaction = (Transaction) object;
+
+    logger.info("AAAAAA");
+    logger.info(receivedTransaction.getType().name());
+
+    if (receivedTransaction.getType() == TransactionType.REP_HAS_SVC) {
+      logger.info("A");
+      this.publishNodeServices(
+          ((HasReputationService) receivedTransaction).getService(), // TODO: Esse método não foi chamado e aconteceu somente uma vez
+          receivedTransaction.getSource()
+        );
     }
   }
 
