@@ -39,6 +39,7 @@ public class Node implements NodeTypeService {
   private int checkDeviceTaskTime;
   private int requestDataTaskTime;
   private int waitDeviceResponseTaskTime;
+  private int checkNodesServicesTaskTime;
   private List<Device> devices;
   private List<Transaction> nodesWithServices;
   private LedgerConnector ledgerConnector;
@@ -417,5 +418,13 @@ public class Node implements NodeTypeService {
 
   public void setNodesWithServices(List<Transaction> nodesWithServices) {
     this.nodesWithServices = nodesWithServices;
+  }
+
+  public int getCheckNodesServicesTaskTime() {
+    return checkNodesServicesTaskTime;
+  }
+
+  public void setCheckNodesServicesTaskTime(int checkNodesServicesTaskTime) {
+    this.checkNodesServicesTaskTime = checkNodesServicesTaskTime;
   }
 }
