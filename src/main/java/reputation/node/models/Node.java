@@ -23,8 +23,6 @@ import reputation.node.mqtt.ListenerDevices;
 import reputation.node.services.NodeTypeService;
 import reputation.node.tangle.LedgerConnector;
 import reputation.node.tasks.CheckDevicesTask;
-import reputation.node.tasks.CheckNodesServicesTask;
-import reputation.node.tasks.PublishNodeServicesTask;
 import reputation.node.tasks.RequestDataTask;
 import reputation.node.tasks.WaitDeviceResponseTask;
 import reputation.node.utils.MQTTClient;
@@ -41,8 +39,6 @@ public class Node implements NodeTypeService {
   private int checkDeviceTaskTime;
   private int requestDataTaskTime;
   private int waitDeviceResponseTaskTime;
-  private int publishNodeServicesTaskTime;
-  private int checkNodesServicesTaskTime;
   private List<Device> devices;
   private List<Transaction> nodesWithServices;
   private LedgerConnector ledgerConnector;
@@ -76,18 +72,6 @@ public class Node implements NodeTypeService {
         new RequestDataTask(this),
         0,
         this.requestDataTaskTime * 1000
-      );
-    new Timer()
-      .scheduleAtFixedRate(
-        new PublishNodeServicesTask(this),
-        0,
-        this.publishNodeServicesTaskTime * 1000
-      );
-    new Timer()
-      .scheduleAtFixedRate(
-        new CheckNodesServicesTask(this),
-        0,
-        this.checkNodesServicesTaskTime * 1000
       );
   }
 
@@ -162,7 +146,7 @@ public class Node implements NodeTypeService {
    *
    * @throws InterruptedException
    */
-  public void publishNodeServices() throws InterruptedException {
+  public void publishNodeServices() throws InterruptedException { // TODO: Verificar se vai usar
     if (this.amountDevices > 0) {
       Transaction transaction = null;
       String transactionType = null;
@@ -262,7 +246,7 @@ public class Node implements NodeTypeService {
    *
    * @param serviceType NodeServiceType - Tipo do serviço.
    */
-  public void getNodesServices(NodeServiceType serviceType) {
+  public void getNodesServices(NodeServiceType serviceType) { // TODO: Verificar se vai usar
     try {
       this.mutexNodesServices.lock();
 
@@ -423,27 +407,11 @@ public class Node implements NodeTypeService {
     this.ledgerConnector = ledgerConnector;
   }
 
-  public int getPublishNodeServicesTaskTime() {
-    return publishNodeServicesTaskTime;
-  }
-
-  public void setPublishNodeServicesTaskTime(int publishNodeServicesTaskTime) {
-    this.publishNodeServicesTaskTime = publishNodeServicesTaskTime;
-  }
-
   public List<Transaction> getNodesWithServices() {
     return nodesWithServices;
   }
 
   public void setNodesWithServices(List<Transaction> nodesWithServices) {
     this.nodesWithServices = nodesWithServices;
-  }
-
-  public int getCheckNodesServicesTaskTime() {
-    return checkNodesServicesTaskTime;
-  }
-
-  public void setCheckNodesServicesTaskTime(int checkNodesServicesTaskTime) {
-    this.checkNodesServicesTaskTime = checkNodesServicesTaskTime;
   }
 }
