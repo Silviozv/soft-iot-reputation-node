@@ -174,9 +174,10 @@ public class Node implements NodeTypeService {
             transaction =
               new ReputationService(
                 this.nodeType.getNodeId(),
-                this.nodeType.getNodeGroup(),
                 this.nodeType.getNodeIp(),
+                "Target", // TODO: Temporário
                 deviceSensorIdList,
+                this.nodeType.getNodeGroup(),
                 TransactionType.REP_SVC_HUMIDITY_SENSOR
               );
 
@@ -187,9 +188,10 @@ public class Node implements NodeTypeService {
             transaction =
               new ReputationService(
                 this.nodeType.getNodeId(),
-                this.nodeType.getNodeGroup(),
                 this.nodeType.getNodeIp(),
+                "Target",
                 deviceSensorIdList,
+                this.nodeType.getNodeGroup(),
                 TransactionType.REP_SVC_PULSE_OXYMETER
               );
 
@@ -200,9 +202,10 @@ public class Node implements NodeTypeService {
             transaction =
               new ReputationService(
                 this.nodeType.getNodeId(),
-                this.nodeType.getNodeGroup(),
                 this.nodeType.getNodeIp(),
+                "Target", // TODO: Temporário
                 deviceSensorIdList,
+                this.nodeType.getNodeGroup(),
                 TransactionType.REP_SVC_THERMOMETER
               );
 
@@ -213,9 +216,10 @@ public class Node implements NodeTypeService {
             transaction =
               new ReputationService(
                 this.nodeType.getNodeId(),
-                this.nodeType.getNodeGroup(),
                 this.nodeType.getNodeIp(),
+                "Target", // TODO: Temporário
                 deviceSensorIdList,
+                this.nodeType.getNodeGroup(),
                 TransactionType.REP_SVC_WIND_DIRECTION_SENSOR
               );
 
