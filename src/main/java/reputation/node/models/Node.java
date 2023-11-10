@@ -156,18 +156,18 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
   }
 
   /**
-   * Publica na blockchain quais são os serviços providos pelo nó.
+   * Publica na blockchain quais são os serviços prestados pelo nó.
    *
    * @throws InterruptedException
    */
   private void publishNodeServices(String serviceType, String target) {
-    logger.info("B");
     /* Só responde se tiver pelo menos um dispositivo conectado ao nó. */
     if (this.amountDevices > 0) {
-      logger.info("SERVICE TYPE: " + serviceType); // TODO: Remover
+      logger.info("Requested service type: " + serviceType);
 
       Transaction transaction = null;
-      String transactionType = null;
+      TransactionType transactionType;
+      String transactionTypeInString = null;
 
       List<DeviceSensorId> deviceSensorIdList = new ArrayList<>();
 
@@ -189,6 +189,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       if (
         serviceType.equals(NodeServiceType.HUMIDITY_SENSOR.getDescription())
       ) {
+        transactionType = TransactionType.REP_SVC_HUMIDITY_SENSOR;
+
         transaction =
           new ReputationService(
             this.nodeType.getNodeId(),
@@ -196,13 +198,15 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
             target,
             deviceSensorIdList,
             this.nodeType.getNodeGroup(),
-            TransactionType.REP_SVC_HUMIDITY_SENSOR
+            transactionType
           );
 
-        transactionType = TransactionType.REP_SVC_HUMIDITY_SENSOR.name();
+        transactionTypeInString = transactionType.name();
       } else if (
         serviceType.equals(NodeServiceType.PULSE_OXYMETER.getDescription())
       ) {
+        transactionType = TransactionType.REP_SVC_PULSE_OXYMETER;
+
         transaction =
           new ReputationService(
             this.nodeType.getNodeId(),
@@ -210,13 +214,15 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
             target,
             deviceSensorIdList,
             this.nodeType.getNodeGroup(),
-            TransactionType.REP_SVC_PULSE_OXYMETER
+            transactionType
           );
 
-        transactionType = TransactionType.REP_SVC_PULSE_OXYMETER.name();
+        transactionTypeInString = transactionType.name();
       } else if (
         serviceType.equals(NodeServiceType.THERMOMETER.getDescription())
       ) {
+        transactionType = TransactionType.REP_SVC_THERMOMETER;
+
         transaction =
           new ReputationService(
             this.nodeType.getNodeId(),
@@ -224,15 +230,17 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
             target,
             deviceSensorIdList,
             this.nodeType.getNodeGroup(),
-            TransactionType.REP_SVC_THERMOMETER
+            transactionType
           );
 
-        transactionType = TransactionType.REP_SVC_THERMOMETER.name();
+        transactionTypeInString = transactionType.name();
       } else if (
         serviceType.equals(
           NodeServiceType.WIND_DIRECTION_SENSOR.getDescription()
         )
       ) {
+        transactionType = TransactionType.REP_SVC_WIND_DIRECTION_SENSOR;
+
         transaction =
           new ReputationService(
             this.nodeType.getNodeId(),
@@ -240,10 +248,10 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
             target,
             deviceSensorIdList,
             this.nodeType.getNodeGroup(),
-            TransactionType.REP_SVC_WIND_DIRECTION_SENSOR
+            transactionType
           );
 
-        transactionType = TransactionType.REP_SVC_WIND_DIRECTION_SENSOR.name();
+        transactionTypeInString = transactionType.name();
       } else {
         logger.severe("Unknown service type.");
       }
@@ -251,14 +259,16 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       /*
        * Enviando a transação para a blockchain.
        */
-      if (transaction != null && transactionType != null) {
+      if (transaction != null && transactionTypeInString != null) {
         try {
           this.ledgerConnector.put(
-              new IndexTransaction(transactionType, transaction)
+              new IndexTransaction(transactionTypeInString, transaction)
             );
         } catch (InterruptedException ie) {
           logger.warning(
-            "Error trying to create a " + transactionType + " transaction."
+            "Error trying to create a " +
+            transactionTypeInString +
+            " transaction."
           );
           logger.warning(ie.getStackTrace().toString());
         }
@@ -381,31 +391,20 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
   @Override
   public void update(Object object, Object object2) {
-    // String sourceReceivedTransaction = ((Transaction) object).getSource();
+    /**
+     * Somente caso a transação não tenha sido enviada pelo próprio nó.
+     */
+    if (
+      !((Transaction) object).getSource().equals(this.getNodeType().getNodeId())
+    ) {
+      if (((Transaction) object).getType() == TransactionType.REP_HAS_SVC) {
+        HasReputationService receivedTransaction = (HasReputationService) object;
 
-    // if (!sourceReceivedTransaction.equals(this.getNodeType().getNodeId())) {
-    //   logger.info("OLA");
-    // } else {
-    //   logger.info("REMOVER");
-    // }
-
-    logger.info("UEEEE");
-    String sourceReceivedTransaction = ((Transaction) object).getSource();
-
-    // if (!sourceReceivedTransaction.equals(this.getNodeType().getNodeId())) {}
-
-    // TODO: Colocar dentro do 'if'
-    Transaction receivedTransaction = (Transaction) object;
-
-    logger.info("AAAAAA");
-    logger.info(receivedTransaction.getType().name());
-
-    if (receivedTransaction.getType() == TransactionType.REP_HAS_SVC) {
-      logger.info("A");
-      this.publishNodeServices(
-          ((HasReputationService) receivedTransaction).getService(), // TODO: Esse método não foi chamado e aconteceu somente uma vez
-          receivedTransaction.getSource()
-        );
+        this.publishNodeServices(
+            receivedTransaction.getService(),
+            receivedTransaction.getSource()
+          );
+      }
     }
   }
 
