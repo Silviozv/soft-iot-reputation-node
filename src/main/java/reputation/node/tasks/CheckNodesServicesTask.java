@@ -49,7 +49,7 @@ public class CheckNodesServicesTask extends TimerTask {
     Transaction transaction = new HasReputationService(
       this.node.getNodeType().getNodeId(),
       this.node.getNodeType().getNodeGroup(),
-      nodeServiceType.name(),
+      nodeServiceType.getDescription(),
       TransactionType.REP_HAS_SVC
     );
 
