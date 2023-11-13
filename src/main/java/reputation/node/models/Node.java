@@ -28,6 +28,7 @@ import reputation.node.tasks.CheckDevicesTask;
 import reputation.node.tasks.CheckNodesServicesTask;
 import reputation.node.tasks.RequestDataTask;
 import reputation.node.tasks.WaitDeviceResponseTask;
+import reputation.node.tasks.WaitNodesResponsesTask;
 import reputation.node.utils.MQTTClient;
 
 /**
@@ -43,6 +44,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
   private int requestDataTaskTime;
   private int waitDeviceResponseTaskTime;
   private int checkNodesServicesTaskTime;
+  private int waitNodesResponsesTaskTime;
   private List<Device> devices;
   private List<Transaction> nodesWithServices;
   private LedgerConnector ledgerConnector;
@@ -50,10 +52,12 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
   private IDevicePropertiesManager deviceManager;
   private ListenerDevices listenerDevices;
   private TimerTask waitDeviceResponseTask;
+  private TimerTask waitNodesResponsesTask;
   private ReentrantLock mutex = new ReentrantLock();
   private ReentrantLock mutexNodesServices = new ReentrantLock();
-  private String lastNodeServiceTransactionType = null; // TODO: Alterar de volta para 'null' quando o timer expirar ou quando terminar o processo
-  private boolean isRequestingNodeServices = false; // TODO: Alterar o valor para 'false' quando o timer expirar ou quando terminar o processo
+  private String lastNodeServiceTransactionType = null; // TODO: Alterar de volta para 'null' quando terminar o processo
+  private boolean isRequestingNodeServices = false; // TODO: Alterar o valor para 'false' quando terminar o processo
+  private boolean canReceiveNodesResponse = false;
   private static final Logger logger = Logger.getLogger(Node.class.getName());
 
   public Node() {}
@@ -84,6 +88,12 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
         new CheckNodesServicesTask(this),
         0,
         this.checkNodesServicesTaskTime * 1000
+      );
+
+    this.waitNodesResponsesTask =
+      new WaitNodesResponsesTask(
+        (this.waitNodesResponsesTaskTime * 1000),
+        this
       );
 
     this.subscribeToTransactionsTopics();
@@ -364,7 +374,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
          */
         if (
           receivedTransaction.getTarget().equals(this.nodeType.getNodeId()) &&
-          this.isRequestingNodeServices
+          this.isRequestingNodeServices &&
+          this.canReceiveNodesResponse
         ) {
           TransactionType expectedTransactionType = null;
 
@@ -517,5 +528,29 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
   public void setRequestingNodeServices(boolean isRequestingNodeServices) {
     this.isRequestingNodeServices = isRequestingNodeServices;
+  }
+
+  public boolean isCanReceiveNodesResponse() {
+    return canReceiveNodesResponse;
+  }
+
+  public void setCanReceiveNodesResponse(boolean canReceiveNodesResponse) {
+    this.canReceiveNodesResponse = canReceiveNodesResponse;
+  }
+
+  public int getWaitNodesResponsesTaskTime() {
+    return waitNodesResponsesTaskTime;
+  }
+
+  public void setWaitNodesResponsesTaskTime(int waitNodesResponsesTaskTime) {
+    this.waitNodesResponsesTaskTime = waitNodesResponsesTaskTime;
+  }
+
+  public TimerTask getWaitNodesResponsesTask() {
+    return waitNodesResponsesTask;
+  }
+
+  public void setWaitNodesResponsesTask(TimerTask waitNodesResponsesTask) {
+    this.waitNodesResponsesTask = waitNodesResponsesTask;
   }
 }

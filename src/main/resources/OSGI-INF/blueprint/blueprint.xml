@@ -29,6 +29,7 @@
         <property name="requestDataTaskTime" value="${requestDataTaskTime}" />
         <property name="waitDeviceResponseTaskTime" value="${waitDeviceResponseTaskTime}" />
         <property name="checkNodesServicesTaskTime" value="${checkNodesServicesTaskTime}" />
+        <property name="waitNodesResponsesTaskTime" value="${waitNodesResponsesTaskTime}" />
         <property name="deviceManager" ref="deviceManagerService" />
         <property name="ledgerConnector" ref="ledgerConnector" />
     </bean>
@@ -50,6 +51,7 @@
             <cm:property name="requestDataTaskTime" value="30" />
             <cm:property name="waitDeviceResponseTaskTime" value="10" />
             <cm:property name="checkNodesServicesTaskTime" value="15" /> <!-- TODO: Alterar para 45-->
+            <cm:property name="waitNodesResponsesTaskTime" value="10" /> <!-- TODO: Alterar para 30-->
             <cm:property name="debugModeValue" value="true" />
         </cm:default-properties>
     </cm:property-placeholder>
