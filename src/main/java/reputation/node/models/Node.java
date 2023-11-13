@@ -6,6 +6,7 @@ import br.ufba.dcc.wiser.soft_iot.entities.Sensor;
 import dlt.client.tangle.hornet.enums.TransactionType;
 import dlt.client.tangle.hornet.model.DeviceSensorId;
 import dlt.client.tangle.hornet.model.transactions.IndexTransaction;
+import dlt.client.tangle.hornet.model.transactions.TargetedTransaction;
 import dlt.client.tangle.hornet.model.transactions.Transaction;
 import dlt.client.tangle.hornet.model.transactions.reputation.HasReputationService;
 import dlt.client.tangle.hornet.model.transactions.reputation.ReputationService;
@@ -18,7 +19,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 import node.type.services.INodeType;
 import reputation.node.enums.NodeServiceType;
 import reputation.node.mqtt.ListenerDevices;
@@ -52,6 +52,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
   private TimerTask waitDeviceResponseTask;
   private ReentrantLock mutex = new ReentrantLock();
   private ReentrantLock mutexNodesServices = new ReentrantLock();
+  private String lastNodeServiceTransactionType = null; // TODO: Alterar de volta para 'null' quando o timer expirar ou quando terminar o processo
+  private boolean isRequestingNodeServices = false; // TODO: Alterar o valor para 'false' quando o timer expirar ou quando terminar o processo
   private static final Logger logger = Logger.getLogger(Node.class.getName());
 
   public Node() {}
@@ -277,92 +279,26 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
   }
 
   /**
-   * Obtém uma lista com as transações a respeito de um serviço que os demais
-   * nós prestam.
-   *
-   * @param serviceType NodeServiceType - Tipo do serviço.
-   */
-  public void getNodesServices(NodeServiceType serviceType) { // TODO: Verificar se vai usar
-    try {
-      this.mutexNodesServices.lock();
-
-      this.nodesWithServices.clear();
-
-      String index = "";
-
-      switch (serviceType) {
-        case HUMIDITY_SENSOR:
-          index = TransactionType.REP_SVC_HUMIDITY_SENSOR.name();
-          break;
-        case PULSE_OXYMETER:
-          index = TransactionType.REP_SVC_PULSE_OXYMETER.name();
-          break;
-        case THERMOMETER:
-          index = TransactionType.REP_SVC_THERMOMETER.name();
-          break;
-        case WIND_DIRECTION_SENSOR:
-          index = TransactionType.REP_SVC_WIND_DIRECTION_SENSOR.name();
-          break;
-        default:
-          logger.severe("Unknown service type.");
-          break;
-      }
-
-      if (!index.equals("")) {
-        List<Transaction> transactions =
-          this.ledgerConnector.getLedgerReader().getTransactionsByIndex(index);
-
-        /*
-         * Ordenação em ordem decrescente com relação a data/hora de criação da
-         * transação.
-         */
-        transactions.sort((t1, t2) ->
-          Long.compare(t2.getCreatedAt(), t1.getCreatedAt())
-        );
-
-        /**
-         * Tempo limite de 1 hora.
-         */
-        long timeLimit = System.currentTimeMillis() - 1 * 60 * 60 * 1000;
-
-        /**
-         * Removendo serviços duplicados de um mesmo nó, e as transações criadas
-         * a mais de 1 hora atrás.
-         */
-        this.nodesWithServices =
-          transactions
-            .stream()
-            .collect(
-              Collectors.toMap(
-                Transaction::getSource,
-                obj -> obj,
-                (existing, replacement) -> existing
-              )
-            )
-            .values()
-            .stream()
-            .filter(obj -> obj.getCreatedAt() >= timeLimit) // TODO: Adicionar filtro para não pegar a transação que o próprio nó enviou
-            .collect(Collectors.toList());
-      }
-    } finally {
-      this.mutexNodesServices.unlock();
-    }
-
-    logger.info("-----------------"); // TODO: remover
-
-    for (Transaction transaction : this.nodesWithServices) { // TODO: remover
-      logger.info(((ReputationService) transaction).getSource());
-      logger.info(
-        Long.toString(((ReputationService) transaction).getCreatedAt())
-      );
-    }
-  }
-
-  /**
    * Se inscreve nos tópicos ZMQ das transações .
    */
   private void subscribeToTransactionsTopics() {
     this.ledgerConnector.subscribe(TransactionType.REP_HAS_SVC.name(), this);
+    this.ledgerConnector.subscribe(
+        TransactionType.REP_SVC_HUMIDITY_SENSOR.name(),
+        this
+      );
+    this.ledgerConnector.subscribe(
+        TransactionType.REP_SVC_PULSE_OXYMETER.name(),
+        this
+      );
+    this.ledgerConnector.subscribe(
+        TransactionType.REP_SVC_THERMOMETER.name(),
+        this
+      );
+    this.ledgerConnector.subscribe(
+        TransactionType.REP_SVC_WIND_DIRECTION_SENSOR.name(),
+        this
+      );
   }
 
   /**
@@ -370,6 +306,22 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
    */
   private void unsubscribeToTransactionsTopics() {
     this.ledgerConnector.unsubscribe(TransactionType.REP_HAS_SVC.name(), this);
+    this.ledgerConnector.unsubscribe(
+        TransactionType.REP_SVC_HUMIDITY_SENSOR.name(),
+        this
+      );
+    this.ledgerConnector.unsubscribe(
+        TransactionType.REP_SVC_PULSE_OXYMETER.name(),
+        this
+      );
+    this.ledgerConnector.unsubscribe(
+        TransactionType.REP_SVC_THERMOMETER.name(),
+        this
+      );
+    this.ledgerConnector.unsubscribe(
+        TransactionType.REP_SVC_WIND_DIRECTION_SENSOR.name(),
+        this
+      );
   }
 
   /**
@@ -404,6 +356,63 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
             receivedTransaction.getService(),
             receivedTransaction.getSource()
           );
+      } else {
+        TargetedTransaction receivedTransaction = (TargetedTransaction) object;
+
+        /**
+         * Somente se o destino da transação for este nó.
+         */
+        if (
+          receivedTransaction.getTarget().equals(this.nodeType.getNodeId()) &&
+          this.isRequestingNodeServices
+        ) {
+          TransactionType expectedTransactionType = null;
+
+          /**
+           * Verificando se a transação de serviço que recebeu é do tipo que
+           * requisitou.
+           */
+          if (
+            this.lastNodeServiceTransactionType.equals(
+                NodeServiceType.HUMIDITY_SENSOR.getDescription()
+              )
+          ) {
+            expectedTransactionType = TransactionType.REP_SVC_HUMIDITY_SENSOR;
+          } else if (
+            this.lastNodeServiceTransactionType.equals(
+                NodeServiceType.PULSE_OXYMETER.getDescription()
+              )
+          ) {
+            expectedTransactionType = TransactionType.REP_SVC_PULSE_OXYMETER;
+          } else if (
+            this.lastNodeServiceTransactionType.equals(
+                NodeServiceType.THERMOMETER.getDescription()
+              )
+          ) {
+            expectedTransactionType = TransactionType.REP_SVC_THERMOMETER;
+          } else if (
+            this.lastNodeServiceTransactionType.equals(
+                NodeServiceType.WIND_DIRECTION_SENSOR.getDescription()
+              )
+          ) {
+            expectedTransactionType =
+              TransactionType.REP_SVC_WIND_DIRECTION_SENSOR;
+          }
+
+          /**
+           * Adicionando na lista as transações referente aos serviços prestados
+           * pelos outros nós.
+           */
+          if (receivedTransaction.getType() == expectedTransactionType) {
+            try {
+              this.mutexNodesServices.lock();
+              this.nodesWithServices.clear();
+              this.nodesWithServices.add(receivedTransaction);
+            } finally {
+              this.mutexNodesServices.unlock();
+            }
+          }
+        }
       }
     }
   }
@@ -490,5 +499,23 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
   public void setCheckNodesServicesTaskTime(int checkNodesServicesTaskTime) {
     this.checkNodesServicesTaskTime = checkNodesServicesTaskTime;
+  }
+
+  public String getLastNodeServiceTransactionType() {
+    return lastNodeServiceTransactionType;
+  }
+
+  public void setLastNodeServiceTransactionType(
+    String lastNodeServiceTransactionType
+  ) {
+    this.lastNodeServiceTransactionType = lastNodeServiceTransactionType;
+  }
+
+  public boolean isRequestingNodeServices() {
+    return isRequestingNodeServices;
+  }
+
+  public void setRequestingNodeServices(boolean isRequestingNodeServices) {
+    this.isRequestingNodeServices = isRequestingNodeServices;
   }
 }
