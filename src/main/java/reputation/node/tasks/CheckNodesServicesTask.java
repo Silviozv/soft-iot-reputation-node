@@ -35,35 +35,46 @@ public class CheckNodesServicesTask extends TimerTask {
 
   @Override
   public void run() {
-    /**
-     * Serviço sendo escolhido de maneira aleatório.
-     */
-    int randomIndex = new Random().nextInt(NodeServiceType.values().length);
+    if (!this.node.isRequestingNodeServices()) {
+      /**
+       * Serviço sendo escolhido de maneira aleatório.
+       */
+      int randomIndex = new Random().nextInt(NodeServiceType.values().length);
 
-    NodeServiceType nodeServiceType = NodeServiceType.values()[randomIndex];
+      NodeServiceType nodeServiceType = NodeServiceType.values()[randomIndex];
 
-    logger.info(
-      "Checking nodes with " + nodeServiceType.getDescription() + " service."
-    );
+      /**
+       * Salvando qual foi o último tipo de serviço requisitado.
+       */
+      this.node.setLastNodeServiceTransactionType(
+          nodeServiceType.getDescription()
+        );
 
-    Transaction transaction = new HasReputationService(
-      this.node.getNodeType().getNodeId(),
-      this.node.getNodeType().getNodeGroup(),
-      nodeServiceType.getDescription(),
-      TransactionType.REP_HAS_SVC
-    );
-
-    String transactionTypeString = TransactionType.REP_HAS_SVC.name();
-
-    try {
-      this.node.getLedgerConnector()
-        .getLedgerWriter()
-        .put(new IndexTransaction(transactionTypeString, transaction));
-    } catch (InterruptedException ie) {
-      logger.warning(
-        "Error trying to create a " + transactionTypeString + " transaction."
+      logger.info(
+        "Checking nodes with " + nodeServiceType.getDescription() + " service."
       );
-      logger.warning(ie.getStackTrace().toString());
+
+      Transaction transaction = new HasReputationService(
+        this.node.getNodeType().getNodeId(),
+        this.node.getNodeType().getNodeGroup(),
+        nodeServiceType.getDescription(),
+        TransactionType.REP_HAS_SVC
+      );
+
+      String transactionTypeString = TransactionType.REP_HAS_SVC.name();
+
+      this.node.setRequestingNodeServices(true);
+
+      try {
+        this.node.getLedgerConnector()
+          .getLedgerWriter()
+          .put(new IndexTransaction(transactionTypeString, transaction));
+      } catch (InterruptedException ie) {
+        logger.warning(
+          "Error trying to create a " + transactionTypeString + " transaction."
+        );
+        logger.warning(ie.getStackTrace().toString());
+      }
     }
   }
 }
