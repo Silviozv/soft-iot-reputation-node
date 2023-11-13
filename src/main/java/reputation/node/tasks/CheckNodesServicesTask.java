@@ -5,6 +5,7 @@ import dlt.client.tangle.hornet.model.transactions.IndexTransaction;
 import dlt.client.tangle.hornet.model.transactions.Transaction;
 import dlt.client.tangle.hornet.model.transactions.reputation.HasReputationService;
 import java.util.Random;
+import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Logger;
 import reputation.node.enums.NodeServiceType;
@@ -50,6 +51,11 @@ public class CheckNodesServicesTask extends TimerTask {
           nodeServiceType.getDescription()
         );
 
+      /**
+       * Permitindo o nó a receber as respostas dos outros nós.
+       */
+      this.node.setCanReceiveNodesResponse(true);
+
       logger.info(
         "Checking nodes with " + nodeServiceType.getDescription() + " service."
       );
@@ -69,6 +75,12 @@ public class CheckNodesServicesTask extends TimerTask {
         this.node.getLedgerConnector()
           .getLedgerWriter()
           .put(new IndexTransaction(transactionTypeString, transaction));
+
+        /**
+         * Timer para aguardar as aceitar as respostas dos nós.
+         */
+        new Timer()
+          .scheduleAtFixedRate(this.node.getWaitNodesResponsesTask(), 0, 1000);
       } catch (InterruptedException ie) {
         logger.warning(
           "Error trying to create a " + transactionTypeString + " transaction."
