@@ -44,7 +44,11 @@ public class WaitNodesResponsesTask extends TimerTask {
        */
       this.node.setCanReceiveNodesResponse(false);
 
-      // TODO: Adicionar a chamada da função para verificar a reputaçãos dos nós que responderam e estão na lista
+      /**
+       * Verificando a reputação dos nós que responderam a requisição de 
+       * serviço.
+       */
+      this.node.checkNodesReputation();
 
       this.cancel();
     }
