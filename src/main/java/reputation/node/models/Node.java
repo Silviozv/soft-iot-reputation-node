@@ -355,12 +355,9 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
         .filter(nws -> nws.getSource().equals(innerHighestReputationNodeId))
         .collect(Collectors.toList())
         .get(0);
-
-      // TODO: Remover
-      logger.info("AAAAAA");
-      logger.info(nodeWithService.getSourceIp());
-      logger.info(nodeWithService.getServices().get(0).getDeviceId());
-      logger.info(nodeWithService.getServices().get(0).getSensorId());
+    } else {
+      this.setRequestingNodeServices(false);
+      this.setLastNodeServiceTransactionType(null);
     }
   }
 
