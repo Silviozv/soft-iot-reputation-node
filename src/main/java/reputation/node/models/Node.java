@@ -3,6 +3,11 @@ package reputation.node.models;
 import br.uefs.larsid.extended.mapping.devices.services.IDevicePropertiesManager;
 import br.ufba.dcc.wiser.soft_iot.entities.Device;
 import br.ufba.dcc.wiser.soft_iot.entities.Sensor;
+import br.ufba.dcc.wiser.soft_iot.entities.SensorData;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.stream.JsonReader;
 import dlt.client.tangle.hornet.enums.TransactionType;
 import dlt.client.tangle.hornet.model.DeviceSensorId;
 import dlt.client.tangle.hornet.model.transactions.IndexTransaction;
@@ -11,7 +16,13 @@ import dlt.client.tangle.hornet.model.transactions.Transaction;
 import dlt.client.tangle.hornet.model.transactions.reputation.HasReputationService;
 import dlt.client.tangle.hornet.model.transactions.reputation.ReputationService;
 import dlt.client.tangle.hornet.services.ILedgerSubscriber;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.StringReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -298,66 +309,147 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     Double highestReputation = 0.0;
     String highestReputationNodeId = null;
 
-    /**
-     * Salvando a reputação de cada nó em uma lista.
-     */
-    for (Transaction nodeWithService : this.nodesWithServices) {
-      String nodeId = nodeWithService.getSource();
-
-      List<Transaction> evaluationTransactions =
-        this.ledgerConnector.getLedgerReader().getTransactionsByIndex(nodeId);
-
-      if (evaluationTransactions.isEmpty()) {
-        reputation = 0.5;
-      } else {
-        reputation = 0.0; // TODO: Implementar o cáculo da reputação e modificar essa variável.
-      }
-
-      nodesReputations.add(new NodeReputation(nodeId, reputation));
-
-      if (reputation > highestReputation) {
-        highestReputation = reputation;
-      }
-    }
-
-    final Double innerHighestReputation = Double.valueOf(highestReputation);
-
-    /**
-     * Verificando quais nós possuem a maior reputação.
-     */
-    List<NodeReputation> temp = nodesReputations
-      .stream()
-      .filter(nr -> nr.getReputation().equals(innerHighestReputation))
-      .collect(Collectors.toList());
-
-    /**
-     * Obtendo o ID de um dos nós com a maior reputação.
-     */
-    if (temp.size() == 0) {
-      highestReputationNodeId = temp.get(0).getNodeId();
-    } else if (temp.size() > 0) {
-      int randomIndex = new Random().nextInt(temp.size());
-
-      highestReputationNodeId = temp.get(randomIndex).getNodeId();
-    } else {
-      logger.severe("Invalid amount of nodes with the highest reputation.");
-    }
-
-    if (highestReputationNodeId != null) {
-      final String innerHighestReputationNodeId = String.valueOf(
-        highestReputationNodeId
-      );
-
-      /**
-       * Pegando a transação do nó com a maior reputação.
-       */
-      ReputationService nodeWithService = (ReputationService) this.nodesWithServices.stream()
-        .filter(nws -> nws.getSource().equals(innerHighestReputationNodeId))
-        .collect(Collectors.toList())
-        .get(0);
-    } else {
+    // TODO: Verificar se quando não tem ninguém respondendo a solicitação, se ele ainda fica checando de tempo em tempos
+    if (this.nodesWithServices.isEmpty()) {
       this.setRequestingNodeServices(false);
       this.setLastNodeServiceTransactionType(null);
+      logger.info("EEEEEEEEEEEEE");
+    } else {
+      /**
+       * Salvando a reputação de cada nó em uma lista.
+       */
+      for (Transaction nodeWithService : this.nodesWithServices) {
+        String nodeId = nodeWithService.getSource();
+
+        List<Transaction> evaluationTransactions =
+          this.ledgerConnector.getLedgerReader().getTransactionsByIndex(nodeId);
+
+        if (evaluationTransactions.isEmpty()) {
+          reputation = 0.5;
+        } else {
+          reputation = 0.0; // TODO: Implementar o cáculo da reputação e modificar essa variável.
+        }
+
+        nodesReputations.add(new NodeReputation(nodeId, reputation));
+
+        if (reputation > highestReputation) {
+          highestReputation = reputation;
+        }
+      }
+
+      final Double innerHighestReputation = Double.valueOf(highestReputation);
+
+      /**
+       * Verificando quais nós possuem a maior reputação.
+       */
+      List<NodeReputation> temp = nodesReputations
+        .stream()
+        .filter(nr -> nr.getReputation().equals(innerHighestReputation))
+        .collect(Collectors.toList());
+
+      /**
+       * Obtendo o ID de um dos nós com a maior reputação.
+       */
+      if (temp.size() == 0) {
+        highestReputationNodeId = temp.get(0).getNodeId();
+      } else if (temp.size() > 0) {
+        int randomIndex = new Random().nextInt(temp.size());
+
+        highestReputationNodeId = temp.get(randomIndex).getNodeId();
+      } else {
+        logger.severe("Invalid amount of nodes with the highest reputation.");
+      }
+
+      if (highestReputationNodeId != null) {
+        final String innerHighestReputationNodeId = String.valueOf(
+          highestReputationNodeId
+        );
+
+        /**
+         * Pegando a transação do nó com a maior reputação.
+         */
+        ReputationService nodeWithService = (ReputationService) this.nodesWithServices.stream()
+          .filter(nws -> nws.getSource().equals(innerHighestReputationNodeId))
+          .collect(Collectors.toList())
+          .get(0);
+
+        // TODO: Calcular a reputação de todos os dispositivos, e enviar as informações do dispositivo com a maior reputação
+        this.requestNodeService(
+            nodeWithService.getSourceIp(),
+            nodeWithService.getServices().get(0).getDeviceId(),
+            nodeWithService.getServices().get(0).getSensorId()
+          );
+      } else {
+        this.setRequestingNodeServices(false);
+        this.setLastNodeServiceTransactionType(null);
+      }
+    }
+  }
+
+  // TODO: Adicionar documentação
+  private void requestNodeService( // TODO: Tem um bug, isso aqui não está funcionando corretamente
+    String nodeIp,
+    String deviceId,
+    String sensorId
+  ) {
+    boolean isNullable = false;
+    String response = null;
+
+    try {
+      URL url = new URL(
+        String.format(
+          "http://%s:8181/cxf/iot-service/devices/%s/%s",
+          nodeIp,
+          deviceId,
+          sensorId
+        )
+      );
+      HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+
+      if (conn.getResponseCode() != HttpURLConnection.HTTP_OK) {
+        throw new RuntimeException(
+          "HTTP error code : " + conn.getResponseCode()
+        );
+      }
+
+      BufferedReader br = new BufferedReader(
+        new InputStreamReader((conn.getInputStream()))
+      );
+
+      String temp = null;
+
+      while ((temp = br.readLine()) != null) {
+        if (temp.equals("null")) {
+          isNullable = true;
+
+          break;
+        }
+
+        response = temp;
+      }
+
+      conn.disconnect();
+
+      // TODO: Colocar essa conversão em uma função
+      JsonReader reader = new JsonReader(new StringReader(response));
+
+      reader.setLenient(true);
+
+      JsonObject jsonObject = JsonParser.parseReader(reader).getAsJsonObject();
+
+      Gson gson = new Gson();
+
+      SensorData sensorData = gson.fromJson(jsonObject, SensorData.class);
+
+      // TODO: Remover
+      logger.info("-------------");
+      logger.info(sensorData.getDevice().getId());
+      logger.info(sensorData.getSensor().getId());
+      logger.info(sensorData.getValue());
+    } catch (MalformedURLException mue) {
+      logger.severe(mue.getMessage());
+    } catch (IOException ioe) {
+      logger.severe(ioe.getMessage());
     }
   }
 
