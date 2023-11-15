@@ -333,14 +333,13 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     /**
      * Obtendo o ID de um dos nós com a maior reputação.
      */
-    if (temp.size() > 1) {
+    if (temp.size() == 0) {
+      highestReputationNodeId = temp.get(0).getNodeId();
+    } else if (temp.size() > 0) {
       int randomIndex = new Random().nextInt(temp.size());
 
       highestReputationNodeId = temp.get(randomIndex).getNodeId();
-    } else if (temp.size() == 0) {
-      highestReputationNodeId = temp.get(0).getNodeId();
     } else {
-      // TODO: Corrigir, de alguma forma está entrando aqui
       logger.severe("Invalid amount of nodes with the highest reputation.");
     }
 
