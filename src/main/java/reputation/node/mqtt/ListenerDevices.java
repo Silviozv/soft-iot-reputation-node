@@ -66,26 +66,29 @@ public class ListenerDevices implements IMqttMessageListener {
     throws Exception {
     final String mqttMessage = new String(message.getPayload());
 
-    logger.info(mqttMessage);
-
     JsonObject jsonResponse = new Gson()
       .fromJson(mqttMessage, JsonObject.class);
-    String deviceId = jsonResponse
-      .get("HEADER")
-      .getAsJsonObject()
-      .get("NAME")
-      .getAsString();
 
-    logger.info("Device Id: " + deviceId);
+    if (jsonResponse.get("METHOD").getAsString().equals("GET")) {
+      logger.info(mqttMessage);
 
-    if (this.node.getWaitDeviceResponseTask() != null) {
-      this.node.getWaitDeviceResponseTask().cancel();
-    }
-    // Avaliação de serviço prestado corretamente.
-    try {
-      this.node.getNodeType().getNode().evaluateServiceProvider(deviceId, 1);
-    } catch (Exception e) {
-      logger.warning("Could not add transaction on tangle network.");
+      String deviceId = jsonResponse
+        .get("HEADER")
+        .getAsJsonObject()
+        .get("NAME")
+        .getAsString();
+
+      logger.info("Device Id: " + deviceId);
+
+      if (this.node.getWaitDeviceResponseTask() != null) {
+        this.node.getWaitDeviceResponseTask().cancel();
+      }
+      // Avaliação de serviço prestado corretamente.
+      try {
+        this.node.getNodeType().getNode().evaluateServiceProvider(deviceId, 1);
+      } catch (Exception e) {
+        logger.warning("Could not add transaction on tangle network.");
+      }
     }
   }
 }
