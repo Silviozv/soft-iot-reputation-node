@@ -40,7 +40,6 @@ import reputation.node.tasks.CheckDevicesTask;
 import reputation.node.tasks.CheckNodesServicesTask;
 import reputation.node.tasks.RequestDataTask;
 import reputation.node.tasks.WaitDeviceResponseTask;
-import reputation.node.tasks.WaitNodesResponsesTask;
 import reputation.node.utils.MQTTClient;
 
 /**
@@ -64,7 +63,6 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
   private IDevicePropertiesManager deviceManager;
   private ListenerDevices listenerDevices;
   private TimerTask waitDeviceResponseTask;
-  private TimerTask waitNodesResponsesTask;
   private ReentrantLock mutex = new ReentrantLock();
   private ReentrantLock mutexNodesServices = new ReentrantLock();
   private String lastNodeServiceTransactionType = null; // TODO: Alterar de volta para 'null' quando terminar o processo
@@ -100,12 +98,6 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
         new CheckNodesServicesTask(this),
         0,
         this.checkNodesServicesTaskTime * 1000
-      );
-
-    this.waitNodesResponsesTask =
-      new WaitNodesResponsesTask(
-        (this.waitNodesResponsesTaskTime * 1000),
-        this
       );
 
     this.subscribeToTransactionsTopics();
@@ -309,11 +301,9 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     Double highestReputation = 0.0;
     String highestReputationNodeId = null;
 
-    // TODO: Verificar se quando não tem ninguém respondendo a solicitação, se ele ainda fica checando de tempo em tempos
     if (this.nodesWithServices.isEmpty()) {
       this.setRequestingNodeServices(false);
       this.setLastNodeServiceTransactionType(null);
-      logger.info("EEEEEEEEEEEEE");
     } else {
       /**
        * Salvando a reputação de cada nó em uma lista.
@@ -709,13 +699,5 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
   public void setWaitNodesResponsesTaskTime(int waitNodesResponsesTaskTime) {
     this.waitNodesResponsesTaskTime = waitNodesResponsesTaskTime;
-  }
-
-  public TimerTask getWaitNodesResponsesTask() {
-    return waitNodesResponsesTask;
-  }
-
-  public void setWaitNodesResponsesTask(TimerTask waitNodesResponsesTask) {
-    this.waitNodesResponsesTask = waitNodesResponsesTask;
   }
 }

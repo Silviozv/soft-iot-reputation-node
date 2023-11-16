@@ -80,7 +80,14 @@ public class CheckNodesServicesTask extends TimerTask {
          * Timer para aguardar as aceitar as respostas dos nós.
          */
         new Timer()
-          .scheduleAtFixedRate(this.node.getWaitNodesResponsesTask(), 0, 1000);
+          .scheduleAtFixedRate(
+            new WaitNodesResponsesTask(
+              (this.node.getWaitNodesResponsesTaskTime() * 1000),
+              this.node
+            ),
+            0,
+            1000
+          );
       } catch (InterruptedException ie) {
         logger.warning(
           "Error trying to create a " + transactionTypeString + " transaction."
