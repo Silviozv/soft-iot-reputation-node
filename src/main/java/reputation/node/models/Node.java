@@ -3,8 +3,6 @@ package reputation.node.models;
 import br.uefs.larsid.extended.mapping.devices.services.IDevicePropertiesManager;
 import br.ufba.dcc.wiser.soft_iot.entities.Device;
 import br.ufba.dcc.wiser.soft_iot.entities.Sensor;
-import br.ufba.dcc.wiser.soft_iot.entities.SensorData;
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.stream.JsonReader;
@@ -65,8 +63,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
   private TimerTask waitDeviceResponseTask;
   private ReentrantLock mutex = new ReentrantLock();
   private ReentrantLock mutexNodesServices = new ReentrantLock();
-  private String lastNodeServiceTransactionType = null; // TODO: Alterar de volta para 'null' quando terminar o processo
-  private boolean isRequestingNodeServices = false; // TODO: Alterar o valor para 'false' quando terminar o processo
+  private String lastNodeServiceTransactionType = null;
+  private boolean isRequestingNodeServices = false;
   private boolean canReceiveNodesResponse = false;
   private static final Logger logger = Logger.getLogger(Node.class.getName());
 
@@ -317,7 +315,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
         if (evaluationTransactions.isEmpty()) {
           reputation = 0.5;
         } else {
-          reputation = 0.0; // TODO: Implementar o cáculo da reputação e modificar essa variável.
+          reputation = 0.5; // TODO: Implementar o cáculo da reputação e modificar essa variável.
         }
 
         nodesReputations.add(new NodeReputation(nodeId, reputation));
@@ -377,13 +375,48 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
   }
 
   // TODO: Adicionar documentação
-  private void requestNodeService( // TODO: Tem um bug, isso aqui não está funcionando corretamente
+  private void enableDevicesPage(
     String nodeIp,
     String deviceId,
     String sensorId
   ) {
+    try {
+      URL url = new URL(
+        String.format(
+          "http://%s:8181/cxf/iot-service/devices/%s/%s",
+          nodeIp,
+          deviceId,
+          sensorId
+        )
+      );
+      HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+
+      if (conn.getResponseCode() != HttpURLConnection.HTTP_OK) {
+        throw new RuntimeException(
+          "HTTP error code : " + conn.getResponseCode()
+        );
+      }
+
+      conn.disconnect();
+    } catch (MalformedURLException mue) {
+      logger.severe(mue.getMessage());
+    } catch (IOException ioe) {
+      logger.severe(ioe.getMessage());
+    }
+  }
+
+  // TODO: Adicionar documentação
+  private void requestNodeService(
+    String nodeIp,
+    String deviceId,
+    String sensorId
+  ) {
+    this.enableDevicesPage(nodeIp, deviceId, sensorId);
+
     boolean isNullable = false;
     String response = null;
+    String sensorValue = null;
+    int evaluationValue = 0;
 
     try {
       URL url = new URL(
@@ -427,20 +460,26 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
       JsonObject jsonObject = JsonParser.parseReader(reader).getAsJsonObject();
 
-      Gson gson = new Gson();
-
-      SensorData sensorData = gson.fromJson(jsonObject, SensorData.class);
-
-      // TODO: Remover
-      logger.info("-------------");
-      logger.info(sensorData.getDevice().getId());
-      logger.info(sensorData.getSensor().getId());
-      logger.info(sensorData.getValue());
+      sensorValue = jsonObject.get("value").getAsString();
     } catch (MalformedURLException mue) {
       logger.severe(mue.getMessage());
     } catch (IOException ioe) {
       logger.severe(ioe.getMessage());
     }
+
+    if (!isNullable && sensorValue != null) { // Providenciou o serviço.
+      evaluationValue = 1;
+    }
+
+    // TODO: Está com um bug, a avaliação funcionou somente uma vez
+    try {
+      this.nodeType.getNode().evaluateServiceProvider(nodeIp, evaluationValue); // TODO: Está errado, é para ser nodeId
+    } catch (InterruptedException ie) {
+      logger.severe(ie.getStackTrace().toString());
+    }
+
+    this.setRequestingNodeServices(false);
+    this.setLastNodeServiceTransactionType(null);
   }
 
   /**
