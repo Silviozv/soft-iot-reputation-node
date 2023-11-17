@@ -77,25 +77,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     this.devices = new ArrayList<>();
     this.nodesWithServices = new ArrayList<>();
     this.listenerDevices = new ListenerDevices(this.MQTTClient, this);
-    new Timer()
-      .scheduleAtFixedRate(
-        new CheckDevicesTask(this),
-        0,
-        this.checkDeviceTaskTime * 1000
-      );
-    new Timer()
-      .scheduleAtFixedRate(
-        new RequestDataTask(this),
-        0,
-        this.requestDataTaskTime * 1000
-      );
-    new Timer()
-      .scheduleAtFixedRate(
-        new CheckNodesServicesTask(this),
-        0,
-        this.checkNodesServicesTaskTime * 1000
-      );
 
+    this.createTasks();
     this.subscribeToTransactionsTopics();
   }
 
@@ -178,7 +161,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       logger.info("Requested service type: " + serviceType);
 
       Transaction transaction = null;
-      TransactionType transactionType;
+      TransactionType transactionType = null;
       String transactionTypeInString = null;
 
       List<DeviceSensorId> deviceSensorIdList = new ArrayList<>();
@@ -202,57 +185,25 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
         serviceType.equals(NodeServiceType.HUMIDITY_SENSOR.getDescription())
       ) {
         transactionType = TransactionType.REP_SVC_HUMIDITY_SENSOR;
-
-        transaction =
-          new ReputationService(
-            this.nodeType.getNodeId(),
-            this.nodeType.getNodeIp(),
-            target,
-            deviceSensorIdList,
-            this.nodeType.getNodeGroup(),
-            transactionType
-          );
-
-        transactionTypeInString = transactionType.name();
       } else if (
         serviceType.equals(NodeServiceType.PULSE_OXYMETER.getDescription())
       ) {
         transactionType = TransactionType.REP_SVC_PULSE_OXYMETER;
-
-        transaction =
-          new ReputationService(
-            this.nodeType.getNodeId(),
-            this.nodeType.getNodeIp(),
-            target,
-            deviceSensorIdList,
-            this.nodeType.getNodeGroup(),
-            transactionType
-          );
-
-        transactionTypeInString = transactionType.name();
       } else if (
         serviceType.equals(NodeServiceType.THERMOMETER.getDescription())
       ) {
         transactionType = TransactionType.REP_SVC_THERMOMETER;
-
-        transaction =
-          new ReputationService(
-            this.nodeType.getNodeId(),
-            this.nodeType.getNodeIp(),
-            target,
-            deviceSensorIdList,
-            this.nodeType.getNodeGroup(),
-            transactionType
-          );
-
-        transactionTypeInString = transactionType.name();
       } else if (
         serviceType.equals(
           NodeServiceType.WIND_DIRECTION_SENSOR.getDescription()
         )
       ) {
         transactionType = TransactionType.REP_SVC_WIND_DIRECTION_SENSOR;
+      } else {
+        logger.severe("Unknown service type.");
+      }
 
+      if (transactionType != null) {
         transaction =
           new ReputationService(
             this.nodeType.getNodeId(),
@@ -264,8 +215,6 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
           );
 
         transactionTypeInString = transactionType.name();
-      } else {
-        logger.severe("Unknown service type.");
       }
 
       /*
@@ -542,6 +491,30 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
   }
 
   /**
+   * Cria todas as tasks que serão usadas pelo bundle.
+   */
+  private void createTasks() {
+    new Timer()
+      .scheduleAtFixedRate(
+        new CheckDevicesTask(this),
+        0,
+        this.checkDeviceTaskTime * 1000
+      );
+    new Timer()
+      .scheduleAtFixedRate(
+        new RequestDataTask(this),
+        0,
+        this.requestDataTaskTime * 1000
+      );
+    new Timer()
+      .scheduleAtFixedRate(
+        new CheckNodesServicesTask(this),
+        0,
+        this.checkNodesServicesTaskTime * 1000
+      );
+  }
+
+  /**
    * Se inscreve nos tópicos dos novos dispositivos.
    *
    * @param amountNewDevices int - Número de novos dispositivos que se
@@ -558,6 +531,9 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     }
   }
 
+  /**
+   * Responsável por lidar com as mensagens recebidas pelo ZMQ (MQTT).
+   */
   @Override
   public void update(Object object, Object object2) {
     /**
@@ -634,6 +610,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       }
     }
   }
+
+  /*------------------------- Getters e Setters -----------------------------*/
 
   public MQTTClient getMQTTClient() {
     return MQTTClient;
