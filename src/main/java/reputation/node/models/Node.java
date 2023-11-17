@@ -363,6 +363,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
         // TODO: Calcular a reputação de todos os dispositivos, e enviar as informações do dispositivo com a maior reputação
         this.requestNodeService(
+            nodeWithService.getSource(),
             nodeWithService.getSourceIp(),
             nodeWithService.getServices().get(0).getDeviceId(),
             nodeWithService.getServices().get(0).getSensorId()
@@ -389,12 +390,13 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
           sensorId
         )
       );
+
       HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 
       if (conn.getResponseCode() != HttpURLConnection.HTTP_OK) {
-        throw new RuntimeException(
-          "HTTP error code : " + conn.getResponseCode()
-        );
+        conn.disconnect();
+
+        return;
       }
 
       conn.disconnect();
@@ -407,6 +409,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
   // TODO: Adicionar documentação
   private void requestNodeService(
+    String nodeId,
     String nodeIp,
     String deviceId,
     String sensorId
@@ -430,9 +433,10 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 
       if (conn.getResponseCode() != HttpURLConnection.HTTP_OK) {
-        throw new RuntimeException(
-          "HTTP error code : " + conn.getResponseCode()
-        );
+        logger.severe("HTTP error code : " + conn.getResponseCode());
+        conn.disconnect();
+
+        return;
       }
 
       BufferedReader br = new BufferedReader(
@@ -471,9 +475,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       evaluationValue = 1;
     }
 
-    // TODO: Está com um bug, a avaliação funcionou somente uma vez
     try {
-      this.nodeType.getNode().evaluateServiceProvider(nodeIp, evaluationValue); // TODO: Está errado, é para ser nodeId
+      this.nodeType.getNode().evaluateServiceProvider(nodeId, evaluationValue);
     } catch (InterruptedException ie) {
       logger.severe(ie.getStackTrace().toString());
     }
