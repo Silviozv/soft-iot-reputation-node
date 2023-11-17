@@ -4,8 +4,6 @@ import br.uefs.larsid.extended.mapping.devices.services.IDevicePropertiesManager
 import br.ufba.dcc.wiser.soft_iot.entities.Device;
 import br.ufba.dcc.wiser.soft_iot.entities.Sensor;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.google.gson.stream.JsonReader;
 import dlt.client.tangle.hornet.enums.TransactionType;
 import dlt.client.tangle.hornet.model.DeviceSensorId;
 import dlt.client.tangle.hornet.model.transactions.IndexTransaction;
@@ -17,7 +15,6 @@ import dlt.client.tangle.hornet.services.ILedgerSubscriber;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.StringReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -38,6 +35,7 @@ import reputation.node.tasks.CheckDevicesTask;
 import reputation.node.tasks.CheckNodesServicesTask;
 import reputation.node.tasks.RequestDataTask;
 import reputation.node.tasks.WaitDeviceResponseTask;
+import reputation.node.utils.JsonStringToJsonObject;
 import reputation.node.utils.MQTTClient;
 
 /**
@@ -427,12 +425,12 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     String deviceId,
     String sensorId
   ) {
-    this.enableDevicesPage(nodeIp, deviceId, sensorId);
-
     boolean isNullable = false;
     String response = null;
     String sensorValue = null;
     int evaluationValue = 0;
+
+    this.enableDevicesPage(nodeIp, deviceId, sensorId);
 
     try {
       URL url = new URL(
@@ -447,7 +445,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
       if (conn.getResponseCode() != HttpURLConnection.HTTP_OK) {
         logger.severe("HTTP error code : " + conn.getResponseCode());
-        
+
         conn.disconnect();
 
         return;
@@ -471,12 +469,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
       conn.disconnect();
 
-      // TODO: Colocar essa conversão em uma função
-      JsonReader reader = new JsonReader(new StringReader(response));
-
-      reader.setLenient(true);
-
-      JsonObject jsonObject = JsonParser.parseReader(reader).getAsJsonObject();
+      JsonObject jsonObject = JsonStringToJsonObject.convert(response);
 
       sensorValue = jsonObject.get("value").getAsString();
     } catch (MalformedURLException mue) {
@@ -485,10 +478,13 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       logger.severe(ioe.getMessage());
     }
 
-    if (!isNullable && sensorValue != null) { // Providenciou o serviço.
+    if (!isNullable && sensorValue != null) { // Prestou o serviço.
       evaluationValue = 1;
     }
 
+    /**
+     * Avaliando o serviço prestado pelo nó.
+     */
     try {
       this.nodeType.getNode().evaluateServiceProvider(nodeId, evaluationValue);
     } catch (InterruptedException ie) {
