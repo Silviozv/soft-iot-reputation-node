@@ -375,7 +375,13 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     }
   }
 
-  // TODO: Adicionar documentação
+  /**
+   * Habilita a página dos dispositivos faz uma requisição para a mesma.
+   *
+   * @param nodeIp String - IP do nó em que o dispositivo está conectado.
+   * @param deviceId String - ID do dispositivo.
+   * @param sensorId String - ID do sensor.
+   */
   private void enableDevicesPage(
     String nodeIp,
     String deviceId,
@@ -407,7 +413,14 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     }
   }
 
-  // TODO: Adicionar documentação
+  /**
+   * Requisita e avalia o serviço de um determinado nó.
+   *
+   * @param nodeId - ID do nó que irá requisitar o serviço.
+   * @param nodeIp - IP do nó que irá requisitar o serviço.
+   * @param deviceId - ID do dispositivo que fornecerá o serviço.
+   * @param sensorId - ID do sensor que fornecerá o serviço.
+   */
   private void requestNodeService(
     String nodeId,
     String nodeIp,
@@ -434,6 +447,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
       if (conn.getResponseCode() != HttpURLConnection.HTTP_OK) {
         logger.severe("HTTP error code : " + conn.getResponseCode());
+        
         conn.disconnect();
 
         return;
