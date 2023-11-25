@@ -241,7 +241,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
    * Verifica a reputação dos nós que responderam a requisição de serviço.
    */
   public void checkNodesReputation() {
-    List<NodeReputation> nodesReputations = new ArrayList<>();
+    List<ThingReputation> nodesReputations = new ArrayList<>();
     Double reputation;
     Double highestReputation = 0.0;
     String highestReputationNodeId = null;
@@ -265,7 +265,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
           reputation = 0.5; // TODO: Implementar o cáculo da reputação e modificar essa variável.
         }
 
-        nodesReputations.add(new NodeReputation(nodeId, reputation));
+        nodesReputations.add(new ThingReputation(nodeId, reputation));
 
         if (reputation > highestReputation) {
           highestReputation = reputation;
@@ -277,7 +277,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       /**
        * Verificando quais nós possuem a maior reputação.
        */
-      List<NodeReputation> temp = nodesReputations
+      List<ThingReputation> temp = nodesReputations
         .stream()
         .filter(nr -> nr.getReputation().equals(innerHighestReputation))
         .collect(Collectors.toList());

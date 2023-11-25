@@ -5,28 +5,28 @@ package reputation.node.models;
  * @author Allan Capistrano
  * @version 1.0.0
  */
-public class NodeReputation {
+public class ThingReputation {
 
-  private String nodeId;
+  private String thingId;
   private Double reputation;
 
   /**
    * Método construtor.
    *
-   * @param nodeId String - ID do nó.
+   * @param thingId String - Identificador.
    * @param reputation Double - Reputação do nó.
    */
-  public NodeReputation(String nodeId, Double reputation) {
-    this.nodeId = nodeId;
+  public ThingReputation(String thingId, Double reputation) {
+    this.thingId = thingId;
     this.reputation = reputation;
   }
 
   public String getNodeId() {
-    return nodeId;
+    return thingId;
   }
 
-  public void setNodeId(String nodeId) {
-    this.nodeId = nodeId;
+  public void setNodeId(String thingId) {
+    this.thingId = thingId;
   }
 
   public Double getReputation() {
