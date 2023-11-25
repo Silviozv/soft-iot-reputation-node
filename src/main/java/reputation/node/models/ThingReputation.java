@@ -21,11 +21,11 @@ public class ThingReputation {
     this.reputation = reputation;
   }
 
-  public String getNodeId() {
+  public String getThingId() {
     return thingId;
   }
 
-  public void setNodeId(String thingId) {
+  public void setThingId(String thingId) {
     this.thingId = thingId;
   }
 
