@@ -312,7 +312,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
         DeviceSensorId deviceSensorId =
           this.getDeviceWithHighestReputation(nodeWithService.getServices());
 
-        this.requestNodeService(
+        this.requestAndEvaluateNodeService(
             nodeWithService.getSource(),
             nodeWithService.getSourceIp(),
             deviceSensorId.getDeviceId(),
@@ -455,7 +455,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
    * @param deviceId - ID do dispositivo que fornecerá o serviço.
    * @param sensorId - ID do sensor que fornecerá o serviço.
    */
-  private void requestNodeService(
+  private void requestAndEvaluateNodeService(
     String nodeId,
     String nodeIp,
     String deviceId,
