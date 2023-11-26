@@ -29,6 +29,8 @@ import java.util.stream.Collectors;
 import node.type.services.INodeType;
 import reputation.node.enums.NodeServiceType;
 import reputation.node.mqtt.ListenerDevices;
+import reputation.node.reputation.IReputationCalc;
+import reputation.node.reputation.ReputationCalc;
 import reputation.node.services.NodeTypeService;
 import reputation.node.tangle.LedgerConnector;
 import reputation.node.tasks.CheckDevicesTask;
@@ -299,10 +301,16 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
         this.ledgerConnector.getLedgerReader().getTransactionsByIndex(nodeId);
 
       if (evaluationTransactions.isEmpty()) {
+        logger.info("Não era para entrar aqui 1!");
         reputation = 0.5;
       } else {
+        logger.info("AAAAAA"); // TODO: Remover
+        IReputationCalc reputationCalc = new ReputationCalc();
         reputation = 0.5; // TODO: Implementar o cáculo da reputação e modificar essa variável.
+        // reputation = reputationCalc.calc(evaluationTransactions);
       }
+
+      logger.info(reputation.toString()); // TODO: Remover
 
       nodesReputations.add(new ThingReputation(nodeId, reputation));
 
@@ -324,9 +332,9 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     /**
      * Obtendo o ID de um dos nós com a maior reputação.
      */
-    if (temp.size() == 0) {
+    if (temp.size() == 1) {
       highestReputationNodeId = temp.get(0).getThingId();
-    } else if (temp.size() > 0) {
+    } else if (temp.size() > 1) {
       int randomIndex = new Random().nextInt(temp.size());
 
       highestReputationNodeId = temp.get(randomIndex).getThingId();
@@ -362,10 +370,16 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
             .getTransactionsByIndex(deviceSensorId.getDeviceId());
 
         if (evaluationTransactions.isEmpty()) {
+          logger.info("Não era para entrar aqui 2!");
           reputation = 0.5;
         } else {
-          reputation = 0.5; // TODO: Implementar o cáculo da reputação dos dispositivos e modificar essa variável.
+          logger.info("BBBBBBB"); // TODO: Remover
+          IReputationCalc reputationCalc = new ReputationCalc();
+          reputation = 0.5; // TODO: Implementar o cáculo da reputação e modificar essa variável.
+          // reputation = reputationCalc.calc(evaluationTransactions);
         }
+
+        logger.info(reputation.toString()); // TODO: Remover
 
         devicesReputations.add(
           new ThingReputation(
@@ -384,6 +398,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       }
 
       final Double innerHighestReputation = Double.valueOf(highestReputation);
+      logger.info("CCCCCC");
+      logger.info(innerHighestReputation.toString());
 
       /**
        * Verificando quais dispositivos possuem a maior reputação.
@@ -398,9 +414,9 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       /**
        * Obtendo o ID de um dos dispositivos com a maior reputação.
        */
-      if (temp.size() == 0) {
+      if (temp.size() == 1) {
         index = 0;
-      } else if (temp.size() > 0) {
+      } else if (temp.size() > 1) {
         index = new Random().nextInt(temp.size());
       } else {
         logger.severe("Invalid amount of devices with the highest reputation.");
