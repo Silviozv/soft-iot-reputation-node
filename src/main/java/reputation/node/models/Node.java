@@ -325,7 +325,13 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     }
   }
 
-  // TODO: Adicionar documentação
+  /**
+   * Obtém os IDs do dispositivo e do sensor, com a maior reputação.
+   *
+   * @param deviceSensorIdList List<DeviceSensorId> - Lista com os IDs do
+   * dispositivo e sensor que se deseja obter o maior.
+   * @return DeviceSensorId
+   */
   private DeviceSensorId getDeviceWithHighestReputation(
     List<DeviceSensorId> deviceSensorIdList
   ) {
