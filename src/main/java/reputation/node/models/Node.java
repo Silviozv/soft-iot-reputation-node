@@ -240,6 +240,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
   /**
    * Verifica a reputação dos nós que responderam a requisição de serviço.
    */
+  // TODO: Refatorar código para separar as responsabilidades. Checagem do nó, e requsiição de fato do serviço
   public void checkNodesReputation() {
     List<ThingReputation> nodesReputations = new ArrayList<>();
     Double reputation;
@@ -286,11 +287,11 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
        * Obtendo o ID de um dos nós com a maior reputação.
        */
       if (temp.size() == 0) {
-        highestReputationNodeId = temp.get(0).getNodeId();
+        highestReputationNodeId = temp.get(0).getThingId();
       } else if (temp.size() > 0) {
         int randomIndex = new Random().nextInt(temp.size());
 
-        highestReputationNodeId = temp.get(randomIndex).getNodeId();
+        highestReputationNodeId = temp.get(randomIndex).getThingId();
       } else {
         logger.severe("Invalid amount of nodes with the highest reputation.");
       }
@@ -308,18 +309,98 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
           .collect(Collectors.toList())
           .get(0);
 
-        // TODO: Calcular a reputação de todos os dispositivos, e enviar as informações do dispositivo com a maior reputação
+        DeviceSensorId deviceSensorId =
+          this.getDeviceWithHighestReputation(nodeWithService.getServices());
+
         this.requestNodeService(
             nodeWithService.getSource(),
             nodeWithService.getSourceIp(),
-            nodeWithService.getServices().get(0).getDeviceId(),
-            nodeWithService.getServices().get(0).getSensorId()
+            deviceSensorId.getDeviceId(),
+            deviceSensorId.getSensorId()
           );
       } else {
         this.setRequestingNodeServices(false);
         this.setLastNodeServiceTransactionType(null);
       }
     }
+  }
+
+  // TODO: Adicionar documentação
+  private DeviceSensorId getDeviceWithHighestReputation(
+    List<DeviceSensorId> deviceSensorIdList
+  ) {
+    List<ThingReputation> devicesReputations = new ArrayList<>();
+    Double reputation;
+    Double highestReputation = 0.0;
+    DeviceSensorId highestReputationDeviceSensorId = null;
+
+    if (deviceSensorIdList.size() > 1) {
+      /**
+       * Salvando a reputação de cada dispositivo em uma lista.
+       */
+      for (DeviceSensorId deviceSensorId : deviceSensorIdList) {
+        List<Transaction> evaluationTransactions =
+          this.ledgerConnector.getLedgerReader()
+            .getTransactionsByIndex(deviceSensorId.getDeviceId());
+
+        if (evaluationTransactions.isEmpty()) {
+          reputation = 0.5;
+        } else {
+          reputation = 0.5; // TODO: Implementar o cáculo da reputação dos dispositivos e modificar essa variável.
+        }
+
+        devicesReputations.add(
+          new ThingReputation(
+            String.format(
+              "%s@%s", // Formato: deviceId@sensorId
+              deviceSensorId.getDeviceId(),
+              deviceSensorId.getSensorId()
+            ),
+            reputation
+          )
+        );
+
+        if (reputation > highestReputation) {
+          highestReputation = reputation;
+        }
+      }
+
+      final Double innerHighestReputation = Double.valueOf(highestReputation);
+
+      /**
+       * Verificando quais dispositivos possuem a maior reputação.
+       */
+      List<ThingReputation> temp = devicesReputations
+        .stream()
+        .filter(nr -> nr.getReputation().equals(innerHighestReputation))
+        .collect(Collectors.toList());
+
+      int index = -1;
+
+      /**
+       * Obtendo o ID de um dos dispositivos com a maior reputação.
+       */
+      if (temp.size() == 0) {
+        index = 0;
+      } else if (temp.size() > 0) {
+        index = new Random().nextInt(temp.size());
+      } else {
+        logger.severe("Invalid amount of devices with the highest reputation.");
+      }
+
+      if (index != -1) {
+        String[] tempIds = temp.get(index).getThingId().split("@");
+
+        highestReputationDeviceSensorId =
+          new DeviceSensorId(tempIds[0], tempIds[1]);
+      }
+    } else if (deviceSensorIdList.size() == 1) {
+      highestReputationDeviceSensorId = deviceSensorIdList.get(0);
+    } else {
+      logger.severe("Invalid amount of devices.");
+    }
+
+    return highestReputationDeviceSensorId;
   }
 
   /**
