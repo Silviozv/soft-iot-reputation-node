@@ -238,63 +238,15 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
   }
 
   /**
-   * Verifica a reputação dos nós que responderam a requisição de serviço.
+   * Faz uso do serviço do nó com a maior reputação dentre aqueles que
+   * responderam a requisição, e ao final avalia-o.
    */
-  // TODO: Refatorar código para separar as responsabilidades. Checagem do nó, e requsiição de fato do serviço
-  public void checkNodesReputation() {
-    List<ThingReputation> nodesReputations = new ArrayList<>();
-    Double reputation;
-    Double highestReputation = 0.0;
-    String highestReputationNodeId = null;
-
+  public void useNodeService() {
     if (this.nodesWithServices.isEmpty()) {
       this.setRequestingNodeServices(false);
       this.setLastNodeServiceTransactionType(null);
     } else {
-      /**
-       * Salvando a reputação de cada nó em uma lista.
-       */
-      for (Transaction nodeWithService : this.nodesWithServices) {
-        String nodeId = nodeWithService.getSource();
-
-        List<Transaction> evaluationTransactions =
-          this.ledgerConnector.getLedgerReader().getTransactionsByIndex(nodeId);
-
-        if (evaluationTransactions.isEmpty()) {
-          reputation = 0.5;
-        } else {
-          reputation = 0.5; // TODO: Implementar o cáculo da reputação e modificar essa variável.
-        }
-
-        nodesReputations.add(new ThingReputation(nodeId, reputation));
-
-        if (reputation > highestReputation) {
-          highestReputation = reputation;
-        }
-      }
-
-      final Double innerHighestReputation = Double.valueOf(highestReputation);
-
-      /**
-       * Verificando quais nós possuem a maior reputação.
-       */
-      List<ThingReputation> temp = nodesReputations
-        .stream()
-        .filter(nr -> nr.getReputation().equals(innerHighestReputation))
-        .collect(Collectors.toList());
-
-      /**
-       * Obtendo o ID de um dos nós com a maior reputação.
-       */
-      if (temp.size() == 0) {
-        highestReputationNodeId = temp.get(0).getThingId();
-      } else if (temp.size() > 0) {
-        int randomIndex = new Random().nextInt(temp.size());
-
-        highestReputationNodeId = temp.get(randomIndex).getThingId();
-      } else {
-        logger.severe("Invalid amount of nodes with the highest reputation.");
-      }
+      String highestReputationNodeId = this.getNodeIdWithHighestReputation();
 
       if (highestReputationNodeId != null) {
         final String innerHighestReputationNodeId = String.valueOf(
@@ -323,6 +275,66 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
         this.setLastNodeServiceTransactionType(null);
       }
     }
+  }
+
+  /**
+   * Obtém o ID do nó com a maior reputação dentre aqueles que reponderam a
+   * requisição.
+   *
+   * @return String
+   */
+  private String getNodeIdWithHighestReputation() {
+    List<ThingReputation> nodesReputations = new ArrayList<>();
+    Double reputation;
+    Double highestReputation = 0.0;
+    String highestReputationNodeId = null;
+
+    /**
+     * Salvando a reputação de cada nó em uma lista.
+     */
+    for (Transaction nodeWithService : this.nodesWithServices) {
+      String nodeId = nodeWithService.getSource();
+
+      List<Transaction> evaluationTransactions =
+        this.ledgerConnector.getLedgerReader().getTransactionsByIndex(nodeId);
+
+      if (evaluationTransactions.isEmpty()) {
+        reputation = 0.5;
+      } else {
+        reputation = 0.5; // TODO: Implementar o cáculo da reputação e modificar essa variável.
+      }
+
+      nodesReputations.add(new ThingReputation(nodeId, reputation));
+
+      if (reputation > highestReputation) {
+        highestReputation = reputation;
+      }
+    }
+
+    final Double innerHighestReputation = Double.valueOf(highestReputation);
+
+    /**
+     * Verificando quais nós possuem a maior reputação.
+     */
+    List<ThingReputation> temp = nodesReputations
+      .stream()
+      .filter(nr -> nr.getReputation().equals(innerHighestReputation))
+      .collect(Collectors.toList());
+
+    /**
+     * Obtendo o ID de um dos nós com a maior reputação.
+     */
+    if (temp.size() == 0) {
+      highestReputationNodeId = temp.get(0).getThingId();
+    } else if (temp.size() > 0) {
+      int randomIndex = new Random().nextInt(temp.size());
+
+      highestReputationNodeId = temp.get(randomIndex).getThingId();
+    } else {
+      logger.severe("Invalid amount of nodes with the highest reputation.");
+    }
+
+    return highestReputationNodeId;
   }
 
   /**

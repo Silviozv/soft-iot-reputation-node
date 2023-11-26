@@ -45,10 +45,10 @@ public class WaitNodesResponsesTask extends TimerTask {
       this.node.setCanReceiveNodesResponse(false);
 
       /**
-       * Verificando a reputação dos nós que responderam a requisição de 
-       * serviço.
+       * Usando e avaliando o serviço do nó com a maior reputação, e
+       * avaliando-o.
        */
-      this.node.checkNodesReputation();
+      this.node.useNodeService();
 
       this.cancel();
     }
