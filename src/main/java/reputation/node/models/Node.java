@@ -306,8 +306,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       } else {
         logger.info("AAAAAA"); // TODO: Remover
         IReputationCalc reputationCalc = new ReputationCalc();
-        reputation = 0.5; // TODO: Implementar o cáculo da reputação e modificar essa variável.
-        // reputation = reputationCalc.calc(evaluationTransactions);
+        // reputation = 0.5; // TODO: Implementar o cáculo da reputação e modificar essa variável.
+        reputation = reputationCalc.calc(evaluationTransactions);
       }
 
       logger.info(reputation.toString()); // TODO: Remover
@@ -375,8 +375,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
         } else {
           logger.info("BBBBBBB"); // TODO: Remover
           IReputationCalc reputationCalc = new ReputationCalc();
-          reputation = 0.5; // TODO: Implementar o cáculo da reputação e modificar essa variável.
-          // reputation = reputationCalc.calc(evaluationTransactions);
+          // reputation = 0.5; // TODO: Implementar o cáculo da reputação e modificar essa variável.
+          reputation = reputationCalc.calc(evaluationTransactions);
         }
 
         logger.info(reputation.toString()); // TODO: Remover
@@ -409,6 +409,9 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
         .filter(nr -> nr.getReputation().equals(innerHighestReputation))
         .collect(Collectors.toList());
 
+      logger.info("DDDDDDD");
+      logger.info(String.valueOf(temp.size()));
+
       int index = -1;
 
       /**
@@ -422,12 +425,16 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
         logger.severe("Invalid amount of devices with the highest reputation.");
       }
 
+      logger.info("EEEEEEE");
+
       if (index != -1) {
         String[] tempIds = temp.get(index).getThingId().split("@");
 
         highestReputationDeviceSensorId =
           new DeviceSensorId(tempIds[0], tempIds[1]);
       }
+
+      logger.info("FFFFFFFF");
     } else if (deviceSensorIdList.size() == 1) {
       highestReputationDeviceSensorId = deviceSensorIdList.get(0);
     } else {
