@@ -301,7 +301,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       String nodeId = nodeWithService.getSource();
 
       List<Transaction> evaluationTransactions =
-        this.ledgerConnector.getLedgerReader().getTransactionsByIndex(nodeId);
+        this.ledgerConnector.getLedgerReader()
+          .getTransactionsByIndex(nodeId, false);
 
       if (evaluationTransactions.isEmpty()) {
         reputation = 0.5;
@@ -365,7 +366,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       for (DeviceSensorId deviceSensorId : deviceSensorIdList) {
         List<Transaction> evaluationTransactions =
           this.ledgerConnector.getLedgerReader()
-            .getTransactionsByIndex(deviceSensorId.getDeviceId());
+            .getTransactionsByIndex(deviceSensorId.getDeviceId(), false);
 
         if (evaluationTransactions.isEmpty()) {
           reputation = 0.5;
@@ -419,7 +420,6 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
         highestReputationDeviceSensorId =
           new DeviceSensorId(tempIds[0], tempIds[1]);
       }
-
     } else if (deviceSensorIdList.size() == 1) {
       highestReputationDeviceSensorId = deviceSensorIdList.get(0);
     } else {
