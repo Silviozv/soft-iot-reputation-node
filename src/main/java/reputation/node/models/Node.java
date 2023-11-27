@@ -165,22 +165,25 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       Transaction transaction = null;
       TransactionType transactionType = null;
       String transactionTypeInString = null;
-
+      List<Device> tempDevices = new ArrayList<>();
       List<DeviceSensorId> deviceSensorIdList = new ArrayList<>();
 
       try {
         this.mutex.lock();
-        for (Device d : this.devices) {
-          d
-            .getSensors()
-            .stream()
-            .filter(s -> s.getType().equals(serviceType))
-            .forEach(s ->
-              deviceSensorIdList.add(new DeviceSensorId(d.getId(), s.getId()))
-            );
-        }
+        /* Cópia temporária para liberar a lista de dispositivos. */
+        tempDevices.addAll(this.devices);
       } finally {
         this.mutex.unlock();
+      }
+
+      for (Device d : tempDevices) {
+        d
+          .getSensors()
+          .stream()
+          .filter(s -> s.getType().equals(serviceType))
+          .forEach(s ->
+            deviceSensorIdList.add(new DeviceSensorId(d.getId(), s.getId()))
+          );
       }
 
       if (
@@ -301,16 +304,11 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
         this.ledgerConnector.getLedgerReader().getTransactionsByIndex(nodeId);
 
       if (evaluationTransactions.isEmpty()) {
-        logger.info("Não era para entrar aqui 1!");
         reputation = 0.5;
       } else {
-        logger.info("AAAAAA"); // TODO: Remover
         IReputationCalc reputationCalc = new ReputationCalc();
-        // reputation = 0.5; // TODO: Implementar o cáculo da reputação e modificar essa variável.
         reputation = reputationCalc.calc(evaluationTransactions);
       }
-
-      logger.info(reputation.toString()); // TODO: Remover
 
       nodesReputations.add(new ThingReputation(nodeId, reputation));
 
@@ -370,16 +368,11 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
             .getTransactionsByIndex(deviceSensorId.getDeviceId());
 
         if (evaluationTransactions.isEmpty()) {
-          logger.info("Não era para entrar aqui 2!");
           reputation = 0.5;
         } else {
-          logger.info("BBBBBBB"); // TODO: Remover
           IReputationCalc reputationCalc = new ReputationCalc();
-          // reputation = 0.5; // TODO: Implementar o cáculo da reputação e modificar essa variável.
           reputation = reputationCalc.calc(evaluationTransactions);
         }
-
-        logger.info(reputation.toString()); // TODO: Remover
 
         devicesReputations.add(
           new ThingReputation(
@@ -398,8 +391,6 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       }
 
       final Double innerHighestReputation = Double.valueOf(highestReputation);
-      logger.info("CCCCCC");
-      logger.info(innerHighestReputation.toString());
 
       /**
        * Verificando quais dispositivos possuem a maior reputação.
@@ -408,9 +399,6 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
         .stream()
         .filter(nr -> nr.getReputation().equals(innerHighestReputation))
         .collect(Collectors.toList());
-
-      logger.info("DDDDDDD");
-      logger.info(String.valueOf(temp.size()));
 
       int index = -1;
 
@@ -425,8 +413,6 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
         logger.severe("Invalid amount of devices with the highest reputation.");
       }
 
-      logger.info("EEEEEEE");
-
       if (index != -1) {
         String[] tempIds = temp.get(index).getThingId().split("@");
 
@@ -434,7 +420,6 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
           new DeviceSensorId(tempIds[0], tempIds[1]);
       }
 
-      logger.info("FFFFFFFF");
     } else if (deviceSensorIdList.size() == 1) {
       highestReputationDeviceSensorId = deviceSensorIdList.get(0);
     } else {
