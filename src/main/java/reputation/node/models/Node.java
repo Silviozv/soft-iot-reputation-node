@@ -43,7 +43,7 @@ import reputation.node.utils.MQTTClient;
 /**
  *
  * @author Allan Capistrano
- * @version 1.2.0 // TODO: Alterar quando finalizar o fluxo.
+ * @version 1.3.0
  */
 public class Node implements NodeTypeService, ILedgerSubscriber {
 
