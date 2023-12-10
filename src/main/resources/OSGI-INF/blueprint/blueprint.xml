@@ -27,9 +27,9 @@
         <property name="nodeType" ref="nodeTypeService" />
         <property name="checkDeviceTaskTime" value="${checkDeviceTaskTime}" />
         <property name="requestDataTaskTime" value="${requestDataTaskTime}" />
-        <property name="requestServiceTaskTime" value="${requestServiceTaskTime}" />
         <property name="waitDeviceResponseTaskTime" value="${waitDeviceResponseTaskTime}" />
-        <property name="waitNodeResponseTaskTime" value="${waitNodeResponseTaskTime}" />
+        <property name="checkNodesServicesTaskTime" value="${checkNodesServicesTaskTime}" />
+        <property name="waitNodesResponsesTaskTime" value="${waitNodesResponsesTaskTime}" />
         <property name="deviceManager" ref="deviceManagerService" />
         <property name="ledgerConnector" ref="ledgerConnector" />
     </bean>
@@ -49,9 +49,9 @@
             <cm:property name="pass" value="karaf" />
             <cm:property name="checkDeviceTaskTime" value="5" />
             <cm:property name="requestDataTaskTime" value="30" />
-            <cm:property name="requestServiceTaskTime" value="45" />
             <cm:property name="waitDeviceResponseTaskTime" value="10" />
-            <cm:property name="waitNodeResponseTaskTime" value="15" />
+            <cm:property name="checkNodesServicesTaskTime" value="15" /> <!-- TODO: Alterar para 45-->
+            <cm:property name="waitNodesResponsesTaskTime" value="10" /> <!-- TODO: Alterar para 30-->
             <cm:property name="debugModeValue" value="true" />
         </cm:default-properties>
     </cm:property-placeholder>
