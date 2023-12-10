@@ -9,6 +9,7 @@ import dlt.client.tangle.hornet.model.DeviceSensorId;
 import dlt.client.tangle.hornet.model.transactions.IndexTransaction;
 import dlt.client.tangle.hornet.model.transactions.TargetedTransaction;
 import dlt.client.tangle.hornet.model.transactions.Transaction;
+import dlt.client.tangle.hornet.model.transactions.reputation.Evaluation;
 import dlt.client.tangle.hornet.model.transactions.reputation.HasReputationService;
 import dlt.client.tangle.hornet.model.transactions.reputation.ReputationService;
 import dlt.client.tangle.hornet.services.ILedgerSubscriber;
@@ -20,6 +21,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -82,6 +84,15 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
     this.createTasks();
     this.subscribeToTransactionsTopics();
+
+    // TODO: Temporário
+    logger.info("AAAAA"); // TODO: Remover
+    int test =
+      this.getLastEvaluation(
+          this.nodeType.getNodeId(),
+          "e0635c77-effe-4d57-9ea6-7d5c4e63ff28"
+        );
+    logger.info(String.valueOf(test)); // TODO: Remover
   }
 
   /**
@@ -538,6 +549,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       evaluationValue = 1;
     }
 
+    // TODO: Colocar cálculo da credibilidade
+
     /**
      * Avaliando o serviço prestado pelo nó.
      */
@@ -636,6 +649,36 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
       offset++;
     }
+  }
+
+  /**
+   * Obtém o valor da avaliação mais recente enviada por um nó para um
+   * prestador de serviço. Caso não exista nenhuma avaliação, o retorno é 0.
+   *
+   * @param sourceId String - Id do nó avaliador.
+   * @param targetId String - Id do prestador de serviço.
+   * @return int
+   */
+  private int getLastEvaluation(String sourceId, String targetId) {
+    return Optional
+      .ofNullable(
+        this.ledgerConnector.getLedgerReader()
+          .getTransactionsByIndex(targetId, false)
+      )
+      .map(transactions ->
+        transactions
+          .stream()
+          .filter(t -> // Filtrando somente as transações com source e target informadas por parâmetro.
+            t.getSource().equals(sourceId) &&
+            ((Evaluation) t).getTarget().equals(targetId)
+          )
+          .sorted((t1, t2) -> Long.compare(t2.getCreatedAt(), t1.getCreatedAt()) // Ordenando em ordem decrescente.
+          )
+          .collect(Collectors.toList())
+      )
+      .filter(list -> !list.isEmpty())
+      .map(list -> ((Evaluation) list.get(0)).getValue())
+      .orElse(0); // Caso não exista nenhuma avaliação.
   }
 
   /**
