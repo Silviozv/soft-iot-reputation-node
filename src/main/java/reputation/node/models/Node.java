@@ -659,7 +659,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
    * @param targetId String - Id do prestador de serviço.
    * @return int
    */
-  private int getLastEvaluation(String sourceId, String targetId) {
+  private int getLastEvaluation(String sourceId, String targetId) { // TODO: Provavelmente o retorno vai ser alterado para 'float' ou 'double'
     return Optional
       .ofNullable(
         this.ledgerConnector.getLedgerReader()
