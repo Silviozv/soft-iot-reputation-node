@@ -6,7 +6,7 @@ import java.util.List;
 
 /**
  * Responsável por calcular a reputação de uma coisa.
- * 
+ *
  * @author Allan Capistrano
  * @version 1.0.0
  */
@@ -14,8 +14,6 @@ public class ReputationCalc implements IReputationCalc {
 
   @Override
   public Double calc(List<Transaction> evaluationTransactions) {
-    // TODO: Implementar z-scores para verificar se um valor não está destoante da média
-
     return evaluationTransactions
       .stream()
       .mapToInt(et -> ((Evaluation) et).getValue())
