@@ -670,9 +670,12 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
           sourceId,
           targetId
         );
+
+    // TODO: Salvar aqui o valor de r(t)
     /**
      * Calculando a confiabilidade do nó.
      */
+    // TODO: Calcular R
   }
 
   /**
