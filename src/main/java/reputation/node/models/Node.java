@@ -717,8 +717,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
   }
 
   /**
-   * Obtém e adiciona em uma lista os valores das credibilidades dos nós 
-   * avaliadores cujos IDs foram informados pela lista de transações de 
+   * Obtém e adiciona em uma lista, os valores da credibilidade mais recente dos 
+   * nós avaliadores cujos IDs foram informados pela lista de transações de 
    * avaliações.
    *
    * @param serviceProviderEvaluationTransactions List<Transaction> - Lista de
