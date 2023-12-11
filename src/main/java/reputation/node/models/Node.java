@@ -664,13 +664,12 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
      */
 
     /* r(t-1) */
-    int previousR =
+    int lastEvaluation =
       this.getLastEvaluation(
           serviceProviderEvaluationTransactions,
           sourceId,
           targetId
         );
-
     // TODO: Salvar aqui o valor de r(t)
     /**
      * Calculando a confiabilidade do nó.
