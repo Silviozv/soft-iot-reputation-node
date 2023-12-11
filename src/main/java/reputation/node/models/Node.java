@@ -668,17 +668,17 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       .map(transactions ->
         transactions
           .stream()
-          .filter(t -> // Filtrando somente as transações com source e target informadas por parâmetro.
+          .filter(t -> /* Filtrando somente as transações com source e target informadas por parâmetro. */
             t.getSource().equals(sourceId) &&
             ((Evaluation) t).getTarget().equals(targetId)
           )
-          .sorted((t1, t2) -> Long.compare(t2.getCreatedAt(), t1.getCreatedAt()) // Ordenando em ordem decrescente.
+          .sorted((t1, t2) -> Long.compare(t2.getCreatedAt(), t1.getCreatedAt()) /* Ordenando em ordem decrescente. */
           )
           .collect(Collectors.toList())
       )
       .filter(list -> !list.isEmpty())
       .map(list -> ((Evaluation) list.get(0)).getValue())
-      .orElse(0); // Caso não exista nenhuma avaliação.
+      .orElse(0); /* Caso não exista nenhuma avaliação. */
   }
 
   /**
