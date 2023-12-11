@@ -87,10 +87,13 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
     // TODO: Temporário
     logger.info("AAAAA"); // TODO: Remover
+    String targetId = "e0635c77-effe-4d57-9ea6-7d5c4e63ff28";
     int test =
       this.getLastEvaluation(
+          this.ledgerConnector.getLedgerReader()
+            .getTransactionsByIndex(targetId, false),
           this.nodeType.getNodeId(),
-          "e0635c77-effe-4d57-9ea6-7d5c4e63ff28"
+          targetId
         );
     logger.info(String.valueOf(test)); // TODO: Remover
   }
@@ -651,34 +654,59 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     }
   }
 
+  // TODO: Documentar
+  private void calculateCredibility(String sourceId, String targetId) {
+    List<Transaction> serviceProviderEvaluationTransactions =
+      this.ledgerConnector.getLedgerReader()
+        .getTransactionsByIndex(targetId, false);
+    /**
+     * Calculando a consistência do nó.
+     */
+
+    /* r(t-1) */
+    int previousR =
+      this.getLastEvaluation(
+          serviceProviderEvaluationTransactions,
+          sourceId,
+          targetId
+        );
+    /**
+     * Calculando a confiabilidade do nó.
+     */
+  }
+
   /**
    * Obtém o valor da avaliação mais recente enviada por um nó para um
    * prestador de serviço. Caso não exista nenhuma avaliação, o retorno é 0.
    *
-   * @param sourceId String - Id do nó avaliador.
-   * @param targetId String - Id do prestador de serviço.
+   * @param serviceProviderEvaluationTransactions List<Transaction> - Lista de
+   * transações de avaliação do prestador do serviço
+   * @param sourceId String - ID do nó avaliador.
+   * @param targetId String - ID do prestador do serviço.
    * @return int
    */
-  private int getLastEvaluation(String sourceId, String targetId) { // TODO: Provavelmente o retorno vai ser alterado para 'float' ou 'double'
+  private int getLastEvaluation( // TODO: Provavelmente o retorno vai ser alterado para 'float' ou 'double'
+    List<Transaction> serviceProviderEvaluationTransactions,
+    String sourceId,
+    String targetId
+  ) {
     return Optional
-      .ofNullable(
-        this.ledgerConnector.getLedgerReader()
-          .getTransactionsByIndex(targetId, false)
-      )
+      .ofNullable(serviceProviderEvaluationTransactions)
       .map(transactions ->
         transactions
           .stream()
-          .filter(t -> /* Filtrando somente as transações com source e target informadas por parâmetro. */
+          .filter(t ->/* Filtrando somente as transações com source e target informadas por parâmetro. */
             t.getSource().equals(sourceId) &&
             ((Evaluation) t).getTarget().equals(targetId)
           )
-          .sorted((t1, t2) -> Long.compare(t2.getCreatedAt(), t1.getCreatedAt()) /* Ordenando em ordem decrescente. */
+          .sorted((t1, t2) ->/* Ordenando em ordem decrescente. */
+            Long.compare(t2.getCreatedAt(), t1.getCreatedAt())
           )
           .collect(Collectors.toList())
       )
       .filter(list -> !list.isEmpty())
       .map(list -> ((Evaluation) list.get(0)).getValue())
-      .orElse(0); /* Caso não exista nenhuma avaliação. */
+      .orElse(0);/* Caso não exista nenhuma avaliação. */
   }
 
   /**
