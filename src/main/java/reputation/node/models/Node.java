@@ -9,6 +9,7 @@ import dlt.client.tangle.hornet.model.DeviceSensorId;
 import dlt.client.tangle.hornet.model.transactions.IndexTransaction;
 import dlt.client.tangle.hornet.model.transactions.TargetedTransaction;
 import dlt.client.tangle.hornet.model.transactions.Transaction;
+import dlt.client.tangle.hornet.model.transactions.reputation.Credibility;
 import dlt.client.tangle.hornet.model.transactions.reputation.Evaluation;
 import dlt.client.tangle.hornet.model.transactions.reputation.HasReputationService;
 import dlt.client.tangle.hornet.model.transactions.reputation.ReputationService;
@@ -674,6 +675,10 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     /**
      * Calculando a confiabilidade do nó.
      */
+    List<Float> nodesCredibility =
+      this.getNodesCredibility(serviceProviderEvaluationTransactions); // TODO: Ainda falta testar esse método.
+    // TODO: Calcular K-Means
+    // TODO: Pegar somente a avaliação dos nós pertencentes ao grupo com as maiores credibilidades.
     // TODO: Calcular R
   }
 
@@ -709,6 +714,55 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       .filter(list -> !list.isEmpty())
       .map(list -> ((Evaluation) list.get(0)).getValue())
       .orElse(0);/* Caso não exista nenhuma avaliação. */
+  }
+
+  /**
+   * Obtém e adiciona em uma lista os valores das credibilidades dos nós 
+   * avaliadores cujos IDs foram informados pela lista de transações de 
+   * avaliações.
+   *
+   * @param serviceProviderEvaluationTransactions List<Transaction> - Lista de
+   * transações de avaliações.
+   * @return List<Float>
+   */
+  private List<Float> getNodesCredibility(
+    List<Transaction> serviceProviderEvaluationTransactions
+  ) {
+    List<Float> nodesCredibility = new ArrayList<>();
+
+    if (
+      Optional.ofNullable(serviceProviderEvaluationTransactions).isPresent()
+    ) {
+      for (Transaction transaction : serviceProviderEvaluationTransactions) {
+        /* O index para pegar a credibilidade segue o formato: cred_<id do nó>. */
+        List<Transaction> tempCredibility =
+          this.ledgerConnector.getLedgerReader()
+            .getTransactionsByIndex(
+              String.format("cred_%", transaction.getSource()),
+              false
+            );
+
+        float nodeCredibility = Optional
+          .ofNullable(tempCredibility)
+          .map(transactions ->
+            transactions
+              .stream()
+              .sorted((t1, t2) ->/* Ordenando em ordem decrescente. */
+                Long.compare(t2.getCreatedAt(), t1.getCreatedAt())
+              )
+              .collect(Collectors.toList())
+          )
+          .filter(list -> !list.isEmpty())
+          /* Pegando a credibilidade mais recente calculada pelo nó */
+          .map(list -> ((Credibility) list.get(0)).getValue())
+          /* Caso o nó ainda não tenha calculado a sua credibilidade, por padrão é 0.5. */
+          .orElse((float) 0.5);
+
+        nodesCredibility.add(nodeCredibility);
+      }
+    }
+
+    return nodesCredibility;
   }
 
   /**
