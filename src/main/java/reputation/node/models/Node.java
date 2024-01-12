@@ -485,8 +485,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
   /**
    * Requisita e avalia o serviço de um determinado nó.
    *
-   * @param nodeId - ID do nó que irá requisitar o serviço.
-   * @param nodeIp - IP do nó que irá requisitar o serviço.
+   * @param nodeId - ID do nó para o qual irá requisitar o serviço.
+   * @param nodeIp - IP do nó para o qual irá requisitar o serviço.
    * @param deviceId - ID do dispositivo que fornecerá o serviço.
    * @param sensorId - ID do sensor que fornecerá o serviço.
    */
@@ -554,6 +554,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     }
 
     // TODO: Colocar cálculo da credibilidade
+    /* Calculando a credibilidade deste nó */
+    this.calculateCredibility(this.nodeType.getNodeId(), nodeId);
 
     /**
      * Avaliando o serviço prestado pelo nó.
@@ -675,11 +677,17 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     /**
      * Calculando a confiabilidade do nó.
      */
+
+    /* Obtendo a credibilidade dos nós que já avaliaram o provedor do serviço. */
     List<Float> nodesCredibility =
-      this.getNodesCredibility(serviceProviderEvaluationTransactions); // TODO: Ainda falta testar esse método.
+      this.getNodesCredibility(serviceProviderEvaluationTransactions);
+
+    // TODO: Precisa ter algo relacionando a credibilidade com o ID dos nós avaliadores
     // TODO: Calcular K-Means
     // TODO: Pegar somente a avaliação dos nós pertencentes ao grupo com as maiores credibilidades.
     // TODO: Calcular R
+
+    // TODO: Publicar a credibilidade do nó na Blockchain
   }
 
   /**
@@ -717,8 +725,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
   }
 
   /**
-   * Obtém e adiciona em uma lista, os valores da credibilidade mais recente dos 
-   * nós avaliadores cujos IDs foram informados pela lista de transações de 
+   * Obtém e adiciona em uma lista, os valores da credibilidade mais recente dos
+   * nós avaliadores cujos IDs foram informados pela lista de transações de
    * avaliações.
    *
    * @param serviceProviderEvaluationTransactions List<Transaction> - Lista de
@@ -733,12 +741,14 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     if (
       Optional.ofNullable(serviceProviderEvaluationTransactions).isPresent()
     ) {
+      // TODO: Filtar para pegar somente uma avaliação por nó.
+
       for (Transaction transaction : serviceProviderEvaluationTransactions) {
         /* O index para pegar a credibilidade segue o formato: cred_<id do nó>. */
         List<Transaction> tempCredibility =
           this.ledgerConnector.getLedgerReader()
             .getTransactionsByIndex(
-              String.format("cred_%", transaction.getSource()),
+              "cred_" + transaction.getSource(),
               false
             );
 
@@ -761,6 +771,11 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
         nodesCredibility.add(nodeCredibility);
       }
     }
+
+    logger.info("CREDIBILIDADES"); // TODO: Remover
+    logger.info(nodesCredibility.toString()); // TODO: Remover
+
+    // TODO: Precisa ter algo relacionando a credibilidade com o ID dos nós avaliadores
 
     return nodesCredibility;
   }
