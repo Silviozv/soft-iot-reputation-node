@@ -553,9 +553,9 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       evaluationValue = 1;
     }
 
-    // TODO: Colocar cálculo da credibilidade
     /* Calculando a credibilidade deste nó */
     this.calculateCredibility(this.nodeType.getNodeId(), nodeId);
+    // TODO: Usar cálculo da credibilidade no valor da avaliação
 
     /**
      * Avaliando o serviço prestado pelo nó.
@@ -658,6 +658,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
   }
 
   // TODO: Documentar
+  // TODO: Talvez alterar o retorno do meétodo
   private void calculateCredibility(String sourceId, String targetId) {
     List<Transaction> serviceProviderEvaluationTransactions =
       this.ledgerConnector.getLedgerReader()
