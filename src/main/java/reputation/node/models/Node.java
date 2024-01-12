@@ -274,7 +274,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
         );
 
         /**
-         * Pegando a transação do nó com a maior reputação.
+         * Obtendo a transação do nó com a maior reputação.
          */
         ReputationService nodeWithService = (ReputationService) this.nodesWithServices.stream()
           .filter(nws -> nws.getSource().equals(innerHighestReputationNodeId))
