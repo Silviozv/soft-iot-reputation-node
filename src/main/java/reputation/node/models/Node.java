@@ -681,7 +681,6 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     /* Obtendo a credibilidade dos nós que já avaliaram o provedor do serviço. */
     List<Float> nodesCredibility =
       this.getNodesCredibility(serviceProviderEvaluationTransactions);
-
     // TODO: Precisa ter algo relacionando a credibilidade com o ID dos nós avaliadores
     // TODO: Calcular K-Means
     // TODO: Pegar somente a avaliação dos nós pertencentes ao grupo com as maiores credibilidades.
@@ -738,19 +737,29 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
   ) {
     List<Float> nodesCredibility = new ArrayList<>();
 
+    // TODO: Ver o que retornar caso o nó prestador de serviço ainda não tenha sido avaliado.
     if (
       Optional.ofNullable(serviceProviderEvaluationTransactions).isPresent()
     ) {
-      // TODO: Filtar para pegar somente uma avaliação por nó.
+      /* Pegando somente uma avaliação por nó avaliador. */
+      List<Transaction> uniqueServiceProviderEvaluationTransactions = serviceProviderEvaluationTransactions
+        .stream()
+        .collect(
+          Collectors.toMap(
+            Transaction::getSource,
+            obj -> obj,
+            (existing, replacement) -> existing
+          )
+        )
+        .values()
+        .stream()
+        .collect(Collectors.toList());
 
-      for (Transaction transaction : serviceProviderEvaluationTransactions) {
+      for (Transaction transaction : uniqueServiceProviderEvaluationTransactions) {
         /* O index para pegar a credibilidade segue o formato: cred_<id do nó>. */
         List<Transaction> tempCredibility =
           this.ledgerConnector.getLedgerReader()
-            .getTransactionsByIndex(
-              "cred_" + transaction.getSource(),
-              false
-            );
+            .getTransactionsByIndex("cred_" + transaction.getSource(), false);
 
         float nodeCredibility = Optional
           .ofNullable(tempCredibility)
