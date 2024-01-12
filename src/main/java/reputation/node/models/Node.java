@@ -706,7 +706,6 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       // TODO: Publicar a credibilidade do nó na Blockchain
     } else {
       // TODO: Colocar R como zero
-      logger.info("O nó prestador de serviço ainda não recebeu avaliações"); // TODO: Remover
       logger.info("The node service provider has no evaluations."); // TODO: Remover
     }
   }
