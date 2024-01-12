@@ -1,6 +1,8 @@
 package reputation.node.models;
 
 /**
+ * Classe responsável por relacionar o ID de uma 'coisa' com sua respectiva
+ * reputação.
  *
  * @author Allan Capistrano
  * @version 1.0.0
