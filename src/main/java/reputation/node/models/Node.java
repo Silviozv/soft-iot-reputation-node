@@ -694,7 +694,12 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
         .stream()
         .map(SourceCredibility::getCredibility)
         .collect(Collectors.toList());
-      // TODO: Calcular K-Means
+      
+      /* Executando o algoritmo KMeans. */
+      List<Float> kMeansResult = kMeans.execute(nodesCredibility);
+
+      logger.info("K-MEANS RESULT"); // TODO: Remover
+      logger.info(kMeansResult.toString()); // TODO: Remover
       // TODO: Pegar somente a avaliação dos nós pertencentes ao grupo com as maiores credibilidades.
       // TODO: Calcular R
 
