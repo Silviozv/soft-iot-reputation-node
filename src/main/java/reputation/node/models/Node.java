@@ -683,13 +683,19 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     List<SourceCredibility> nodesCredibility =
       this.getNodesCredibility(serviceProviderEvaluationTransactions);
 
-    logger.info("CREDIBILIDADES"); // TODO: Remover
-    logger.info(nodesCredibility.toString()); // TODO: Remover
-    // TODO: Calcular K-Means
-    // TODO: Pegar somente a avaliação dos nós pertencentes ao grupo com as maiores credibilidades.
-    // TODO: Calcular R
+    if (!nodesCredibility.isEmpty()) {
+      logger.info("CREDIBILITIES"); // TODO: Remover
+      logger.info(nodesCredibility.toString()); // TODO: Remover
+      // TODO: Calcular K-Means
+      // TODO: Pegar somente a avaliação dos nós pertencentes ao grupo com as maiores credibilidades.
+      // TODO: Calcular R
 
-    // TODO: Publicar a credibilidade do nó na Blockchain
+      // TODO: Publicar a credibilidade do nó na Blockchain
+    } else {
+      // TODO: Colocar R como zero
+      logger.info("O nó prestador de serviço ainda não recebeu avaliações"); // TODO: Remover
+      logger.info("The node service provider has no evaluations."); // TODO: Remover
+    }
   }
 
   /**
@@ -740,7 +746,6 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
   ) {
     List<SourceCredibility> nodesCredibility = new ArrayList<>();
 
-    // TODO: Ver o que retornar caso o nó prestador de serviço ainda não tenha sido avaliado.
     if (
       Optional.ofNullable(serviceProviderEvaluationTransactions).isPresent()
     ) {
