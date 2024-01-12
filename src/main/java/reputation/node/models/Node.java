@@ -30,6 +30,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import node.type.services.INodeType;
+import python.to.java.services.IKMeans;
 import reputation.node.enums.NodeServiceType;
 import reputation.node.mqtt.ListenerDevices;
 import reputation.node.reputation.IReputationCalc;
@@ -52,6 +53,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
   private MQTTClient MQTTClient;
   private INodeType nodeType;
+  private IKMeans kMeans;
   private int checkDeviceTaskTime;
   private int requestDataTaskTime;
   private int waitDeviceResponseTaskTime;
@@ -680,12 +682,18 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
      */
 
     /* Obtendo a credibilidade dos nós que já avaliaram o provedor do serviço. */
-    List<SourceCredibility> nodesCredibility =
+    List<SourceCredibility> nodesCredibilityWithSource =
       this.getNodesCredibility(serviceProviderEvaluationTransactions);
 
-    if (!nodesCredibility.isEmpty()) {
+    if (!nodesCredibilityWithSource.isEmpty()) {
       logger.info("CREDIBILITIES"); // TODO: Remover
-      logger.info(nodesCredibility.toString()); // TODO: Remover
+      logger.info(nodesCredibilityWithSource.toString()); // TODO: Remover
+
+      /* Obtendo somente o valor da credibilidade dos nós avaliadores. */
+      List<Float> nodesCredibility = nodesCredibilityWithSource
+        .stream()
+        .map(SourceCredibility::getCredibility)
+        .collect(Collectors.toList());
       // TODO: Calcular K-Means
       // TODO: Pegar somente a avaliação dos nós pertencentes ao grupo com as maiores credibilidades.
       // TODO: Calcular R
@@ -890,6 +898,14 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
   public void setNodeType(INodeType nodeType) {
     this.nodeType = nodeType;
+  }
+
+  public IKMeans getkMeans() {
+    return kMeans;
+  }
+
+  public void setkMeans(IKMeans kMeans) {
+    this.kMeans = kMeans;
   }
 
   public IDevicePropertiesManager getDeviceManager() {
