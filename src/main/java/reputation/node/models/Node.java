@@ -23,6 +23,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalDouble;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -694,7 +695,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
         .stream()
         .map(SourceCredibility::getCredibility)
         .collect(Collectors.toList());
-      
+
       /* Executando o algoritmo KMeans. */
       List<Float> kMeansResult = kMeans.execute(nodesCredibility);
 
@@ -702,6 +703,42 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       logger.info(kMeansResult.toString()); // TODO: Remover
       // TODO: Pegar somente a avaliação dos nós pertencentes ao grupo com as maiores credibilidades.
       // TODO: Calcular R
+
+      /* Obtendo somente os nós que possuem as credibilidades calculadas pelo algoritmo KMeans. */
+      List<SourceCredibility> nodesWithHighestCredibilities = nodesCredibilityWithSource
+        .stream()
+        .filter(node -> kMeansResult.contains(node.getCredibility()))
+        .collect(Collectors.toList());
+
+      logger.info("NODES"); // TODO: Remover
+      logger.info(nodesWithHighestCredibilities.toString()); // TODO: Remover
+
+      /* Inicializando o valor de R */
+      float R = (float) 0.0;
+
+      /* Calculando a média das avaliações dos nós calculadas pelo algoritmo KMeans. */
+      OptionalDouble temp = serviceProviderEvaluationTransactions
+        .stream()
+        .filter(nodeEvaluation ->
+          nodesWithHighestCredibilities
+            .stream()
+            .anyMatch(sourceCredibility ->
+              nodeEvaluation.getSource().equals(sourceCredibility.getSource())
+            )
+        )
+        .mapToDouble(nodeEvaluation -> ((Evaluation) nodeEvaluation).getValue())
+        .average();
+
+      /* Caso existam transações de avaliação, atualiza o valor de R como a média dessas avaliações. */
+      if (temp.isPresent()) {
+        R = (float) temp.getAsDouble();
+      }
+
+      logger.info("R VALUE"); // TODO: Remover
+      logger.info(String.valueOf(R)); // TODO: Remover
+
+      // TODO: Testar na primeira execução, quando ainda não há transações de avaliação.
+      // TODO: Testar colocando uma transação de valiação de valor zero, que não vai pertencer ao nós do KMeans, para isso, usar o Insomnia.
 
       // TODO: Publicar a credibilidade do nó na Blockchain
     } else {
