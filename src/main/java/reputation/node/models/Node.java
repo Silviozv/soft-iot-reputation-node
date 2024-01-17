@@ -88,18 +88,6 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
     this.createTasks();
     this.subscribeToTransactionsTopics();
-
-    // TODO: Temporário
-    logger.info("AAAAA"); // TODO: Remover
-    String targetId = "e0635c77-effe-4d57-9ea6-7d5c4e63ff28";
-    int test =
-      this.getLastEvaluation(
-          this.ledgerConnector.getLedgerReader()
-            .getTransactionsByIndex(targetId, false),
-          this.nodeType.getNodeId(),
-          targetId
-        );
-    logger.info(String.valueOf(test)); // TODO: Remover
   }
 
   /**
