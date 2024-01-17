@@ -502,7 +502,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     boolean isNullable = false;
     String response = null;
     String sensorValue = null;
-    int evaluationValue = 0;
+    int serviceEvaluation = 0;
 
     this.enableDevicesPage(nodeIp, deviceId, sensorId);
 
@@ -553,18 +553,24 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     }
 
     if (!isNullable && sensorValue != null) { // Prestou o serviço.
-      evaluationValue = 1;
+      serviceEvaluation = 1;
     }
 
     /* Calculando a credibilidade deste nó */
-    this.calculateCredibility(this.nodeType.getNodeId(), nodeId);
+    this.calculateCredibility(
+        this.nodeType.getNodeId(),
+        nodeId,
+        serviceEvaluation
+      );
     // TODO: Usar cálculo da credibilidade no valor da avaliação
 
     /**
      * Avaliando o serviço prestado pelo nó.
      */
     try {
-      this.nodeType.getNode().evaluateServiceProvider(nodeId, evaluationValue);
+      // TODO: Alterar para evaluationValue que é calculado com serviceEvaluation e credibility
+      this.nodeType.getNode()
+        .evaluateServiceProvider(nodeId, serviceEvaluation);
     } catch (InterruptedException ie) {
       logger.severe(ie.getStackTrace().toString());
     }
@@ -662,7 +668,11 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
   // TODO: Documentar
   // TODO: Talvez alterar o retorno do método
-  private void calculateCredibility(String sourceId, String targetId) {
+  private void calculateCredibility(
+    String sourceId,
+    String targetId,
+    int currentServiceEvaluation
+  ) {
     List<Transaction> serviceProviderEvaluationTransactions =
       this.ledgerConnector.getLedgerReader()
         .getTransactionsByIndex(targetId, false);
@@ -677,7 +687,6 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
           sourceId,
           targetId
         );
-    // TODO: Salvar aqui o valor de r(t)
     /**
      * Calculando a confiabilidade do nó.
      */
