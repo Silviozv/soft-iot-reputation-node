@@ -687,7 +687,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
         .getTransactionsByIndex(targetId, false);
 
     /**
-     * Calculando a consistência do nó.
+     * Calculando a consistência do nó (C(n)).
      */
 
     /* r(t-1) */
@@ -699,9 +699,31 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
         );
 
     /**
-     * Calculando a confiabilidade do nó.
+     * Calculando a confiabilidade do nó (Tr(n)).
      */
+    float reliability =
+      this.calculateReliability(
+          serviceProviderEvaluationTransactions,
+          currentServiceEvaluation
+        );
 
+    logger.info("RELIABILITY"); // TODO: Remover
+    logger.info(String.valueOf(reliability)); // TODO: Remover
+    // TODO: Publicar a credibilidade do nó na Blockchain
+  }
+
+  /**
+   * Calcula a confiabilidade do nó avaliador.
+   *
+   * @param serviceProviderEvaluationTransactions List<Transaction> - Lista com
+   * as transações de avaliação que do nó prestador de serviço.
+   * @param currentServiceEvaluation int - Nota do serviço atual.
+   * @return float
+   */
+  private float calculateReliability(
+    List<Transaction> serviceProviderEvaluationTransactions,
+    int currentServiceEvaluation
+  ) {
     /* Inicializando o valor de R */
     float R = (float) 0.0;
 
@@ -755,7 +777,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       logger.info("R VALUE"); // TODO: Remover
       logger.info(String.valueOf(R)); // TODO: Remover
     }
-    // TODO: Publicar a credibilidade do nó na Blockchain
+
+    return Math.abs(currentServiceEvaluation - R);
   }
 
   /**
