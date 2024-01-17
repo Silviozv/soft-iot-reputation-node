@@ -682,6 +682,9 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
      * Calculando a confiabilidade do nó.
      */
 
+    /* Inicializando o valor de R */
+    float R = (float) 0.0;
+
     /* Obtendo a credibilidade dos nós que já avaliaram o provedor do serviço. */
     List<SourceCredibility> nodesCredibilityWithSource =
       this.getNodesCredibility(serviceProviderEvaluationTransactions);
@@ -701,8 +704,6 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
       logger.info("K-MEANS RESULT"); // TODO: Remover
       logger.info(kMeansResult.toString()); // TODO: Remover
-      // TODO: Pegar somente a avaliação dos nós pertencentes ao grupo com as maiores credibilidades.
-      // TODO: Calcular R
 
       /* Obtendo somente os nós que possuem as credibilidades calculadas pelo algoritmo KMeans. */
       List<SourceCredibility> nodesWithHighestCredibilities = nodesCredibilityWithSource
@@ -712,9 +713,6 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
       logger.info("NODES"); // TODO: Remover
       logger.info(nodesWithHighestCredibilities.toString()); // TODO: Remover
-
-      /* Inicializando o valor de R */
-      float R = (float) 0.0;
 
       /* Calculando a média das avaliações dos nós calculadas pelo algoritmo KMeans. */
       OptionalDouble temp = serviceProviderEvaluationTransactions
@@ -736,15 +734,9 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
       logger.info("R VALUE"); // TODO: Remover
       logger.info(String.valueOf(R)); // TODO: Remover
-
-      // TODO: Testar na primeira execução, quando ainda não há transações de avaliação.
       // TODO: Testar colocando uma transação de valiação de valor zero, que não vai pertencer ao nós do KMeans, para isso, usar o Insomnia.
-
-      // TODO: Publicar a credibilidade do nó na Blockchain
-    } else {
-      // TODO: Colocar R como zero
-      logger.info("The node service provider has no evaluations."); // TODO: Remover
     }
+    // TODO: Publicar a credibilidade do nó na Blockchain
   }
 
   /**
