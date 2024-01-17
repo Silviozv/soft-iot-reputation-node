@@ -654,9 +654,6 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     }
   }
 
-  // TODO: Documentar
-  // TODO: Talvez alterar o retorno do método
-
   /**
    * Calcula a credibilidade do nó avaliador que será utilizada no cálculo da
    * avaliação.
@@ -665,7 +662,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
    * @param targetId String - ID do nó que prestou o serviço.
    * @param currentServiceEvaluation int - Nota do serviço atual.
    */
-  private void calculateCredibility(
+  private void calculateCredibility( // TODO: Talvez alterar o retorno do método
     String sourceId,
     String targetId,
     int currentServiceEvaluation
