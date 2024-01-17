@@ -661,7 +661,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
   }
 
   // TODO: Documentar
-  // TODO: Talvez alterar o retorno do meétodo
+  // TODO: Talvez alterar o retorno do método
   private void calculateCredibility(String sourceId, String targetId) {
     List<Transaction> serviceProviderEvaluationTransactions =
       this.ledgerConnector.getLedgerReader()
@@ -734,7 +734,6 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
       logger.info("R VALUE"); // TODO: Remover
       logger.info(String.valueOf(R)); // TODO: Remover
-      // TODO: Testar colocando uma transação de valiação de valor zero, que não vai pertencer ao nós do KMeans, para isso, usar o Insomnia.
     }
     // TODO: Publicar a credibilidade do nó na Blockchain
   }
