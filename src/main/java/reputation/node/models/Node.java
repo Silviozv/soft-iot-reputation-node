@@ -668,6 +668,15 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
   // TODO: Documentar
   // TODO: Talvez alterar o retorno do método
+
+  /**
+   * Calcula a credibilidade do nó avaliador que será utilizada no cálculo da
+   * avaliação.
+   *
+   * @param sourceId String - ID do nó avaliador.
+   * @param targetId String - ID do nó que prestou o serviço.
+   * @param currentServiceEvaluation int - Nota do serviço atual.
+   */
   private void calculateCredibility(
     String sourceId,
     String targetId,
@@ -676,6 +685,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     List<Transaction> serviceProviderEvaluationTransactions =
       this.ledgerConnector.getLedgerReader()
         .getTransactionsByIndex(targetId, false);
+
     /**
      * Calculando a consistência do nó.
      */
@@ -687,6 +697,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
           sourceId,
           targetId
         );
+
     /**
      * Calculando a confiabilidade do nó.
      */
