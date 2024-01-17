@@ -689,14 +689,16 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     /**
      * Calculando a consistência do nó (C(n)).
      */
-
-    /* r(t-1) */
-    int lastEvaluation =
-      this.getLastEvaluation(
+    float consistency =
+      this.calculateConsistency(
           serviceProviderEvaluationTransactions,
           sourceId,
-          targetId
+          targetId,
+          currentServiceEvaluation
         );
+
+    logger.info("CONSISTENCY"); // TODO: Remover
+    logger.info(String.valueOf(consistency)); // TODO: Remover
 
     /**
      * Calculando a confiabilidade do nó (Tr(n)).
@@ -710,6 +712,33 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     logger.info("RELIABILITY"); // TODO: Remover
     logger.info(String.valueOf(reliability)); // TODO: Remover
     // TODO: Publicar a credibilidade do nó na Blockchain
+  }
+
+  /**
+   * Calcula a consistência do nó avaliador.
+   *
+   * @param serviceProviderEvaluationTransactions List<Transaction> - Lista com
+   * as transações de avaliação que do nó prestador de serviço.
+   * @param sourceId String - ID do nó avaliador.
+   * @param targetId String - ID do nó que prestou o serviço.
+   * @param currentServiceEvaluation int - Nota do serviço atual.
+   * @return
+   */
+  private float calculateConsistency(
+    List<Transaction> serviceProviderEvaluationTransactions,
+    String sourceId,
+    String targetId,
+    int currentServiceEvaluation
+  ) {
+    /* r(t-1) */
+    int lastEvaluation =
+      this.getLastEvaluation(
+          serviceProviderEvaluationTransactions,
+          sourceId,
+          targetId
+        );
+
+    return Math.abs(currentServiceEvaluation - lastEvaluation);
   }
 
   /**
