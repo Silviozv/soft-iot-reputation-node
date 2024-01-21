@@ -667,6 +667,11 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     String targetId,
     int currentServiceEvaluation
   ) {
+    float consistencyThreshold = (float) 0.4;
+    float trustworthinessThreshold = (float) 0.4;
+    float nodeCredibility = this.getNodeCredibility(sourceId);
+    boolean firstTime = true;
+
     List<Transaction> serviceProviderEvaluationTransactions =
       this.ledgerConnector.getLedgerReader()
         .getTransactionsByIndex(targetId, false);
@@ -696,7 +701,63 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
     logger.info("TRUSTWORTHINESS"); // TODO: Remover
     logger.info(String.valueOf(trustworthiness)); // TODO: Remover
-    // TODO: Publicar a credibilidade do nó na Blockchain
+
+    /**
+     * Calculando a credibilidade do nó avaliador.
+     */
+    if (firstTime) {
+      /* Evitar que na primeira execução a credibilidade seja negativa. */
+      nodeCredibility = (float) 0.5;
+      firstTime = false;
+    } else {
+      if (
+        consistency <= consistencyThreshold &&
+        trustworthiness <= trustworthinessThreshold
+      ) {
+        nodeCredibility =
+          nodeCredibility + nodeCredibility * (trustworthiness + consistency);
+      } else if (
+        consistency > consistencyThreshold &&
+        trustworthiness <= trustworthinessThreshold
+      ) {
+        nodeCredibility = nodeCredibility + nodeCredibility * trustworthiness;
+      } else if (
+        consistency <= consistencyThreshold &&
+        trustworthiness > trustworthinessThreshold
+      ) {
+        nodeCredibility = nodeCredibility - nodeCredibility * consistency;
+      } else if (
+        consistency > consistencyThreshold &&
+        trustworthiness > trustworthinessThreshold
+      ) {
+        nodeCredibility =
+          nodeCredibility - nodeCredibility * (trustworthiness + consistency);
+      } else {
+        logger.warning(
+          "Unable to calculate the new node credibility, so using the latest."
+        );
+      }
+    }
+
+    logger.info("NODE CREDIBILITY"); // TODO: Remover
+    logger.info(String.valueOf(nodeCredibility)); // TODO: Remover
+
+    /* Escrevendo na blockchain a credibilidade calculado do nó avaliador */
+    try {
+      Transaction credibilityTransaction = new Credibility(
+        sourceId,
+        this.getNodeType().getNodeGroup(),
+        TransactionType.REP_CREDIBILITY,
+        nodeCredibility
+      );
+
+      this.ledgerConnector.getLedgerWriter()
+        .put(new IndexTransaction("cred_" + sourceId, credibilityTransaction));
+    } catch (InterruptedException ie) {
+      logger.warning("Unable to write the node credibility on blockchain");
+      logger.warning(ie.getMessage());
+    }
+    // TODO: Retornar a credibilidade calculada
   }
 
   /**
