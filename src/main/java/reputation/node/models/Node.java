@@ -545,17 +545,23 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     }
 
     /* Calculando a credibilidade deste nó */
-    this.calculateCredibility(
-        this.nodeType.getNodeId(),
-        nodeId,
-        serviceEvaluation
-      );
+    float nodeCredibility =
+      this.calculateCredibility(
+          this.nodeType.getNodeId(),
+          nodeId,
+          serviceEvaluation
+        );
     // TODO: Usar cálculo da credibilidade no valor da avaliação
 
     /**
      * Avaliando o serviço prestado pelo nó.
      */
     try {
+      float evaluationValue = serviceEvaluation * nodeCredibility;
+
+      logger.info("EVALUATION VALUE"); // TODO: Remover
+      logger.info(String.valueOf(evaluationValue)); // TODO: Remover
+
       // TODO: Alterar para evaluationValue que é calculado com serviceEvaluation e credibility
       this.nodeType.getNode()
         .evaluateServiceProvider(nodeId, serviceEvaluation);
@@ -661,8 +667,9 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
    * @param sourceId String - ID do nó avaliador.
    * @param targetId String - ID do nó que prestou o serviço.
    * @param currentServiceEvaluation int - Nota do serviço atual.
+   * @return float
    */
-  private void calculateCredibility( // TODO: Talvez alterar o retorno do método
+  private float calculateCredibility( // TODO: Talvez alterar o retorno do método
     String sourceId,
     String targetId,
     int currentServiceEvaluation
@@ -757,7 +764,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       logger.warning("Unable to write the node credibility on blockchain");
       logger.warning(ie.getMessage());
     }
-    // TODO: Retornar a credibilidade calculada
+    return nodeCredibility;
   }
 
   /**
