@@ -688,14 +688,14 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     /**
      * Calculando a confiabilidade do nó (Tr(n)).
      */
-    float reliability =
+    float trustworthiness =
       this.calculateReliability(
           serviceProviderEvaluationTransactions,
           currentServiceEvaluation
         );
 
-    logger.info("RELIABILITY"); // TODO: Remover
-    logger.info(String.valueOf(reliability)); // TODO: Remover
+    logger.info("TRUSTWORTHINESS"); // TODO: Remover
+    logger.info(String.valueOf(trustworthiness)); // TODO: Remover
     // TODO: Publicar a credibilidade do nó na Blockchain
   }
 
@@ -743,7 +743,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
     /* Obtendo a credibilidade dos nós que já avaliaram o provedor do serviço. */
     List<SourceCredibility> nodesCredibilityWithSource =
-      this.getNodesCredibility(serviceProviderEvaluationTransactions);
+      this.getNodesEvaluatorsCredibility(serviceProviderEvaluationTransactions);
 
     if (!nodesCredibilityWithSource.isEmpty()) {
       logger.info("CREDIBILITIES"); // TODO: Remover
@@ -838,7 +838,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
    * transações de avaliações.
    * @return List<SourceCredibility>
    */
-  private List<SourceCredibility> getNodesCredibility(
+  private List<SourceCredibility> getNodesEvaluatorsCredibility(
     List<Transaction> serviceProviderEvaluationTransactions
   ) {
     List<SourceCredibility> nodesCredibility = new ArrayList<>();
@@ -864,31 +864,43 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
         /* O index para pegar a credibilidade segue o formato: cred_<id do nó>. */
         String source = transaction.getSource();
 
-        List<Transaction> tempCredibility =
-          this.ledgerConnector.getLedgerReader()
-            .getTransactionsByIndex("cred_" + source, false);
-
-        float nodeCredibility = Optional
-          .ofNullable(tempCredibility)
-          .map(transactions ->
-            transactions
-              .stream()
-              .sorted((t1, t2) ->/* Ordenando em ordem decrescente. */
-                Long.compare(t2.getCreatedAt(), t1.getCreatedAt())
-              )
-              .collect(Collectors.toList())
-          )
-          .filter(list -> !list.isEmpty())
-          /* Obtendo a credibilidade mais recente calculada pelo nó */
-          .map(list -> ((Credibility) list.get(0)).getValue())
-          /* Caso o nó ainda não tenha calculado a sua credibilidade, por padrão é 0.5. */
-          .orElse((float) 0.5);
+        float nodeCredibility = this.getNodeCredibility(source);
 
         nodesCredibility.add(new SourceCredibility(source, nodeCredibility));
       }
     }
 
     return nodesCredibility;
+  }
+
+  /**
+   * Obtém a credibilidade mais recente de um nó.
+   *
+   * @param nodeId String - ID do nó que se deseja saber a credibilidade.
+   * @return float
+   */
+  public float getNodeCredibility(String nodeId) {
+    List<Transaction> tempCredibility =
+      this.ledgerConnector.getLedgerReader()
+        .getTransactionsByIndex("cred_" + nodeId, false);
+
+    float nodeCredibility = Optional
+      .ofNullable(tempCredibility)
+      .map(transactions ->
+        transactions
+          .stream()
+          .sorted((t1, t2) ->/* Ordenando em ordem decrescente. */
+            Long.compare(t2.getCreatedAt(), t1.getCreatedAt())
+          )
+          .collect(Collectors.toList())
+      )
+      .filter(list -> !list.isEmpty())
+      /* Obtendo a credibilidade mais recente calculada pelo nó */
+      .map(list -> ((Credibility) list.get(0)).getValue())
+      /* Caso o nó ainda não tenha calculado a sua credibilidade, por padrão é 0.5. */
+      .orElse((float) 0.5);
+
+    return nodeCredibility;
   }
 
   /**
