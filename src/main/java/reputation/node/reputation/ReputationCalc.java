@@ -16,7 +16,7 @@ public class ReputationCalc implements IReputationCalc {
   public Double calc(List<Transaction> evaluationTransactions) {
     return evaluationTransactions
       .stream()
-      .mapToInt(et -> ((Evaluation) et).getValue())
+      .mapToDouble(et -> ((Evaluation) et).getValue())
       .average()
       .orElse(0.0);
   }

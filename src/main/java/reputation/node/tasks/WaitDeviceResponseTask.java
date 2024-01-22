@@ -52,7 +52,7 @@ public class WaitDeviceResponseTask extends TimerTask {
       try {
         this.node.getNodeType()
           .getNode()
-          .evaluateServiceProvider(this.deviceId, 0);
+          .evaluateServiceProvider(this.deviceId, 0, false);
       } catch (InterruptedException e) {
         logger.warning("Could not add transaction on tangle network.");
       }

@@ -83,9 +83,9 @@ public class ListenerDevices implements IMqttMessageListener {
       if (this.node.getWaitDeviceResponseTask() != null) {
         this.node.getWaitDeviceResponseTask().cancel();
       }
-      // Avaliação de serviço prestado corretamente.
+      /* Avaliação de serviço prestado corretamente. */
       try {
-        this.node.getNodeType().getNode().evaluateServiceProvider(deviceId, 1);
+        this.node.getNodeType().getNode().evaluateServiceProvider(deviceId, 1, true);
       } catch (Exception e) {
         logger.warning("Could not add transaction on tangle network.");
       }

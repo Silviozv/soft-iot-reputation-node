@@ -72,6 +72,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
   private String lastNodeServiceTransactionType = null;
   private boolean isRequestingNodeServices = false;
   private boolean canReceiveNodesResponse = false;
+  private boolean calculateCredibilityFirstTime = true;
   private static final Logger logger = Logger.getLogger(Node.class.getName());
 
   public Node() {}
@@ -490,7 +491,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     boolean isNullable = false;
     String response = null;
     String sensorValue = null;
-    int serviceEvaluation = 0;
+    float serviceEvaluation = 0;
 
     this.enableDevicesPage(nodeIp, deviceId, sensorId);
 
@@ -551,7 +552,6 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
           nodeId,
           serviceEvaluation
         );
-    // TODO: Usar cálculo da credibilidade no valor da avaliação
 
     /**
      * Avaliando o serviço prestado pelo nó.
@@ -562,9 +562,12 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       logger.info("EVALUATION VALUE"); // TODO: Remover
       logger.info(String.valueOf(evaluationValue)); // TODO: Remover
 
-      // TODO: Alterar para evaluationValue que é calculado com serviceEvaluation e credibility
       this.nodeType.getNode()
-        .evaluateServiceProvider(nodeId, serviceEvaluation);
+        .evaluateServiceProvider(
+          nodeId,
+          evaluationValue,
+          serviceEvaluation != 0
+        );
     } catch (InterruptedException ie) {
       logger.severe(ie.getStackTrace().toString());
     }
@@ -666,18 +669,17 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
    *
    * @param sourceId String - ID do nó avaliador.
    * @param targetId String - ID do nó que prestou o serviço.
-   * @param currentServiceEvaluation int - Nota do serviço atual.
+   * @param currentServiceEvaluation float - Nota do serviço atual.
    * @return float
    */
-  private float calculateCredibility( // TODO: Talvez alterar o retorno do método
+  private float calculateCredibility(
     String sourceId,
     String targetId,
-    int currentServiceEvaluation
+    float currentServiceEvaluation
   ) {
     float consistencyThreshold = (float) 0.4;
     float trustworthinessThreshold = (float) 0.4;
     float nodeCredibility = this.getNodeCredibility(sourceId);
-    boolean firstTime = true;
 
     List<Transaction> serviceProviderEvaluationTransactions =
       this.ledgerConnector.getLedgerReader()
@@ -709,13 +711,16 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     logger.info("TRUSTWORTHINESS"); // TODO: Remover
     logger.info(String.valueOf(trustworthiness)); // TODO: Remover
 
+    logger.info("LATEST NODE CREDIBILITY"); // TODO: Remover
+    logger.info(String.valueOf(nodeCredibility)); // TODO: Remover
+
     /**
      * Calculando a credibilidade do nó avaliador.
      */
-    if (firstTime) {
+    if (this.calculateCredibilityFirstTime) {
       /* Evitar que na primeira execução a credibilidade seja negativa. */
       nodeCredibility = (float) 0.5;
-      firstTime = false;
+      this.calculateCredibilityFirstTime = false;
     } else {
       if (
         consistency <= consistencyThreshold &&
@@ -746,7 +751,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       }
     }
 
-    logger.info("NODE CREDIBILITY"); // TODO: Remover
+    logger.info("NEW NODE CREDIBILITY"); // TODO: Remover
     logger.info(String.valueOf(nodeCredibility)); // TODO: Remover
 
     /* Escrevendo na blockchain a credibilidade calculado do nó avaliador */
@@ -774,17 +779,17 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
    * as transações de avaliação que do nó prestador de serviço.
    * @param sourceId String - ID do nó avaliador.
    * @param targetId String - ID do nó que prestou o serviço.
-   * @param currentServiceEvaluation int - Nota do serviço atual.
+   * @param currentServiceEvaluation float - Nota do serviço atual.
    * @return
    */
   private float calculateConsistency(
     List<Transaction> serviceProviderEvaluationTransactions,
     String sourceId,
     String targetId,
-    int currentServiceEvaluation
+    float currentServiceEvaluation
   ) {
     /* r(t-1) */
-    int lastEvaluation =
+    float lastEvaluation =
       this.getLastEvaluation(
           serviceProviderEvaluationTransactions,
           sourceId,
@@ -799,12 +804,12 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
    *
    * @param serviceProviderEvaluationTransactions List<Transaction> - Lista com
    * as transações de avaliação que do nó prestador de serviço.
-   * @param currentServiceEvaluation int - Nota do serviço atual.
+   * @param currentServiceEvaluation float - Nota do serviço atual.
    * @return float
    */
-  private float calculateReliability(
+  private float calculateReliability( // TODO: Alterar nome do método
     List<Transaction> serviceProviderEvaluationTransactions,
-    int currentServiceEvaluation
+    float currentServiceEvaluation
   ) {
     /* Inicializando o valor de R */
     float R = (float) 0.0;
@@ -871,9 +876,9 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
    * transações de avaliação do prestador do serviço
    * @param sourceId String - ID do nó avaliador.
    * @param targetId String - ID do prestador do serviço.
-   * @return int
+   * @return float
    */
-  private int getLastEvaluation( // TODO: Provavelmente o retorno vai ser alterado para 'float' ou 'double'
+  private float getLastEvaluation(
     List<Transaction> serviceProviderEvaluationTransactions,
     String sourceId,
     String targetId
@@ -894,7 +899,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       )
       .filter(list -> !list.isEmpty())
       .map(list -> ((Evaluation) list.get(0)).getValue())
-      .orElse(0);/* Caso não exista nenhuma avaliação. */
+      .orElse((float) 0.0);/* Caso não exista nenhuma avaliação. */
   }
 
   /**
