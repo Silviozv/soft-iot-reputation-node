@@ -703,7 +703,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
      * Calculando a confiabilidade do nó (Tr(n)).
      */
     float trustworthiness =
-      this.calculateReliability(
+      this.calculateTrustworthiness(
           serviceProviderEvaluationTransactions,
           currentServiceEvaluation
         );
@@ -807,7 +807,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
    * @param currentServiceEvaluation float - Nota do serviço atual.
    * @return float
    */
-  private float calculateReliability( // TODO: Alterar nome do método
+  private float calculateTrustworthiness(
     List<Transaction> serviceProviderEvaluationTransactions,
     float currentServiceEvaluation
   ) {
