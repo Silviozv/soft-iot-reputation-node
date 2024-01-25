@@ -750,6 +750,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
           "Unable to calculate the new node credibility, so using the latest."
         );
       }
+
+      nodeCredibility = (nodeCredibility > 1) ? 1 : nodeCredibility;
     }
 
     logger.info("NEW NODE CREDIBILITY"); // TODO: Remover
