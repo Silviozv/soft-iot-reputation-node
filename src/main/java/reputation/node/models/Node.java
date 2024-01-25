@@ -840,6 +840,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       /* Obtendo somente os nós que possuem as credibilidades calculadas pelo algoritmo KMeans. */
       List<SourceCredibility> nodesWithHighestCredibilities = nodesCredibilityWithSource
         .stream()
+        .filter(node -> !node.getSource().equals(this.getNodeType().getNodeId()))
         .filter(node -> kMeansResult.contains(node.getCredibility()))
         .collect(Collectors.toList());
 
