@@ -491,7 +491,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     boolean isNullable = false;
     String response = null;
     String sensorValue = null;
-    float serviceEvaluation = 0;
+    int serviceEvaluation = 0;
 
     this.enableDevicesPage(nodeIp, deviceId, sensorId);
 
@@ -565,8 +565,9 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       this.nodeType.getNode()
         .evaluateServiceProvider(
           nodeId,
-          evaluationValue,
-          serviceEvaluation != 0
+          serviceEvaluation,
+          nodeCredibility,
+          evaluationValue
         );
     } catch (InterruptedException ie) {
       logger.severe(ie.getStackTrace().toString());

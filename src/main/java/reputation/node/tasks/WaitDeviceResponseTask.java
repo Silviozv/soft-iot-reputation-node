@@ -50,9 +50,19 @@ public class WaitDeviceResponseTask extends TimerTask {
 
       // Avaliação de serviço prestado incorretamente.
       try {
+        int serviceEvaluation = 0;
+        float nodeCredibility =
+          this.node.getNodeCredibility(this.node.getNodeType().getNodeId());
+        float evaluationValue = serviceEvaluation * nodeCredibility;
+
         this.node.getNodeType()
           .getNode()
-          .evaluateServiceProvider(this.deviceId, 0, false);
+          .evaluateServiceProvider(
+            this.deviceId,
+            serviceEvaluation,
+            nodeCredibility,
+            evaluationValue
+          );
       } catch (InterruptedException e) {
         logger.warning("Could not add transaction on tangle network.");
       }
