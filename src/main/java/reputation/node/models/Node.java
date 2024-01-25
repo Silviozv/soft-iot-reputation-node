@@ -72,7 +72,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
   private String lastNodeServiceTransactionType = null;
   private boolean isRequestingNodeServices = false;
   private boolean canReceiveNodesResponse = false;
-  private boolean calculateCredibilityFirstTime = true;
+  private boolean isAverageEvaluationZero = false;
   private static final Logger logger = Logger.getLogger(Node.class.getName());
 
   public Node() {}
@@ -718,10 +718,10 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     /**
      * Calculando a credibilidade do nó avaliador.
      */
-    if (this.calculateCredibilityFirstTime) {
-      /* Evitar que na primeira execução a credibilidade seja negativa. */
+    if (this.isAverageEvaluationZero) {
+      /* Caso o provedor de serviço não tenha recebido avaliações, deve-se
+      considerar a credibilidade inicial do nó avaliador. */
       nodeCredibility = (float) 0.5;
-      this.calculateCredibilityFirstTime = false;
     } else {
       if (
         consistency <= consistencyThreshold &&
@@ -860,6 +860,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       /* Caso existam transações de avaliação, atualiza o valor de R como a média dessas avaliações. */
       if (temp.isPresent()) {
         R = (float) temp.getAsDouble();
+      } else {
+        this.isAverageEvaluationZero = true;
       }
 
       logger.info("R VALUE"); // TODO: Remover
