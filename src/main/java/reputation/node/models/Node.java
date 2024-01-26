@@ -670,13 +670,13 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
    *
    * @param sourceId String - ID do nó avaliador.
    * @param targetId String - ID do nó que prestou o serviço.
-   * @param currentServiceEvaluation float - Nota do serviço atual.
+   * @param currentServiceEvaluation int - Nota do serviço atual.
    * @return float
    */
   private float calculateCredibility(
     String sourceId,
     String targetId,
-    float currentServiceEvaluation
+    int currentServiceEvaluation
   ) {
     float consistencyThreshold = (float) 0.4;
     float trustworthinessThreshold = (float) 0.4;
@@ -691,7 +691,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     /**
      * Calculando a consistência do nó (C(n)).
      */
-    float consistency =
+    int consistency =
       this.calculateConsistency(
           serviceProviderEvaluationTransactions,
           sourceId,
@@ -783,17 +783,17 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
    * as transações de avaliação que do nó prestador de serviço.
    * @param sourceId String - ID do nó avaliador.
    * @param targetId String - ID do nó que prestou o serviço.
-   * @param currentServiceEvaluation float - Nota do serviço atual.
-   * @return
+   * @param currentServiceEvaluation int - Nota do serviço atual.
+   * @return int
    */
-  private float calculateConsistency(
+  private int calculateConsistency(
     List<Transaction> serviceProviderEvaluationTransactions,
     String sourceId,
     String targetId,
-    float currentServiceEvaluation
+    int currentServiceEvaluation
   ) {
     /* r(t-1) */
-    float lastEvaluation =
+    int lastEvaluation =
       this.getLastEvaluation(
           serviceProviderEvaluationTransactions,
           sourceId,
@@ -889,9 +889,9 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
    * transações de avaliação do prestador do serviço
    * @param sourceId String - ID do nó avaliador.
    * @param targetId String - ID do prestador do serviço.
-   * @return float
+   * @return int
    */
-  private float getLastEvaluation(
+  private int getLastEvaluation(
     List<Transaction> serviceProviderEvaluationTransactions,
     String sourceId,
     String targetId
@@ -911,8 +911,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
           .collect(Collectors.toList())
       )
       .filter(list -> !list.isEmpty())
-      .map(list -> ((Evaluation) list.get(0)).getValue())
-      .orElse((float) 0.0);/* Caso não exista nenhuma avaliação. */
+      .map(list -> ((Evaluation) list.get(0)).getServiceEvaluation())
+      .orElse(0);/* Caso não exista nenhuma avaliação. */
   }
 
   /**
