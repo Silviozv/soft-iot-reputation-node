@@ -728,23 +728,23 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
         trustworthiness <= trustworthinessThreshold
       ) {
         nodeCredibility =
-          nodeCredibility + nodeCredibility * (trustworthiness + consistency);
+          nodeCredibility + nodeCredibility * (trustworthiness + consistency); // TODO: Alterar o cálculo
       } else if (
         consistency > consistencyThreshold &&
         trustworthiness <= trustworthinessThreshold
       ) {
-        nodeCredibility = nodeCredibility + nodeCredibility * trustworthiness;
+        nodeCredibility = nodeCredibility + nodeCredibility * trustworthiness; // TODO: Alterar o cálculo
       } else if (
         consistency <= consistencyThreshold &&
         trustworthiness > trustworthinessThreshold
       ) {
-        nodeCredibility = nodeCredibility - nodeCredibility * consistency;
+        nodeCredibility = nodeCredibility - nodeCredibility * consistency; // TODO: Alterar o cálculo
       } else if (
         consistency > consistencyThreshold &&
         trustworthiness > trustworthinessThreshold
       ) {
         nodeCredibility =
-          nodeCredibility - nodeCredibility * (trustworthiness + consistency);
+          nodeCredibility - nodeCredibility * (trustworthiness + consistency); // TODO: Alterar o cálculo
       } else {
         logger.warning(
           "Unable to calculate the new node credibility, so using the latest."
@@ -840,7 +840,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       /* Obtendo somente os nós que possuem as credibilidades calculadas pelo algoritmo KMeans. */
       List<SourceCredibility> nodesWithHighestCredibilities = nodesCredibilityWithSource
         .stream()
-        .filter(node -> !node.getSource().equals(this.getNodeType().getNodeId()))
+        .filter(node -> !node.getSource().equals(this.getNodeType().getNodeId())
+        )
         .filter(node -> kMeansResult.contains(node.getCredibility()))
         .collect(Collectors.toList());
 
@@ -857,7 +858,9 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
               nodeEvaluation.getSource().equals(sourceCredibility.getSource())
             )
         )
-        .mapToDouble(nodeEvaluation -> ((Evaluation) nodeEvaluation).getValue())
+        .mapToDouble(nodeEvaluation ->
+          ((Evaluation) nodeEvaluation).getServiceEvaluation()
+        )
         .average();
 
       /* Caso existam transações de avaliação, atualiza o valor de R como a média dessas avaliações. */
