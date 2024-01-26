@@ -541,7 +541,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       logger.severe(ioe.getMessage());
     }
 
-    if (!isNullable && sensorValue != null) { // Prestou o serviço.
+    /* Prestou o serviço. */
+    if (!isNullable && sensorValue != null) {
       serviceEvaluation = 1;
     }
 
@@ -872,9 +873,6 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     }
 
     this.isAverageEvaluationZero = (R == 0.0) ? true : false;
-
-    logger.info("R == 0"); // TODO: Remover
-    logger.info(String.valueOf(this.isAverageEvaluationZero)); // TODO: Remover
 
     return Math.abs(currentServiceEvaluation - R);
   }
