@@ -841,8 +841,6 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       /* Obtendo somente os nós que possuem as credibilidades calculadas pelo algoritmo KMeans. */
       List<SourceCredibility> nodesWithHighestCredibilities = nodesCredibilityWithSource
         .stream()
-        .filter(node -> !node.getSource().equals(this.getNodeType().getNodeId())
-        )
         .filter(node -> kMeansResult.contains(node.getCredibility()))
         .collect(Collectors.toList());
 
@@ -932,7 +930,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     if (
       Optional.ofNullable(serviceProviderEvaluationTransactions).isPresent()
     ) {
-      /* Filtrando somente uma avaliação por nó avaliador. */
+      /* Filtrando somente uma avaliação por nó avaliador, e não levando em 
+      consideração as avaliações do atual nó avaliador. */
       List<Transaction> uniqueServiceProviderEvaluationTransactions = serviceProviderEvaluationTransactions
         .stream()
         .collect(
@@ -944,6 +943,9 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
         )
         .values()
         .stream()
+        .filter(transaction ->
+          !transaction.getSource().equals(this.getNodeType().getNodeId())
+        )
         .collect(Collectors.toList());
 
       for (Transaction transaction : uniqueServiceProviderEvaluationTransactions) {
