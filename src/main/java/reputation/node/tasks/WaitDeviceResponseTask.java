@@ -48,7 +48,7 @@ public class WaitDeviceResponseTask extends TimerTask {
     if ((timer * 1000) >= timeoutWaitDeviceResponse) {
       logger.warning("Timeout for waiting for " + this.deviceId + " response.");
 
-      // Avaliação de serviço prestado incorretamente.
+      /* Avaliação de serviço prestado incorretamente. */
       try {
         int serviceEvaluation = 0;
         float nodeCredibility =
