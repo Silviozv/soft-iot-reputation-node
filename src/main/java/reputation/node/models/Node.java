@@ -681,6 +681,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     float consistencyThreshold = (float) 0.4;
     float trustworthinessThreshold = (float) 0.4;
     float nodeCredibility = this.getNodeCredibility(sourceId);
+    float higherGrowthRate = (float) 0.1;
+    float lowerGrowthRate = (float) 0.05;
 
     List<Transaction> serviceProviderEvaluationTransactions =
       this.ledgerConnector.getLedgerReader()
@@ -727,30 +729,29 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
         consistency <= consistencyThreshold &&
         trustworthiness <= trustworthinessThreshold
       ) {
-        nodeCredibility =
-          nodeCredibility + nodeCredibility * (trustworthiness + consistency); // TODO: Alterar o cálculo
+        nodeCredibility = nodeCredibility + nodeCredibility * higherGrowthRate;
       } else if (
         consistency > consistencyThreshold &&
         trustworthiness <= trustworthinessThreshold
       ) {
-        nodeCredibility = nodeCredibility + nodeCredibility * trustworthiness; // TODO: Alterar o cálculo
+        nodeCredibility = nodeCredibility + nodeCredibility * lowerGrowthRate; // TODO: Alterar o cálculo
       } else if (
         consistency <= consistencyThreshold &&
         trustworthiness > trustworthinessThreshold
       ) {
-        nodeCredibility = nodeCredibility - nodeCredibility * consistency; // TODO: Alterar o cálculo
+        nodeCredibility = nodeCredibility - nodeCredibility * lowerGrowthRate; // TODO: Alterar o cálculo
       } else if (
         consistency > consistencyThreshold &&
         trustworthiness > trustworthinessThreshold
       ) {
-        nodeCredibility =
-          nodeCredibility - nodeCredibility * (trustworthiness + consistency); // TODO: Alterar o cálculo
+        nodeCredibility = nodeCredibility - nodeCredibility * higherGrowthRate; // TODO: Alterar o cálculo
       } else {
         logger.warning(
           "Unable to calculate the new node credibility, so using the latest."
         );
       }
 
+      /* Limitando o valor máximo da credibilidade. */
       nodeCredibility = (nodeCredibility > 1) ? 1 : nodeCredibility;
     }
 
@@ -866,13 +867,16 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       /* Caso existam transações de avaliação, atualiza o valor de R como a média dessas avaliações. */
       if (temp.isPresent()) {
         R = (float) temp.getAsDouble();
-      } else {
-        this.isAverageEvaluationZero = true;
       }
 
       logger.info("R VALUE"); // TODO: Remover
       logger.info(String.valueOf(R)); // TODO: Remover
     }
+
+    this.isAverageEvaluationZero = (R == 0.0) ? true : false;
+
+    logger.info("R == 0"); // TODO: Remover
+    logger.info(String.valueOf(this.isAverageEvaluationZero)); // TODO: Remover
 
     return Math.abs(currentServiceEvaluation - R);
   }
