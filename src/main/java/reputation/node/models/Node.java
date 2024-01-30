@@ -73,6 +73,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
   private boolean isRequestingNodeServices = false;
   private boolean canReceiveNodesResponse = false;
   private boolean isAverageEvaluationZero = false;
+  private boolean useCredibility;
   private static final Logger logger = Logger.getLogger(Node.class.getName());
 
   public Node() {}
@@ -492,6 +493,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     String response = null;
     String sensorValue = null;
     int serviceEvaluation = 0;
+    float nodeCredibility = 0;
 
     this.enableDevicesPage(nodeIp, deviceId, sensorId);
 
@@ -546,19 +548,25 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       serviceEvaluation = 1;
     }
 
-    /* Calculando a credibilidade deste nó */
-    float nodeCredibility =
-      this.calculateCredibility(
-          this.nodeType.getNodeId(),
-          nodeId,
-          serviceEvaluation
-        );
+    if (this.useCredibility) {
+      /* Calculando a credibilidade deste nó */
+      nodeCredibility =
+        this.calculateCredibility(
+            this.nodeType.getNodeId(),
+            nodeId,
+            serviceEvaluation
+          );
+    }
 
     /**
      * Avaliando o serviço prestado pelo nó.
      */
     try {
-      float evaluationValue = serviceEvaluation * nodeCredibility;
+      float evaluationValue = serviceEvaluation;
+
+      if (this.useCredibility) {
+        evaluationValue = serviceEvaluation * nodeCredibility;
+      }
 
       logger.info("EVALUATION VALUE"); // TODO: Remover
       logger.info(String.valueOf(evaluationValue)); // TODO: Remover
@@ -1195,5 +1203,13 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
   public void setWaitNodesResponsesTaskTime(int waitNodesResponsesTaskTime) {
     this.waitNodesResponsesTaskTime = waitNodesResponsesTaskTime;
+  }
+
+  public boolean isUseCredibility() {
+    return useCredibility;
+  }
+
+  public void setUseCredibility(boolean useCredibility) {
+    this.useCredibility = useCredibility;
   }
 }

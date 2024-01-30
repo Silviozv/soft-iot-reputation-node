@@ -37,6 +37,7 @@
         <property name="waitNodesResponsesTaskTime" value="${waitNodesResponsesTaskTime}" />
         <property name="deviceManager" ref="deviceManagerService" />
         <property name="ledgerConnector" ref="ledgerConnector" />
+        <property name="useCredibility" value="${useCredibility}" />
     </bean>
 
     <bean id="ledgerConnector" class="reputation.node.tangle.LedgerConnector">
@@ -57,6 +58,7 @@
             <cm:property name="waitDeviceResponseTaskTime" value="10" />
             <cm:property name="checkNodesServicesTaskTime" value="15" /> <!-- TODO: Alterar para 45-->
             <cm:property name="waitNodesResponsesTaskTime" value="10" /> <!-- TODO: Alterar para 30-->
+            <cm:property name="useCredibility" value="true" />
             <cm:property name="debugModeValue" value="true" />
         </cm:default-properties>
     </cm:property-placeholder>
