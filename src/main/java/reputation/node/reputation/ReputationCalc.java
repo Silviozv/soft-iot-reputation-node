@@ -12,6 +12,13 @@ import java.util.List;
  */
 public class ReputationCalc implements IReputationCalc {
 
+  /**
+   * Calcula a reputação de uma coisa.
+   *
+   * @param evaluationTransactions List<Transaction> - Lista com as transações
+   * de avaliação da coisa.
+   * @return Double
+   */
   @Override
   public Double calc(List<Transaction> evaluationTransactions) {
     return evaluationTransactions
