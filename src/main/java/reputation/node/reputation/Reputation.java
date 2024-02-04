@@ -10,7 +10,7 @@ import java.util.List;
  * @author Allan Capistrano
  * @version 1.0.0
  */
-public class ReputationCalc implements IReputation {
+public class Reputation implements IReputation {
 
   /**
    * Calcula a reputação de uma coisa.

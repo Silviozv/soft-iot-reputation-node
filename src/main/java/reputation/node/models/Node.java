@@ -35,7 +35,7 @@ import python.to.java.services.IKMeans;
 import reputation.node.enums.NodeServiceType;
 import reputation.node.mqtt.ListenerDevices;
 import reputation.node.reputation.IReputation;
-import reputation.node.reputation.ReputationCalc;
+import reputation.node.reputation.Reputation;
 import reputation.node.reputation.ReputationCalcUsingKMeans;
 import reputation.node.reputation.credibility.NodeCredibility;
 import reputation.node.services.NodeTypeService;
@@ -386,7 +386,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
         if (evaluationTransactions.isEmpty()) {
           reputation = 0.5;
         } else {
-          IReputation reputationCalc = new ReputationCalc();
+          IReputation reputationCalc = new Reputation();
           reputation = reputationCalc.calc(evaluationTransactions);
         }
 
