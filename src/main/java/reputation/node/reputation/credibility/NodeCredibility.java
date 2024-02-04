@@ -2,9 +2,11 @@ package reputation.node.reputation.credibility;
 
 import dlt.client.tangle.hornet.model.transactions.Transaction;
 import dlt.client.tangle.hornet.model.transactions.reputation.Credibility;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import reputation.node.models.SourceCredibility;
 import reputation.node.tangle.LedgerConnector;
 
 /**
@@ -47,6 +49,54 @@ public final class NodeCredibility implements INodeCredibility {
       .orElse((float) 0.5);
 
     return nodeCredibility;
+  }
+
+  /**
+   * Obtém e adiciona em uma lista, os valores da credibilidade mais recente dos
+   * nós avaliadores cujos IDs foram informados pela lista de transações de
+   * avaliações.
+   *
+   * @param serviceProviderEvaluationTransactions List<Transaction> - Lista de
+   * transações de avaliações.
+   * @param sourceId String - ID do atual nó avaliador.
+   * @return List<SourceCredibility>
+   */
+  public List<SourceCredibility> getNodesEvaluatorsCredibility(
+    List<Transaction> serviceProviderEvaluationTransactions,
+    String sourceId
+  ) {
+    List<SourceCredibility> nodesCredibility = new ArrayList<>();
+
+    if (
+      Optional.ofNullable(serviceProviderEvaluationTransactions).isPresent()
+    ) {
+      /* Filtrando somente uma avaliação por nó avaliador, e não levando em 
+      consideração as avaliações do atual nó avaliador. */
+      List<Transaction> uniqueServiceProviderEvaluationTransactions = serviceProviderEvaluationTransactions
+        .stream()
+        .collect(
+          Collectors.toMap(
+            Transaction::getSource,
+            obj -> obj,
+            (existing, replacement) -> existing
+          )
+        )
+        .values()
+        .stream()
+        .filter(transaction -> !transaction.getSource().equals(sourceId))
+        .collect(Collectors.toList());
+
+      for (Transaction transaction : uniqueServiceProviderEvaluationTransactions) {
+        /* O index para pegar a credibilidade segue o formato: cred_<id do nó>. */
+        String source = transaction.getSource();
+
+        float nodeCredibility = this.get(source);
+
+        nodesCredibility.add(new SourceCredibility(source, nodeCredibility));
+      }
+    }
+
+    return nodesCredibility;
   }
 
   public LedgerConnector getLedgerConnector() {

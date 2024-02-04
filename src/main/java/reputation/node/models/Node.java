@@ -831,7 +831,10 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
     /* Obtendo a credibilidade dos nós que já avaliaram o provedor do serviço. */
     List<SourceCredibility> nodesCredibilityWithSource =
-      this.getNodesEvaluatorsCredibility(serviceProviderEvaluationTransactions);
+      this.nodeCredibility.getNodesEvaluatorsCredibility(
+          serviceProviderEvaluationTransactions,
+          this.getNodeType().getNodeId()
+        );
 
     if (!nodesCredibilityWithSource.isEmpty()) {
       logger.info("CREDIBILITIES"); // TODO: Remover
@@ -919,54 +922,6 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       .filter(list -> !list.isEmpty())
       .map(list -> ((Evaluation) list.get(0)).getServiceEvaluation())
       .orElse(0);/* Caso não exista nenhuma avaliação. */
-  }
-
-  /**
-   * Obtém e adiciona em uma lista, os valores da credibilidade mais recente dos
-   * nós avaliadores cujos IDs foram informados pela lista de transações de
-   * avaliações.
-   *
-   * @param serviceProviderEvaluationTransactions List<Transaction> - Lista de
-   * transações de avaliações.
-   * @return List<SourceCredibility>
-   */
-  private List<SourceCredibility> getNodesEvaluatorsCredibility(
-    List<Transaction> serviceProviderEvaluationTransactions
-  ) {
-    List<SourceCredibility> nodesCredibility = new ArrayList<>();
-
-    if (
-      Optional.ofNullable(serviceProviderEvaluationTransactions).isPresent()
-    ) {
-      /* Filtrando somente uma avaliação por nó avaliador, e não levando em 
-      consideração as avaliações do atual nó avaliador. */
-      List<Transaction> uniqueServiceProviderEvaluationTransactions = serviceProviderEvaluationTransactions
-        .stream()
-        .collect(
-          Collectors.toMap(
-            Transaction::getSource,
-            obj -> obj,
-            (existing, replacement) -> existing
-          )
-        )
-        .values()
-        .stream()
-        .filter(transaction ->
-          !transaction.getSource().equals(this.getNodeType().getNodeId())
-        )
-        .collect(Collectors.toList());
-
-      for (Transaction transaction : uniqueServiceProviderEvaluationTransactions) {
-        /* O index para pegar a credibilidade segue o formato: cred_<id do nó>. */
-        String source = transaction.getSource();
-
-        float nodeCredibility = this.getNodeCredibility(source);
-
-        nodesCredibility.add(new SourceCredibility(source, nodeCredibility));
-      }
-    }
-
-    return nodesCredibility;
   }
 
   /**
