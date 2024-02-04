@@ -8,7 +8,7 @@ import java.util.List;
  * @author Allan Capistrano
  * @version 1.0.0
  */
-public interface IReputationCalc {
+public interface IReputation {
   /**
    * Calcula a reputação de uma coisa.
    *

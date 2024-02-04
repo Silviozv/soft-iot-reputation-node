@@ -17,7 +17,7 @@ import reputation.node.reputation.credibility.NodeCredibility;
  * @author Allan Capistrano
  * @version 1.0.0
  */
-public class ReputationCalcUsingKMeans implements IReputationCalc {
+public class ReputationCalcUsingKMeans implements IReputation {
 
   private final IKMeans kMeans;
   private final INodeCredibility nodeCredibility;
