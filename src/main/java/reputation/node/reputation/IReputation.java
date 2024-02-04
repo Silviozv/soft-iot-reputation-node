@@ -16,5 +16,5 @@ public interface IReputation {
    * de avaliação da coisa.
    * @return Double
    */
-  Double calc(List<Transaction> evaluationTransactions);
+  Double calculate(List<Transaction> evaluationTransactions);
 }

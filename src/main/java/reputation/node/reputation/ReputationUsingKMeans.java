@@ -50,7 +50,7 @@ public class ReputationUsingKMeans implements IReputation {
    * @return Double
    */
   @Override
-  public Double calc(List<Transaction> evaluationTransactions) {
+  public Double calculate(List<Transaction> evaluationTransactions) {
     double reputation = 0.0;
 
     List<SourceCredibility> nodesCredibilityWithSource =

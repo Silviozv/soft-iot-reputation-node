@@ -20,7 +20,7 @@ public class Reputation implements IReputation {
    * @return Double
    */
   @Override
-  public Double calc(List<Transaction> evaluationTransactions) {
+  public Double calculate(List<Transaction> evaluationTransactions) {
     return evaluationTransactions
       .stream()
       .mapToDouble(et -> ((Evaluation) et).getServiceEvaluation())
