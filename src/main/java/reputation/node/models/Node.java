@@ -36,6 +36,7 @@ import reputation.node.enums.NodeServiceType;
 import reputation.node.mqtt.ListenerDevices;
 import reputation.node.reputation.IReputationCalc;
 import reputation.node.reputation.ReputationCalc;
+import reputation.node.reputation.ReputationCalcUsingKMeans;
 import reputation.node.reputation.credibility.NodeCredibility;
 import reputation.node.services.NodeTypeService;
 import reputation.node.tangle.LedgerConnector;
@@ -317,7 +318,11 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       if (evaluationTransactions.isEmpty()) {
         reputation = 0.5;
       } else {
-        IReputationCalc reputationCalc = new ReputationCalc();
+        IReputationCalc reputationCalc = new ReputationCalcUsingKMeans(
+          this.kMeans,
+          this.nodeCredibility,
+          this.getNodeType().getNodeId()
+        );
         reputation = reputationCalc.calc(evaluationTransactions);
       }
 
@@ -745,17 +750,17 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
         consistency > consistencyThreshold &&
         trustworthiness <= trustworthinessThreshold
       ) {
-        nodeCredibility = nodeCredibility + nodeCredibility * lowerGrowthRate; // TODO: Alterar o cálculo
+        nodeCredibility = nodeCredibility + nodeCredibility * lowerGrowthRate;
       } else if (
         consistency <= consistencyThreshold &&
         trustworthiness > trustworthinessThreshold
       ) {
-        nodeCredibility = nodeCredibility - nodeCredibility * lowerGrowthRate; // TODO: Alterar o cálculo
+        nodeCredibility = nodeCredibility - nodeCredibility * lowerGrowthRate;
       } else if (
         consistency > consistencyThreshold &&
         trustworthiness > trustworthinessThreshold
       ) {
-        nodeCredibility = nodeCredibility - nodeCredibility * higherGrowthRate; // TODO: Alterar o cálculo
+        nodeCredibility = nodeCredibility - nodeCredibility * higherGrowthRate;
       } else {
         logger.warning(
           "Unable to calculate the new node credibility, so using the latest."
@@ -833,7 +838,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     List<SourceCredibility> nodesCredibilityWithSource =
       this.nodeCredibility.getNodesEvaluatorsCredibility(
           serviceProviderEvaluationTransactions,
-          this.getNodeType().getNodeId()
+          this.getNodeType().getNodeId(),
+          false
         );
 
     if (!nodesCredibilityWithSource.isEmpty()) {
