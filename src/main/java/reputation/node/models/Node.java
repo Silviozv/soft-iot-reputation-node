@@ -36,7 +36,7 @@ import reputation.node.enums.NodeServiceType;
 import reputation.node.mqtt.ListenerDevices;
 import reputation.node.reputation.IReputation;
 import reputation.node.reputation.Reputation;
-import reputation.node.reputation.ReputationCalcUsingKMeans;
+import reputation.node.reputation.ReputationUsingKMeans;
 import reputation.node.reputation.credibility.NodeCredibility;
 import reputation.node.services.NodeTypeService;
 import reputation.node.tangle.LedgerConnector;
@@ -318,7 +318,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       if (evaluationTransactions.isEmpty()) {
         reputation = 0.5;
       } else {
-        IReputation reputationCalc = new ReputationCalcUsingKMeans(
+        IReputation reputationCalc = new ReputationUsingKMeans(
           this.kMeans,
           this.nodeCredibility,
           this.getNodeType().getNodeId()
