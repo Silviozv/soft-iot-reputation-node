@@ -5,6 +5,7 @@ import dlt.client.tangle.hornet.model.transactions.reputation.Credibility;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import reputation.node.models.SourceCredibility;
 import reputation.node.tangle.LedgerConnector;
@@ -17,6 +18,9 @@ import reputation.node.tangle.LedgerConnector;
  */
 public final class NodeCredibility implements INodeCredibility {
 
+  private static final Logger logger = Logger.getLogger(
+    NodeCredibility.class.getName()
+  );
   private LedgerConnector ledgerConnector;
 
   public NodeCredibility() {}
@@ -28,9 +32,17 @@ public final class NodeCredibility implements INodeCredibility {
    * @return float
    */
   public float get(String nodeId) {
+    logger.info("------");
+    logger.info(nodeId);
+    logger.info("cred_" + nodeId);
+
+    String index = "cred_" + nodeId;
+
     List<Transaction> tempCredibility =
       this.ledgerConnector.getLedgerReader()
-        .getTransactionsByIndex("cred_" + nodeId, false);
+        .getTransactionsByIndex(index, false);
+
+    logger.info(tempCredibility.toString());
 
     float nodeCredibility = Optional
       .ofNullable(tempCredibility)
@@ -48,6 +60,8 @@ public final class NodeCredibility implements INodeCredibility {
       /* Caso o nó ainda não tenha calculado a sua credibilidade, por padrão é 0.5. */
       .orElse((float) 0.5);
 
+    logger.info(String.valueOf(nodeCredibility));
+
     return nodeCredibility;
   }
 
@@ -59,32 +73,55 @@ public final class NodeCredibility implements INodeCredibility {
    * @param serviceProviderEvaluationTransactions List<Transaction> - Lista de
    * transações de avaliações.
    * @param sourceId String - ID do atual nó avaliador.
+   * @param useOwnEvaluations boolean - Indica se deve ou não considerar as próprias
+   * avaliações.
    * @return List<SourceCredibility>
    */
   public List<SourceCredibility> getNodesEvaluatorsCredibility(
     List<Transaction> serviceProviderEvaluationTransactions,
-    String sourceId
+    String sourceId,
+    boolean useOwnEvaluations
   ) {
     List<SourceCredibility> nodesCredibility = new ArrayList<>();
 
     if (
       Optional.ofNullable(serviceProviderEvaluationTransactions).isPresent()
     ) {
-      /* Filtrando somente uma avaliação por nó avaliador, e não levando em 
+      List<Transaction> uniqueServiceProviderEvaluationTransactions;
+
+      if (useOwnEvaluations) {
+        /* Filtrando somente uma avaliação por nó avaliador. */
+        uniqueServiceProviderEvaluationTransactions =
+          serviceProviderEvaluationTransactions
+            .stream()
+            .collect(
+              Collectors.toMap(
+                Transaction::getSource,
+                obj -> obj,
+                (existing, replacement) -> existing
+              )
+            )
+            .values()
+            .stream()
+            .collect(Collectors.toList());
+      } else {
+        /* Filtrando somente uma avaliação por nó avaliador, e não levando em 
       consideração as avaliações do atual nó avaliador. */
-      List<Transaction> uniqueServiceProviderEvaluationTransactions = serviceProviderEvaluationTransactions
-        .stream()
-        .collect(
-          Collectors.toMap(
-            Transaction::getSource,
-            obj -> obj,
-            (existing, replacement) -> existing
-          )
-        )
-        .values()
-        .stream()
-        .filter(transaction -> !transaction.getSource().equals(sourceId))
-        .collect(Collectors.toList());
+        uniqueServiceProviderEvaluationTransactions =
+          serviceProviderEvaluationTransactions
+            .stream()
+            .collect(
+              Collectors.toMap(
+                Transaction::getSource,
+                obj -> obj,
+                (existing, replacement) -> existing
+              )
+            )
+            .values()
+            .stream()
+            .filter(transaction -> !transaction.getSource().equals(sourceId))
+            .collect(Collectors.toList());
+      }
 
       for (Transaction transaction : uniqueServiceProviderEvaluationTransactions) {
         /* O index para pegar a credibilidade segue o formato: cred_<id do nó>. */

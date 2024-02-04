@@ -26,10 +26,13 @@ public interface INodeCredibility {
    * @param serviceProviderEvaluationTransactions List<Transaction> - Lista de
    * transações de avaliações.
    * @param sourceId String - ID do atual nó avaliador.
+   * @param useOwnEvaluations boolean - Indica se deve ou não considerar as próprias
+   * avaliações.
    * @return List<SourceCredibility>
    */
   public List<SourceCredibility> getNodesEvaluatorsCredibility(
     List<Transaction> serviceProviderEvaluationTransactions,
-    String sourceId
+    String sourceId,
+    boolean useOwnEvaluations
   );
 }
