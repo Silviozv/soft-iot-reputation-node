@@ -32,10 +32,6 @@ public final class NodeCredibility implements INodeCredibility {
    * @return float
    */
   public float get(String nodeId) {
-    logger.info("------");
-    logger.info(nodeId);
-    logger.info("cred_" + nodeId);
-
     String index = "cred_" + nodeId;
 
     List<Transaction> tempCredibility =
