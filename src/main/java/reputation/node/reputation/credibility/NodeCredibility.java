@@ -5,7 +5,6 @@ import dlt.client.tangle.hornet.model.transactions.reputation.Credibility;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import reputation.node.models.SourceCredibility;
 import reputation.node.tangle.LedgerConnector;
@@ -18,9 +17,6 @@ import reputation.node.tangle.LedgerConnector;
  */
 public final class NodeCredibility implements INodeCredibility {
 
-  private static final Logger logger = Logger.getLogger(
-    NodeCredibility.class.getName()
-  );
   private LedgerConnector ledgerConnector;
 
   public NodeCredibility() {}
@@ -38,8 +34,6 @@ public final class NodeCredibility implements INodeCredibility {
       this.ledgerConnector.getLedgerReader()
         .getTransactionsByIndex(index, false);
 
-    logger.info(tempCredibility.toString());
-
     float nodeCredibility = Optional
       .ofNullable(tempCredibility)
       .map(transactions ->
@@ -55,8 +49,6 @@ public final class NodeCredibility implements INodeCredibility {
       .map(list -> ((Credibility) list.get(0)).getValue())
       /* Caso o nó ainda não tenha calculado a sua credibilidade, por padrão é 0.5. */
       .orElse((float) 0.5);
-
-    logger.info(String.valueOf(nodeCredibility));
 
     return nodeCredibility;
   }
