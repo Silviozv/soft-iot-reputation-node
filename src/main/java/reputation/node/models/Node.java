@@ -36,6 +36,7 @@ import reputation.node.enums.NodeServiceType;
 import reputation.node.mqtt.ListenerDevices;
 import reputation.node.reputation.IReputationCalc;
 import reputation.node.reputation.ReputationCalc;
+import reputation.node.reputation.credibility.NodeCredibility;
 import reputation.node.services.NodeTypeService;
 import reputation.node.tangle.LedgerConnector;
 import reputation.node.tasks.CheckDevicesTask;
@@ -74,6 +75,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
   private boolean canReceiveNodesResponse = false;
   private boolean isAverageEvaluationZero = false;
   private boolean useCredibility;
+  private NodeCredibility nodeCredibility;
   private static final Logger logger = Logger.getLogger(Node.class.getName());
 
   public Node() {}
@@ -974,27 +976,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
    * @return float
    */
   public float getNodeCredibility(String nodeId) {
-    List<Transaction> tempCredibility =
-      this.ledgerConnector.getLedgerReader()
-        .getTransactionsByIndex("cred_" + nodeId, false);
-
-    float nodeCredibility = Optional
-      .ofNullable(tempCredibility)
-      .map(transactions ->
-        transactions
-          .stream()
-          .sorted((t1, t2) ->/* Ordenando em ordem decrescente. */
-            Long.compare(t2.getCreatedAt(), t1.getCreatedAt())
-          )
-          .collect(Collectors.toList())
-      )
-      .filter(list -> !list.isEmpty())
-      /* Obtendo a credibilidade mais recente calculada pelo nó */
-      .map(list -> ((Credibility) list.get(0)).getValue())
-      /* Caso o nó ainda não tenha calculado a sua credibilidade, por padrão é 0.5. */
-      .orElse((float) 0.5);
-
-    return nodeCredibility;
+    return this.nodeCredibility.get(nodeId);
   }
 
   /**
@@ -1211,5 +1193,13 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
   public void setUseCredibility(boolean useCredibility) {
     this.useCredibility = useCredibility;
+  }
+
+  public NodeCredibility getNodeCredibility() {
+    return nodeCredibility;
+  }
+
+  public void setNodeCredibility(NodeCredibility nodeCredibility) {
+    this.nodeCredibility = nodeCredibility;
   }
 }
