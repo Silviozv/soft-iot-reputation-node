@@ -15,6 +15,8 @@
         interface="dlt.client.tangle.hornet.services.ILedgerWriter" />
     <reference id="kMeansService"
         interface="python.to.java.services.IKMeans" />
+    <reference id="csvWriterService"
+        interface="write.csv.services.CsvWriterService" />
 
     <bean id="mqttClient" class="reputation.node.utils.MQTTClient"
         init-method="start" destroy-method="stop">
@@ -39,6 +41,7 @@
         <property name="ledgerConnector" ref="ledgerConnector" />
         <property name="useCredibility" value="${useCredibility}" />
         <property name="nodeCredibility" ref="nodeCredibility" />
+        <property name="csvWriter" ref="csvWriterService" />
     </bean>
 
     <bean id="ledgerConnector" class="reputation.node.tangle.LedgerConnector">
