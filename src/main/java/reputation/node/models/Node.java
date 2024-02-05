@@ -46,6 +46,7 @@ import reputation.node.tasks.RequestDataTask;
 import reputation.node.tasks.WaitDeviceResponseTask;
 import reputation.node.utils.JsonStringToJsonObject;
 import reputation.node.utils.MQTTClient;
+import write.csv.services.CsvWriterService;
 
 /**
  *
@@ -77,6 +78,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
   private boolean isAverageEvaluationZero = false;
   private boolean useCredibility;
   private NodeCredibility nodeCredibility;
+  private CsvWriterService csvWriter;
+  private String[] csvData = new String[6];
   private static final Logger logger = Logger.getLogger(Node.class.getName());
 
   public Node() {}
@@ -93,6 +96,10 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
     this.createTasks();
     this.subscribeToTransactionsTopics();
+
+    this.csvWriter.createFile(
+        String.format("node_%s_credibility", this.nodeType.getNodeId())
+      );
   }
 
   /**
@@ -104,6 +111,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     this.unsubscribeToTransactionsTopics();
 
     this.MQTTClient.disconnect();
+
+    this.csvWriter.closeFile();
   }
 
   /**
@@ -591,6 +600,9 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
     this.setRequestingNodeServices(false);
     this.setLastNodeServiceTransactionType(null);
+
+    /* Escrevendo os dados no arquivo .csv. */
+    this.csvWriter.writeData(this.csvData);
   }
 
   /**
@@ -727,6 +739,12 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
           currentServiceEvaluation
         );
 
+    /* Salvando o ID, consistência, confiabilidade e credibilidade mais recente. */
+    this.csvData[0] = String.valueOf(this.nodeType.getNodeId());
+    this.csvData[1] = String.valueOf(consistency);
+    this.csvData[3] = String.valueOf(trustworthiness);
+    this.csvData[4] = String.valueOf(nodeCredibility);
+
     logger.info("TRUSTWORTHINESS"); // TODO: Remover
     logger.info(String.valueOf(trustworthiness)); // TODO: Remover
 
@@ -770,6 +788,9 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       /* Limitando o valor máximo da credibilidade. */
       nodeCredibility = (nodeCredibility > 1) ? 1 : nodeCredibility;
     }
+
+    /* Salvando a nova credibilidade. */
+    this.csvData[5] = String.valueOf(nodeCredibility);
 
     logger.info("NEW NODE CREDIBILITY"); // TODO: Remover
     logger.info(String.valueOf(nodeCredibility)); // TODO: Remover
@@ -886,6 +907,9 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       if (temp.isPresent()) {
         R = (float) temp.getAsDouble();
       }
+
+      /* Salvando R. */
+      this.csvData[2] = String.valueOf(R);
 
       logger.info("R VALUE"); // TODO: Remover
       logger.info(String.valueOf(R)); // TODO: Remover
@@ -1162,5 +1186,13 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
   public void setNodeCredibility(NodeCredibility nodeCredibility) {
     this.nodeCredibility = nodeCredibility;
+  }
+
+  public CsvWriterService getCsvWriter() {
+    return csvWriter;
+  }
+
+  public void setCsvWriter(CsvWriterService csvWriter) {
+    this.csvWriter = csvWriter;
   }
 }
