@@ -6,7 +6,7 @@ import java.util.List;
 /**
  *
  * @author Allan Capistrano
- * @version 1.0.0
+ * @version 1.1.0
  */
 public interface IReputation {
   /**
@@ -14,7 +14,12 @@ public interface IReputation {
    *
    * @param evaluationTransactions List<Transaction> - Lista com as transações
    * de avaliação da coisa.
+   * @param useLatestCredibility boolean - Indica se é para usar ou não a
+   * credibilidade mais recente para o cálculo da reputação
    * @return Double
    */
-  Double calculate(List<Transaction> evaluationTransactions);
+  Double calculate(
+    List<Transaction> evaluationTransactions,
+    boolean useLatestCredibility
+  );
 }

@@ -333,7 +333,11 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
           this.nodeCredibility,
           this.getNodeType().getNodeId()
         );
-        reputation = reputationCalc.calculate(evaluationTransactions);
+        reputation =
+          reputationCalc.calculate(
+            evaluationTransactions,
+            this.useLatestCredibility
+          );
       }
 
       nodesReputations.add(new ThingReputation(nodeId, reputation));
@@ -397,7 +401,11 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
           reputation = 0.5;
         } else {
           IReputation reputationCalc = new Reputation();
-          reputation = reputationCalc.calculate(evaluationTransactions);
+          reputation =
+            reputationCalc.calculate(
+              evaluationTransactions,
+              this.useLatestCredibility
+            );
         }
 
         devicesReputations.add(
