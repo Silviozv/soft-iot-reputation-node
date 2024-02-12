@@ -40,6 +40,7 @@
         <property name="deviceManager" ref="deviceManagerService" />
         <property name="ledgerConnector" ref="ledgerConnector" />
         <property name="useCredibility" value="${useCredibility}" />
+        <property name="useLatestCredibility" value="${useLatestCredibility}" />
         <property name="nodeCredibility" ref="nodeCredibility" />
         <property name="csvWriter" ref="csvWriterService" />
     </bean>
@@ -70,6 +71,7 @@
             <cm:property name="waitNodesResponsesTaskTime" value="10" /> <!-- TODO: Alterar para
             30-->
             <cm:property name="useCredibility" value="true" />
+            <cm:property name="useLatestCredibility" value="true" />
             <cm:property name="debugModeValue" value="true" />
         </cm:default-properties>
     </cm:property-placeholder>
