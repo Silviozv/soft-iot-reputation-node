@@ -9,8 +9,14 @@
         interface="br.uefs.larsid.extended.mapping.devices.services.IDevicePropertiesManager" />
     <reference id="nodeTypeService"
         interface="node.type.services.INodeType" />
-    <reference id="ledgerReaderService" interface="dlt.client.tangle.hornet.services.ILedgerReader" />
-    <reference id="ledgerWriterService" interface="dlt.client.tangle.hornet.services.ILedgerWriter" />
+    <reference id="ledgerReaderService"
+        interface="dlt.client.tangle.hornet.services.ILedgerReader" />
+    <reference id="ledgerWriterService"
+        interface="dlt.client.tangle.hornet.services.ILedgerWriter" />
+    <reference id="kMeansService"
+        interface="python.to.java.services.IKMeans" />
+    <reference id="csvWriterService"
+        interface="write.csv.services.CsvWriterService" />
 
     <bean id="mqttClient" class="reputation.node.utils.MQTTClient"
         init-method="start" destroy-method="stop">
@@ -25,6 +31,7 @@
         init-method="start" destroy-method="stop">
         <property name="MQTTClient" ref="mqttClient" />
         <property name="nodeType" ref="nodeTypeService" />
+        <property name="kMeans" ref="kMeansService" />
         <property name="checkDeviceTaskTime" value="${checkDeviceTaskTime}" />
         <property name="requestDataTaskTime" value="${requestDataTaskTime}" />
         <property name="waitDeviceResponseTaskTime" value="${waitDeviceResponseTaskTime}" />
@@ -32,11 +39,20 @@
         <property name="waitNodesResponsesTaskTime" value="${waitNodesResponsesTaskTime}" />
         <property name="deviceManager" ref="deviceManagerService" />
         <property name="ledgerConnector" ref="ledgerConnector" />
+        <property name="useCredibility" value="${useCredibility}" />
+        <property name="useLatestCredibility" value="${useLatestCredibility}" />
+        <property name="nodeCredibility" ref="nodeCredibility" />
+        <property name="csvWriter" ref="csvWriterService" />
     </bean>
 
     <bean id="ledgerConnector" class="reputation.node.tangle.LedgerConnector">
         <property name="ledgerReader" ref="ledgerReaderService" />
         <property name="ledgerWriter" ref="ledgerWriterService" />
+    </bean>
+
+    <bean id="nodeCredibility"
+        class="reputation.node.reputation.credibility.NodeCredibility">
+        <property name="ledgerConnector" ref="ledgerConnector" />
     </bean>
 
     <cm:property-placeholder
@@ -50,8 +66,12 @@
             <cm:property name="checkDeviceTaskTime" value="5" />
             <cm:property name="requestDataTaskTime" value="30" />
             <cm:property name="waitDeviceResponseTaskTime" value="10" />
-            <cm:property name="checkNodesServicesTaskTime" value="15" /> <!-- TODO: Alterar para 45-->
-            <cm:property name="waitNodesResponsesTaskTime" value="10" /> <!-- TODO: Alterar para 30-->
+            <cm:property name="checkNodesServicesTaskTime" value="15" /> <!-- TODO: Alterar para
+            45-->
+            <cm:property name="waitNodesResponsesTaskTime" value="10" /> <!-- TODO: Alterar para
+            30-->
+            <cm:property name="useCredibility" value="true" />
+            <cm:property name="useLatestCredibility" value="true" />
             <cm:property name="debugModeValue" value="true" />
         </cm:default-properties>
     </cm:property-placeholder>

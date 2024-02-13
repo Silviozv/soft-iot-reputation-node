@@ -9,6 +9,8 @@ import dlt.client.tangle.hornet.model.DeviceSensorId;
 import dlt.client.tangle.hornet.model.transactions.IndexTransaction;
 import dlt.client.tangle.hornet.model.transactions.TargetedTransaction;
 import dlt.client.tangle.hornet.model.transactions.Transaction;
+import dlt.client.tangle.hornet.model.transactions.reputation.Credibility;
+import dlt.client.tangle.hornet.model.transactions.reputation.Evaluation;
 import dlt.client.tangle.hornet.model.transactions.reputation.HasReputationService;
 import dlt.client.tangle.hornet.model.transactions.reputation.ReputationService;
 import dlt.client.tangle.hornet.services.ILedgerSubscriber;
@@ -20,6 +22,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.OptionalDouble;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -27,10 +31,13 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import node.type.services.INodeType;
+import python.to.java.services.IKMeans;
 import reputation.node.enums.NodeServiceType;
 import reputation.node.mqtt.ListenerDevices;
-import reputation.node.reputation.IReputationCalc;
-import reputation.node.reputation.ReputationCalc;
+import reputation.node.reputation.IReputation;
+import reputation.node.reputation.Reputation;
+import reputation.node.reputation.ReputationUsingKMeans;
+import reputation.node.reputation.credibility.NodeCredibility;
 import reputation.node.services.NodeTypeService;
 import reputation.node.tangle.LedgerConnector;
 import reputation.node.tasks.CheckDevicesTask;
@@ -39,6 +46,7 @@ import reputation.node.tasks.RequestDataTask;
 import reputation.node.tasks.WaitDeviceResponseTask;
 import reputation.node.utils.JsonStringToJsonObject;
 import reputation.node.utils.MQTTClient;
+import write.csv.services.CsvWriterService;
 
 /**
  *
@@ -49,6 +57,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
   private MQTTClient MQTTClient;
   private INodeType nodeType;
+  private IKMeans kMeans;
   private int checkDeviceTaskTime;
   private int requestDataTaskTime;
   private int waitDeviceResponseTaskTime;
@@ -66,6 +75,12 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
   private String lastNodeServiceTransactionType = null;
   private boolean isRequestingNodeServices = false;
   private boolean canReceiveNodesResponse = false;
+  private boolean isAverageEvaluationZero = false;
+  private boolean useCredibility;
+  private boolean useLatestCredibility;
+  private NodeCredibility nodeCredibility;
+  private CsvWriterService csvWriter;
+  private String[] csvData = new String[6];
   private static final Logger logger = Logger.getLogger(Node.class.getName());
 
   public Node() {}
@@ -82,6 +97,10 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
     this.createTasks();
     this.subscribeToTransactionsTopics();
+
+    this.csvWriter.createFile(
+        String.format("node_%s_credibility", this.nodeType.getNodeId())
+      );
   }
 
   /**
@@ -93,6 +112,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     this.unsubscribeToTransactionsTopics();
 
     this.MQTTClient.disconnect();
+
+    this.csvWriter.closeFile();
   }
 
   /**
@@ -259,7 +280,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
         );
 
         /**
-         * Pegando a transação do nó com a maior reputação.
+         * Obtendo a transação do nó com a maior reputação.
          */
         ReputationService nodeWithService = (ReputationService) this.nodesWithServices.stream()
           .filter(nws -> nws.getSource().equals(innerHighestReputationNodeId))
@@ -307,8 +328,16 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       if (evaluationTransactions.isEmpty()) {
         reputation = 0.5;
       } else {
-        IReputationCalc reputationCalc = new ReputationCalc();
-        reputation = reputationCalc.calc(evaluationTransactions);
+        IReputation reputationCalc = new ReputationUsingKMeans(
+          this.kMeans,
+          this.nodeCredibility,
+          this.getNodeType().getNodeId()
+        );
+        reputation =
+          reputationCalc.calculate(
+            evaluationTransactions,
+            this.useLatestCredibility
+          );
       }
 
       nodesReputations.add(new ThingReputation(nodeId, reputation));
@@ -371,8 +400,12 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
         if (evaluationTransactions.isEmpty()) {
           reputation = 0.5;
         } else {
-          IReputationCalc reputationCalc = new ReputationCalc();
-          reputation = reputationCalc.calc(evaluationTransactions);
+          IReputation reputationCalc = new Reputation();
+          reputation =
+            reputationCalc.calculate(
+              evaluationTransactions,
+              this.useLatestCredibility
+            );
         }
 
         devicesReputations.add(
@@ -470,8 +503,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
   /**
    * Requisita e avalia o serviço de um determinado nó.
    *
-   * @param nodeId - ID do nó que irá requisitar o serviço.
-   * @param nodeIp - IP do nó que irá requisitar o serviço.
+   * @param nodeId - ID do nó para o qual irá requisitar o serviço.
+   * @param nodeIp - IP do nó para o qual irá requisitar o serviço.
    * @param deviceId - ID do dispositivo que fornecerá o serviço.
    * @param sensorId - ID do sensor que fornecerá o serviço.
    */
@@ -484,7 +517,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     boolean isNullable = false;
     String response = null;
     String sensorValue = null;
-    int evaluationValue = 0;
+    int serviceEvaluation = 0;
+    float nodeCredibility = 0;
 
     this.enableDevicesPage(nodeIp, deviceId, sensorId);
 
@@ -534,21 +568,50 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       logger.severe(ioe.getMessage());
     }
 
-    if (!isNullable && sensorValue != null) { // Prestou o serviço.
-      evaluationValue = 1;
+    /* Prestou o serviço. */
+    if (!isNullable && sensorValue != null) {
+      serviceEvaluation = 1;
+    }
+
+    if (this.useCredibility) {
+      /* Calculando a credibilidade deste nó */
+      nodeCredibility =
+        this.calculateCredibility(
+            this.nodeType.getNodeId(),
+            nodeId,
+            serviceEvaluation
+          );
     }
 
     /**
      * Avaliando o serviço prestado pelo nó.
      */
     try {
-      this.nodeType.getNode().evaluateServiceProvider(nodeId, evaluationValue);
+      float evaluationValue = serviceEvaluation;
+
+      if (this.useCredibility) {
+        evaluationValue = serviceEvaluation * nodeCredibility;
+      }
+
+      logger.info("EVALUATION VALUE"); // TODO: Remover
+      logger.info(String.valueOf(evaluationValue)); // TODO: Remover
+
+      this.nodeType.getNode()
+        .evaluateServiceProvider(
+          nodeId,
+          serviceEvaluation,
+          nodeCredibility,
+          evaluationValue
+        );
     } catch (InterruptedException ie) {
       logger.severe(ie.getStackTrace().toString());
     }
 
     this.setRequestingNodeServices(false);
     this.setLastNodeServiceTransactionType(null);
+
+    /* Escrevendo os dados no arquivo .csv. */
+    this.csvWriter.writeData(this.csvData);
   }
 
   /**
@@ -636,6 +699,278 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
       offset++;
     }
+  }
+
+  /**
+   * Calcula a credibilidade do nó avaliador que será utilizada no cálculo da
+   * avaliação.
+   *
+   * @param sourceId String - ID do nó avaliador.
+   * @param targetId String - ID do nó que prestou o serviço.
+   * @param currentServiceEvaluation int - Nota do serviço atual.
+   * @return float
+   */
+  private float calculateCredibility(
+    String sourceId,
+    String targetId,
+    int currentServiceEvaluation
+  ) {
+    float consistencyThreshold = (float) 0.4;
+    float trustworthinessThreshold = (float) 0.4;
+    float nodeCredibility = this.getNodeCredibility(sourceId);
+    float higherGrowthRate = (float) 0.1;
+    float lowerGrowthRate = (float) 0.05;
+
+    List<Transaction> serviceProviderEvaluationTransactions =
+      this.ledgerConnector.getLedgerReader()
+        .getTransactionsByIndex(targetId, false);
+
+    /**
+     * Calculando a consistência do nó (C(n)).
+     */
+    int consistency =
+      this.calculateConsistency(
+          serviceProviderEvaluationTransactions,
+          sourceId,
+          targetId,
+          currentServiceEvaluation
+        );
+
+    logger.info("CONSISTENCY"); // TODO: Remover
+    logger.info(String.valueOf(consistency)); // TODO: Remover
+
+    /**
+     * Calculando a confiabilidade do nó (Tr(n)).
+     */
+    float trustworthiness =
+      this.calculateTrustworthiness(
+          serviceProviderEvaluationTransactions,
+          currentServiceEvaluation
+        );
+
+    /* Salvando o ID, consistência, confiabilidade e credibilidade mais recente. */
+    this.csvData[0] = String.valueOf(this.nodeType.getNodeId());
+    this.csvData[1] = String.valueOf(consistency);
+    this.csvData[3] = String.valueOf(trustworthiness);
+    this.csvData[4] = String.valueOf(nodeCredibility);
+
+    logger.info("TRUSTWORTHINESS"); // TODO: Remover
+    logger.info(String.valueOf(trustworthiness)); // TODO: Remover
+
+    logger.info("LATEST NODE CREDIBILITY"); // TODO: Remover
+    logger.info(String.valueOf(nodeCredibility)); // TODO: Remover
+
+    /**
+     * Calculando a credibilidade do nó avaliador.
+     */
+    if (this.isAverageEvaluationZero) {
+      /* Caso o provedor de serviço não tenha recebido avaliações, deve-se
+      considerar a credibilidade inicial do nó avaliador. */
+      nodeCredibility = (float) 0.5;
+    } else {
+      if (
+        consistency <= consistencyThreshold &&
+        trustworthiness <= trustworthinessThreshold
+      ) {
+        nodeCredibility = nodeCredibility + nodeCredibility * higherGrowthRate;
+      } else if (
+        consistency > consistencyThreshold &&
+        trustworthiness <= trustworthinessThreshold
+      ) {
+        nodeCredibility = nodeCredibility + nodeCredibility * lowerGrowthRate;
+      } else if (
+        consistency <= consistencyThreshold &&
+        trustworthiness > trustworthinessThreshold
+      ) {
+        nodeCredibility = nodeCredibility - nodeCredibility * lowerGrowthRate;
+      } else if (
+        consistency > consistencyThreshold &&
+        trustworthiness > trustworthinessThreshold
+      ) {
+        nodeCredibility = nodeCredibility - nodeCredibility * higherGrowthRate;
+      } else {
+        logger.warning(
+          "Unable to calculate the new node credibility, so using the latest."
+        );
+      }
+
+      /* Limitando o valor máximo da credibilidade. */
+      nodeCredibility = (nodeCredibility > 1) ? 1 : nodeCredibility;
+    }
+
+    /* Salvando a nova credibilidade. */
+    this.csvData[5] = String.valueOf(nodeCredibility);
+
+    logger.info("NEW NODE CREDIBILITY"); // TODO: Remover
+    logger.info(String.valueOf(nodeCredibility)); // TODO: Remover
+
+    /* Escrevendo na blockchain a credibilidade calculado do nó avaliador */
+    try {
+      Transaction credibilityTransaction = new Credibility(
+        sourceId,
+        this.getNodeType().getNodeGroup(),
+        TransactionType.REP_CREDIBILITY,
+        nodeCredibility
+      );
+
+      this.ledgerConnector.getLedgerWriter()
+        .put(new IndexTransaction("cred_" + sourceId, credibilityTransaction));
+    } catch (InterruptedException ie) {
+      logger.warning("Unable to write the node credibility on blockchain");
+      logger.warning(ie.getMessage());
+    }
+    return nodeCredibility;
+  }
+
+  /**
+   * Calcula a consistência do nó avaliador.
+   *
+   * @param serviceProviderEvaluationTransactions List<Transaction> - Lista com
+   * as transações de avaliação que do nó prestador de serviço.
+   * @param sourceId String - ID do nó avaliador.
+   * @param targetId String - ID do nó que prestou o serviço.
+   * @param currentServiceEvaluation int - Nota do serviço atual.
+   * @return int
+   */
+  private int calculateConsistency(
+    List<Transaction> serviceProviderEvaluationTransactions,
+    String sourceId,
+    String targetId,
+    int currentServiceEvaluation
+  ) {
+    /* r(t-1) */
+    int lastEvaluation =
+      this.getLastEvaluation(
+          serviceProviderEvaluationTransactions,
+          sourceId,
+          targetId
+        );
+
+    return Math.abs(currentServiceEvaluation - lastEvaluation);
+  }
+
+  /**
+   * Calcula a confiabilidade do nó avaliador.
+   *
+   * @param serviceProviderEvaluationTransactions List<Transaction> - Lista com
+   * as transações de avaliação que do nó prestador de serviço.
+   * @param currentServiceEvaluation float - Nota do serviço atual.
+   * @return float
+   */
+  private float calculateTrustworthiness(
+    List<Transaction> serviceProviderEvaluationTransactions,
+    float currentServiceEvaluation
+  ) {
+    /* Inicializando o valor de R */
+    float R = (float) 0.0;
+
+    /* Obtendo a credibilidade dos nós que já avaliaram o provedor do serviço. */
+    List<SourceCredibility> nodesCredibilityWithSource =
+      this.nodeCredibility.getNodesEvaluatorsCredibility(
+          serviceProviderEvaluationTransactions,
+          this.getNodeType().getNodeId(),
+          false
+        );
+
+    if (!nodesCredibilityWithSource.isEmpty()) {
+      logger.info("CREDIBILITIES"); // TODO: Remover
+      logger.info(nodesCredibilityWithSource.toString()); // TODO: Remover
+
+      /* Obtendo somente o valor da credibilidade dos nós avaliadores. */
+      List<Float> nodesCredibility = nodesCredibilityWithSource
+        .stream()
+        .map(SourceCredibility::getCredibility)
+        .collect(Collectors.toList());
+
+      /* Executando o algoritmo KMeans. */
+      List<Float> kMeansResult = kMeans.execute(nodesCredibility);
+
+      logger.info("K-MEANS RESULT"); // TODO: Remover
+      logger.info(kMeansResult.toString()); // TODO: Remover
+
+      /* Obtendo somente os nós que possuem as credibilidades calculadas pelo algoritmo KMeans. */
+      List<SourceCredibility> nodesWithHighestCredibilities = nodesCredibilityWithSource
+        .stream()
+        .filter(node -> kMeansResult.contains(node.getCredibility()))
+        .collect(Collectors.toList());
+
+      logger.info("NODES"); // TODO: Remover
+      logger.info(nodesWithHighestCredibilities.toString()); // TODO: Remover
+
+      /* Calculando a média das avaliações dos nós calculadas pelo algoritmo KMeans. */
+      OptionalDouble temp = serviceProviderEvaluationTransactions
+        .stream()
+        .filter(nodeEvaluation ->
+          nodesWithHighestCredibilities
+            .stream()
+            .anyMatch(sourceCredibility ->
+              nodeEvaluation.getSource().equals(sourceCredibility.getSource())
+            )
+        )
+        .mapToDouble(nodeEvaluation ->
+          ((Evaluation) nodeEvaluation).getServiceEvaluation()
+        )
+        .average();
+
+      /* Caso existam transações de avaliação, atualiza o valor de R como a média dessas avaliações. */
+      if (temp.isPresent()) {
+        R = (float) temp.getAsDouble();
+      }
+
+      /* Salvando R. */
+      this.csvData[2] = String.valueOf(R);
+
+      logger.info("R VALUE"); // TODO: Remover
+      logger.info(String.valueOf(R)); // TODO: Remover
+    }
+
+    this.isAverageEvaluationZero = (R == 0.0) ? true : false;
+
+    return Math.abs(currentServiceEvaluation - R);
+  }
+
+  /**
+   * Obtém o valor da avaliação mais recente enviada por um nó para um
+   * prestador de serviço. Caso não exista nenhuma avaliação, o retorno é 0.
+   *
+   * @param serviceProviderEvaluationTransactions List<Transaction> - Lista de
+   * transações de avaliação do prestador do serviço
+   * @param sourceId String - ID do nó avaliador.
+   * @param targetId String - ID do prestador do serviço.
+   * @return int
+   */
+  private int getLastEvaluation(
+    List<Transaction> serviceProviderEvaluationTransactions,
+    String sourceId,
+    String targetId
+  ) {
+    return Optional
+      .ofNullable(serviceProviderEvaluationTransactions)
+      .map(transactions ->
+        transactions
+          .stream()
+          .filter(t ->/* Filtrando somente as transações com source e target informadas por parâmetro. */
+            t.getSource().equals(sourceId) &&
+            ((Evaluation) t).getTarget().equals(targetId)
+          )
+          .sorted((t1, t2) ->/* Ordenando em ordem decrescente. */
+            Long.compare(t2.getCreatedAt(), t1.getCreatedAt())
+          )
+          .collect(Collectors.toList())
+      )
+      .filter(list -> !list.isEmpty())
+      .map(list -> ((Evaluation) list.get(0)).getServiceEvaluation())
+      .orElse(0);/* Caso não exista nenhuma avaliação. */
+  }
+
+  /**
+   * Obtém a credibilidade mais recente de um nó.
+   *
+   * @param nodeId String - ID do nó que se deseja saber a credibilidade.
+   * @return float
+   */
+  public float getNodeCredibility(String nodeId) {
+    return this.nodeCredibility.get(nodeId);
   }
 
   /**
@@ -734,6 +1069,14 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
   public void setNodeType(INodeType nodeType) {
     this.nodeType = nodeType;
+  }
+
+  public IKMeans getkMeans() {
+    return kMeans;
+  }
+
+  public void setkMeans(IKMeans kMeans) {
+    this.kMeans = kMeans;
   }
 
   public IDevicePropertiesManager getDeviceManager() {
@@ -836,5 +1179,37 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
   public void setWaitNodesResponsesTaskTime(int waitNodesResponsesTaskTime) {
     this.waitNodesResponsesTaskTime = waitNodesResponsesTaskTime;
+  }
+
+  public boolean isUseCredibility() {
+    return useCredibility;
+  }
+
+  public void setUseCredibility(boolean useCredibility) {
+    this.useCredibility = useCredibility;
+  }
+
+  public NodeCredibility getNodeCredibility() {
+    return nodeCredibility;
+  }
+
+  public void setNodeCredibility(NodeCredibility nodeCredibility) {
+    this.nodeCredibility = nodeCredibility;
+  }
+
+  public CsvWriterService getCsvWriter() {
+    return csvWriter;
+  }
+
+  public void setCsvWriter(CsvWriterService csvWriter) {
+    this.csvWriter = csvWriter;
+  }
+
+  public boolean isUseLatestCredibility() {
+    return useLatestCredibility;
+  }
+
+  public void setUseLatestCredibility(boolean useLatestCredibility) {
+    this.useLatestCredibility = useLatestCredibility;
   }
 }

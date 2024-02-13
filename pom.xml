@@ -49,10 +49,10 @@
 
     <dependencies>
         <dependency>
-		    <groupId>org.eclipse.paho</groupId>
-		    <artifactId>org.eclipse.paho.client.mqttv3</artifactId>
-		    <version>1.2.2</version>
-		</dependency>
+            <groupId>org.eclipse.paho</groupId>
+            <artifactId>org.eclipse.paho.client.mqttv3</artifactId>
+            <version>1.2.2</version>
+        </dependency>
         <dependency>
             <groupId>io.github.larsid</groupId>
             <artifactId>soft-iot-mapping-devices</artifactId>
@@ -73,6 +73,18 @@
         <dependency>
             <groupId>br.uefs.larsid.iot.soft</groupId>
             <artifactId>soft-iot-dlt-client-tangle-hornet</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>br.uefs.larsid.iot.soft</groupId>
+            <artifactId>soft-iot-python-to-java</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>br.uefs.larsid.iot.soft</groupId>
+            <artifactId>soft-iot-write-csv</artifactId>
             <version>1.0-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>

@@ -10,13 +10,23 @@ import java.util.List;
  * @author Allan Capistrano
  * @version 1.0.0
  */
-public class ReputationCalc implements IReputationCalc {
+public class Reputation implements IReputation {
 
+  /**
+   * Calcula a reputação de uma coisa.
+   *
+   * @param evaluationTransactions List<Transaction> - Lista com as transações
+   * de avaliação da coisa.
+   * @return Double
+   */
   @Override
-  public Double calc(List<Transaction> evaluationTransactions) {
+  public Double calculate(
+    List<Transaction> evaluationTransactions,
+    boolean useLatestCredibility
+  ) {
     return evaluationTransactions
       .stream()
-      .mapToInt(et -> ((Evaluation) et).getValue())
+      .mapToDouble(et -> ((Evaluation) et).getServiceEvaluation())
       .average()
       .orElse(0.0);
   }
