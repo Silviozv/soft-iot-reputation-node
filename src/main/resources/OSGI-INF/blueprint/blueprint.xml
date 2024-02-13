@@ -66,10 +66,8 @@
             <cm:property name="checkDeviceTaskTime" value="5" />
             <cm:property name="requestDataTaskTime" value="30" />
             <cm:property name="waitDeviceResponseTaskTime" value="10" />
-            <cm:property name="checkNodesServicesTaskTime" value="15" /> <!-- TODO: Alterar para
-            45-->
-            <cm:property name="waitNodesResponsesTaskTime" value="10" /> <!-- TODO: Alterar para
-            30-->
+            <cm:property name="checkNodesServicesTaskTime" value="45" />
+            <cm:property name="waitNodesResponsesTaskTime" value="30" />
             <cm:property name="useCredibility" value="true" />
             <cm:property name="useLatestCredibility" value="true" />
             <cm:property name="debugModeValue" value="true" />
