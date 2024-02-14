@@ -7,7 +7,7 @@ import reputation.node.models.Node;
 import reputation.node.reputation.IReputation;
 
 /**
- * Task para verificar de tempos em tempos a reputação do próprio nó.
+ * Task para alterar o comportamento de um nó do tipo Perturbador.
  *
  * @author Allan Capistrano
  * @version 1.0.0
