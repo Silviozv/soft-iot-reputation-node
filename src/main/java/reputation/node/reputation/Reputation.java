@@ -17,12 +17,17 @@ public class Reputation implements IReputation {
    *
    * @param evaluationTransactions List<Transaction> - Lista com as transações
    * de avaliação da coisa.
+   * @param useLatestCredibility boolean - Indica se é para usar ou não a
+   * credibilidade mais recente para o cálculo da reputação.
+   * @param useCredibility boolean - Indica se é para usar ou não a
+   * credibilidade no cálculo da reputação.
    * @return Double
    */
   @Override
   public Double calculate(
     List<Transaction> evaluationTransactions,
-    boolean useLatestCredibility
+    boolean useLatestCredibility,
+    boolean useCredibility
   ) {
     return evaluationTransactions
       .stream()
