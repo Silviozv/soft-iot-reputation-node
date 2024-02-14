@@ -251,6 +251,9 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
           this.ledgerConnector.put(
               new IndexTransaction(transactionTypeInString, transaction)
             );
+
+          /* Alterando o comportamento, caso seja um nó malicioso. */
+          this.changeMaliciousNodeBehavior();
         } catch (InterruptedException ie) {
           logger.warning(
             "Error trying to create a " +
@@ -612,6 +615,9 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
     /* Escrevendo os dados no arquivo .csv. */
     this.csvWriter.writeData(this.csvData);
+
+    /* Alterando o comportamento, caso seja um nó malicioso. */
+    this.changeMaliciousNodeBehavior();
   }
 
   /**
@@ -961,6 +967,28 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       .filter(list -> !list.isEmpty())
       .map(list -> ((Evaluation) list.get(0)).getServiceEvaluation())
       .orElse(0);/* Caso não exista nenhuma avaliação. */
+  }
+
+  /**
+   * Altera o comportamento do nó, caso seja um nó malicioso.
+   */
+  private void changeMaliciousNodeBehavior() {
+    if (
+      this.getNodeType()
+        .getNode()
+        .getConductType()
+        .toString()
+        .equals("MALICIOUS")
+    ) {
+      this.getNodeType().getNode().defineConduct();
+
+      logger.info(
+        String.format(
+          "Changing Malicious behavior to '%s'.",
+          this.getNodeType().getNode().getConductType().toString()
+        )
+      );
+    }
   }
 
   /**
