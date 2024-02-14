@@ -78,6 +78,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
   private boolean isAverageEvaluationZero = false;
   private boolean useCredibility;
   private boolean useLatestCredibility;
+  private double reputationValue;
   private NodeCredibility nodeCredibility;
   private CsvWriterService csvWriter;
   private String[] csvData = new String[6];
@@ -1239,5 +1240,13 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
   public void setUseLatestCredibility(boolean useLatestCredibility) {
     this.useLatestCredibility = useLatestCredibility;
+  }
+
+  public double getReputationValue() {
+    return reputationValue;
+  }
+
+  public void setReputationValue(double reputationValue) {
+    this.reputationValue = reputationValue;
   }
 }
