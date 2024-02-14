@@ -37,6 +37,7 @@
         <property name="waitDeviceResponseTaskTime" value="${waitDeviceResponseTaskTime}" />
         <property name="checkNodesServicesTaskTime" value="${checkNodesServicesTaskTime}" />
         <property name="waitNodesResponsesTaskTime" value="${waitNodesResponsesTaskTime}" />
+        <property name="changeDisturbingNodeBehaviorTaskTime" value="${changeDisturbingNodeBehaviorTaskTime}" />
         <property name="deviceManager" ref="deviceManagerService" />
         <property name="ledgerConnector" ref="ledgerConnector" />
         <property name="useCredibility" value="${useCredibility}" />
@@ -68,6 +69,7 @@
             <cm:property name="waitDeviceResponseTaskTime" value="10" />
             <cm:property name="checkNodesServicesTaskTime" value="45" />
             <cm:property name="waitNodesResponsesTaskTime" value="30" />
+            <cm:property name="changeDisturbingNodeBehaviorTaskTime" value="30" />
             <cm:property name="useCredibility" value="true" />
             <cm:property name="useLatestCredibility" value="true" />
             <cm:property name="debugModeValue" value="true" />
