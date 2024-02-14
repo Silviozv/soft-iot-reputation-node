@@ -12,7 +12,7 @@ import reputation.node.reputation.IReputation;
  * @author Allan Capistrano
  * @version 1.0.0
  */
-public class CheckNodeReputationTask extends TimerTask { // TODO: Renomear classe para ChangeDisturbingNodeBehaviorTask
+public class ChangeDisturbingNodeBehaviorTask extends TimerTask { // TODO: Renomear classe para ChangeDisturbingNodeBehaviorTask
 
   private static final double REPUTATION_THRESHOLD = 0.9;
 
@@ -25,7 +25,7 @@ public class CheckNodeReputationTask extends TimerTask { // TODO: Renomear class
    * @param node Node - O nó que verificará a própria reputação.
    * @param reputation IReputation - Objeto para calcular a reputação.
    */
-  public CheckNodeReputationTask(Node node, IReputation reputation) {
+  public ChangeDisturbingNodeBehaviorTask(Node node, IReputation reputation) {
     this.node = node;
     this.reputation = reputation;
   }
