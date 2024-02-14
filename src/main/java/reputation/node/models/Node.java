@@ -40,6 +40,7 @@ import reputation.node.reputation.ReputationUsingKMeans;
 import reputation.node.reputation.credibility.NodeCredibility;
 import reputation.node.services.NodeTypeService;
 import reputation.node.tangle.LedgerConnector;
+import reputation.node.tasks.ChangeDisturbingNodeBehaviorTask;
 import reputation.node.tasks.CheckDevicesTask;
 import reputation.node.tasks.CheckNodesServicesTask;
 import reputation.node.tasks.RequestDataTask;
@@ -63,6 +64,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
   private int waitDeviceResponseTaskTime;
   private int checkNodesServicesTaskTime;
   private int waitNodesResponsesTaskTime;
+  private int changeDisturbingNodeBehaviorTaskTime;
   private List<Device> devices;
   private List<Transaction> nodesWithServices;
   private LedgerConnector ledgerConnector;
@@ -689,6 +691,19 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
         0,
         this.checkNodesServicesTaskTime * 1000
       );
+    new Timer()
+      .scheduleAtFixedRate(
+        new ChangeDisturbingNodeBehaviorTask(
+          this,
+          new ReputationUsingKMeans(
+            this.kMeans,
+            this.nodeCredibility,
+            this.getNodeType().getNodeId()
+          )
+        ),
+        0,
+        this.changeDisturbingNodeBehaviorTaskTime * 1000
+      );
   }
 
   /**
@@ -1248,5 +1263,16 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
   public void setReputationValue(double reputationValue) {
     this.reputationValue = reputationValue;
+  }
+
+  public int getChangeDisturbingNodeBehaviorTaskTime() {
+    return changeDisturbingNodeBehaviorTaskTime;
+  }
+
+  public void setChangeDisturbingNodeBehaviorTaskTime(
+    int changeDisturbingNodeBehaviorTaskTime
+  ) {
+    this.changeDisturbingNodeBehaviorTaskTime =
+      changeDisturbingNodeBehaviorTaskTime;
   }
 }
