@@ -985,7 +985,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
       logger.info(
         String.format(
-          "Changing Malicious behavior to '%s'.",
+          "Changing Malicious node behavior to '%s'.",
           this.getNodeType().getNode().getConductType().toString()
         )
       );
