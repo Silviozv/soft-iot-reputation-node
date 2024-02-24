@@ -38,13 +38,7 @@ public class ChangeDisturbingNodeBehaviorTask extends TimerTask {
   @Override
   public void run() {
     /* Somente se um nó do tipo perturbador. */
-    if (
-      this.node.getNodeType()
-        .getNode()
-        .getConductType()
-        .toString()
-        .equals("DISTURBING")
-    ) {
+    if (this.node.getNodeType().getType().toString().equals("DISTURBING")) {
       List<Transaction> evaluationTransactions =
         this.node.getLedgerConnector()
           .getLedgerReader()
