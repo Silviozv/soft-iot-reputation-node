@@ -693,19 +693,22 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
         0,
         this.checkNodesServicesTaskTime * 1000
       );
-    new Timer()
-      .scheduleAtFixedRate(
-        new ChangeDisturbingNodeBehaviorTask(
-          this,
-          new ReputationUsingKMeans(
-            this.kMeans,
-            this.nodeCredibility,
-            this.getNodeType().getNodeId()
-          )
-        ),
-        0,
-        this.changeDisturbingNodeBehaviorTaskTime * 1000
-      );
+    /* Somente se um nó do tipo perturbador. */
+    if (this.getNodeType().getType().toString().equals("DISTURBING")) {
+      new Timer()
+        .scheduleAtFixedRate(
+          new ChangeDisturbingNodeBehaviorTask(
+            this,
+            new ReputationUsingKMeans(
+              this.kMeans,
+              this.nodeCredibility,
+              this.getNodeType().getNodeId()
+            )
+          ),
+          0,
+          this.changeDisturbingNodeBehaviorTaskTime * 1000
+        );
+    }
   }
 
   /**
