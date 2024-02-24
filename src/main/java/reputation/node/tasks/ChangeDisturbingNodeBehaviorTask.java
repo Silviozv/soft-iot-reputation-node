@@ -53,7 +53,8 @@ public class ChangeDisturbingNodeBehaviorTask extends TimerTask {
       double reputationValue =
         this.reputation.calculate(
             evaluationTransactions,
-            this.node.isUseLatestCredibility()
+            this.node.isUseLatestCredibility(),
+            this.node.isUseCredibility()
           );
 
       if (this.changeBehaviorFlag && reputationValue > REPUTATION_THRESHOLD) {
