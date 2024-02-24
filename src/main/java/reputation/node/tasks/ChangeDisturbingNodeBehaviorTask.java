@@ -37,39 +37,33 @@ public class ChangeDisturbingNodeBehaviorTask extends TimerTask {
 
   @Override
   public void run() {
-    /* Somente se um nó do tipo perturbador. */
-    if (this.node.getNodeType().getType().toString().equals("DISTURBING")) {
-      List<Transaction> evaluationTransactions =
-        this.node.getLedgerConnector()
-          .getLedgerReader()
-          .getTransactionsByIndex(this.node.getNodeType().getNodeId(), false);
+    List<Transaction> evaluationTransactions =
+      this.node.getLedgerConnector()
+        .getLedgerReader()
+        .getTransactionsByIndex(this.node.getNodeType().getNodeId(), false);
 
-      double reputationValue =
-        this.reputation.calculate(
-            evaluationTransactions,
-            this.node.isUseLatestCredibility(),
-            this.node.isUseCredibility()
-          );
-
-      if (this.changeBehaviorFlag && reputationValue > REPUTATION_THRESHOLD) {
-        this.node.getNodeType().getNode().defineConduct();
-        this.changeBehaviorFlag = false;
-
-        logger.info(
-          String.format(
-            "Changing Disturbing node behavior to '%s'.",
-            this.node.getNodeType().getNode().getConductType().toString()
-          )
+    double reputationValue =
+      this.reputation.calculate(
+          evaluationTransactions,
+          this.node.isUseLatestCredibility(),
+          this.node.isUseCredibility()
         );
-      }
 
-      /**
-       * Quando o nó alcançar uma reputação negativa, ele está habilitado a
-       * poder alterar novamente seu comportamento.
-       */
-      if (reputationValue <= 0) {
-        this.changeBehaviorFlag = true;
-      }
+    logger.info(
+      String.format("Disturbing node reputation: %f", reputationValue)
+    );
+
+    if (this.changeBehaviorFlag && reputationValue > REPUTATION_THRESHOLD) {
+      this.node.getNodeType().getNode().defineConduct();
+      this.changeBehaviorFlag = false;
+    }
+
+    /**
+     * Quando o nó alcançar uma reputação negativa, ele está habilitado a
+     * poder alterar novamente seu comportamento.
+     */
+    if (reputationValue <= 0) {
+      this.changeBehaviorFlag = true;
     }
   }
 }
