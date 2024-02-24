@@ -47,12 +47,17 @@ public class ReputationUsingKMeans implements IReputation {
    *
    * @param evaluationTransactions List<Transaction> - Lista com as transações
    * de avaliação da coisa.
+   * @param useLatestCredibility boolean - Indica se é para usar ou não a
+   * credibilidade mais recente para o cálculo da reputação.
+   * @param useCredibility boolean - Indica se é para usar ou não a
+   * credibilidade no cálculo da reputação.
    * @return Double
    */
   @Override
   public Double calculate(
     List<Transaction> evaluationTransactions,
-    boolean useLatestCredibility
+    boolean useLatestCredibility,
+    boolean useCredibility
   ) {
     double reputation = 0.0;
 
@@ -82,36 +87,61 @@ public class ReputationUsingKMeans implements IReputation {
       OptionalDouble temp;
 
       if (useLatestCredibility) { // Cálculo da reputação usando a credibilidade mais recente.
-        /* Obtendo somente as transações dos nós possuem as credibilidades calculadas pelo algoritmo KMeans.  */
-        List<Transaction> evaluationTransactionsOfNodesWithHighestCredibilities = evaluationTransactions
-          .stream()
-          .filter(nodeEvaluation ->
-            nodesWithHighestCredibilities
-              .stream()
-              .anyMatch(sourceCredibility ->
-                nodeEvaluation.getSource().equals(sourceCredibility.getSource())
-              )
-          )
-          .collect(Collectors.toList());
+        /**
+         * Calculando a reputação a partir da nota de serviço e das credibilidades mais recentes dos nós avaliadores.
+         */
 
-        /* Calculando a reputação a partir da nota de serviço e das credibilidades mais recentes dos nós avaliadores. */
-        temp =
-          evaluationTransactionsOfNodesWithHighestCredibilities
+        /* Caso utilize a credibilidade para o cálculo da reputação. */
+        if (useCredibility) {
+          /* Obtendo somente as transações dos nós possuem as credibilidades calculadas pelo algoritmo KMeans.  */
+          List<Transaction> evaluationTransactionsOfNodesWithHighestCredibilities = evaluationTransactions
             .stream()
-            .flatMapToDouble(nodeEvaluation ->
+            .filter(nodeEvaluation ->
               nodesWithHighestCredibilities
                 .stream()
-                .filter(sourceCredibility ->
+                .anyMatch(sourceCredibility ->
                   nodeEvaluation
                     .getSource()
                     .equals(sourceCredibility.getSource())
                 )
-                .mapToDouble(sourceCredibility ->
-                  sourceCredibility.getCredibility() *
-                  ((Evaluation) nodeEvaluation).getServiceEvaluation()
-                )
             )
-            .average();
+            .collect(Collectors.toList());
+
+          temp =
+            evaluationTransactionsOfNodesWithHighestCredibilities
+              .stream()
+              .flatMapToDouble(nodeEvaluation ->
+                nodesWithHighestCredibilities
+                  .stream()
+                  .filter(sourceCredibility ->
+                    nodeEvaluation
+                      .getSource()
+                      .equals(sourceCredibility.getSource())
+                  )
+                  .mapToDouble(sourceCredibility ->
+                    sourceCredibility.getCredibility() *
+                    ((Evaluation) nodeEvaluation).getServiceEvaluation()
+                  )
+              )
+              .average();
+        } else { // Caso não precise da credibilidade.
+          temp =
+            evaluationTransactions
+              .stream()
+              .filter(nodeEvaluation ->
+                nodesWithHighestCredibilities
+                  .stream()
+                  .anyMatch(sourceCredibility ->
+                    nodeEvaluation
+                      .getSource()
+                      .equals(sourceCredibility.getSource())
+                  )
+              )
+              .mapToDouble(nodeEvaluation ->
+                ((Evaluation) nodeEvaluation).getValue()
+              )
+              .average();
+        }
       } else { // Cálculo da reputação usando a credibilidade no momento da avaliação.
         /* Calculando a reputação a partir da média das avaliações dos nós calculadas pelo algoritmo KMeans. */
         temp =

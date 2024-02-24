@@ -339,7 +339,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
         reputation =
           reputationCalc.calculate(
             evaluationTransactions,
-            this.useLatestCredibility
+            this.useLatestCredibility,
+            this.useCredibility
           );
       }
 
@@ -407,7 +408,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
           reputation =
             reputationCalc.calculate(
               evaluationTransactions,
-              this.useLatestCredibility
+              this.useLatestCredibility,
+              this.useCredibility
             );
         }
 
