@@ -15,6 +15,7 @@ O `soft-iot-reputation-node` é o *bundle* responsável pelo gerenciamento dos n
 | waitDeviceResponseTaskTime | Tempo máximo (segundos) de espera da resposta do dispositivo para a requisição feita pelo nó. | 10 |
 | checkNodesServicesTaskTime | Tempo (segundos) para vericar quais nós tem um determinado serviço. | 45 |
 | waitNodesResponsesTaskTime | Tempo máximo (segundos) de espera da resposta do nós para a requisição de pretação de serviço. | 30 |
+| changeDisturbingNodeBehaviorTaskTime | Tempo (segundos) para o nó do tipo Perturbador verificar a própria reputação para alterar o seu comportamento. | 30 |
 | useCredibility | Determina se deseja usar (true) ou não (false) a credibilidade no sistema. | true |
 | useLatestCredibility | Determina se é para usar (true) ou não (false) a credibilidade mais recente para o cálculo da reputação. | true |
 | debugModeValue | Modo depuração. | true |
