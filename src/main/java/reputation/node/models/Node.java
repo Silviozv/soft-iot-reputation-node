@@ -994,13 +994,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
    * Altera o comportamento do nó, caso seja um nó malicioso.
    */
   private void changeMaliciousNodeBehavior() {
-    if (
-      this.getNodeType()
-        .getNode()
-        .getConductType()
-        .toString()
-        .equals("MALICIOUS")
-    ) {
+    if (this.getNodeType().getType().toString().equals("MALICIOUS")) {
       this.getNodeType().getNode().defineConduct();
 
       logger.info(
