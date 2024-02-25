@@ -40,6 +40,7 @@ import reputation.node.reputation.ReputationUsingKMeans;
 import reputation.node.reputation.credibility.NodeCredibility;
 import reputation.node.services.NodeTypeService;
 import reputation.node.tangle.LedgerConnector;
+import reputation.node.tasks.ChangeDisturbingNodeBehaviorTask;
 import reputation.node.tasks.CheckDevicesTask;
 import reputation.node.tasks.CheckNodesServicesTask;
 import reputation.node.tasks.RequestDataTask;
@@ -63,6 +64,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
   private int waitDeviceResponseTaskTime;
   private int checkNodesServicesTaskTime;
   private int waitNodesResponsesTaskTime;
+  private int changeDisturbingNodeBehaviorTaskTime;
   private List<Device> devices;
   private List<Transaction> nodesWithServices;
   private LedgerConnector ledgerConnector;
@@ -78,6 +80,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
   private boolean isAverageEvaluationZero = false;
   private boolean useCredibility;
   private boolean useLatestCredibility;
+  private double reputationValue;
   private NodeCredibility nodeCredibility;
   private CsvWriterService csvWriter;
   private String[] csvData = new String[6];
@@ -690,6 +693,22 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
         0,
         this.checkNodesServicesTaskTime * 1000
       );
+    /* Somente se um nó do tipo perturbador. */
+    if (this.getNodeType().getType().toString().equals("DISTURBING")) {
+      new Timer()
+        .scheduleAtFixedRate(
+          new ChangeDisturbingNodeBehaviorTask(
+            this,
+            new ReputationUsingKMeans(
+              this.kMeans,
+              this.nodeCredibility,
+              this.getNodeType().getNodeId()
+            )
+          ),
+          0,
+          this.changeDisturbingNodeBehaviorTaskTime * 1000
+        );
+    }
   }
 
   /**
@@ -975,18 +994,12 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
    * Altera o comportamento do nó, caso seja um nó malicioso.
    */
   private void changeMaliciousNodeBehavior() {
-    if (
-      this.getNodeType()
-        .getNode()
-        .getConductType()
-        .toString()
-        .equals("MALICIOUS")
-    ) {
+    if (this.getNodeType().getType().toString().equals("MALICIOUS")) {
       this.getNodeType().getNode().defineConduct();
 
       logger.info(
         String.format(
-          "Changing Malicious behavior to '%s'.",
+          "Changing Malicious node behavior to '%s'.",
           this.getNodeType().getNode().getConductType().toString()
         )
       );
@@ -1241,5 +1254,24 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
   public void setUseLatestCredibility(boolean useLatestCredibility) {
     this.useLatestCredibility = useLatestCredibility;
+  }
+
+  public double getReputationValue() {
+    return reputationValue;
+  }
+
+  public void setReputationValue(double reputationValue) {
+    this.reputationValue = reputationValue;
+  }
+
+  public int getChangeDisturbingNodeBehaviorTaskTime() {
+    return changeDisturbingNodeBehaviorTaskTime;
+  }
+
+  public void setChangeDisturbingNodeBehaviorTaskTime(
+    int changeDisturbingNodeBehaviorTaskTime
+  ) {
+    this.changeDisturbingNodeBehaviorTaskTime =
+      changeDisturbingNodeBehaviorTaskTime;
   }
 }
