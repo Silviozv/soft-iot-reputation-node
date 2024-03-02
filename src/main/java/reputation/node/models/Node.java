@@ -579,6 +579,19 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     /* Prestou o serviço. */
     if (!isNullable && sensorValue != null) {
       serviceEvaluation = 1;
+
+      if (
+        this.getNodeType()
+          .getNode()
+          .getConductType()
+          .toString()
+          .equals("MALICIOUS")
+      ) {
+        /* Necessário alterar aqui também, pois mesmo que esse valor seja 
+        alterado no momento de salvar na blockchain, esse valor será usado no 
+        cálculo da credibilidade. */
+        serviceEvaluation = 0;
+      }
     }
 
     if (this.useCredibility) {
