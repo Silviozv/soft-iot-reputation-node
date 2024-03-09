@@ -44,6 +44,7 @@
         <property name="useLatestCredibility" value="${useLatestCredibility}" />
         <property name="nodeCredibility" ref="nodeCredibility" />
         <property name="csvWriter" ref="csvWriterService" />
+        <property name="credibilityHeader" value="${credibilityHeader}" />
     </bean>
 
     <bean id="ledgerConnector" class="reputation.node.tangle.LedgerConnector">
@@ -73,6 +74,7 @@
             <cm:property name="useCredibility" value="true" />
             <cm:property name="useLatestCredibility" value="true" />
             <cm:property name="debugModeValue" value="true" />
+            <cm:property name="credibilityHeader" value="Node_ID,C(n),R,Tr(n),Cr_old(n),Cr_new(n),Started_experiment_time,wrote_file_time" />
         </cm:default-properties>
     </cm:property-placeholder>
 </blueprint>

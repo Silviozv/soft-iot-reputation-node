@@ -83,6 +83,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
   private double reputationValue;
   private NodeCredibility nodeCredibility;
   private CsvWriterService csvWriter;
+  private String credibilityHeader;
   private String[] csvData = new String[8];
   private long startedExperiment;
   private boolean flagStartedExperiment = true;
@@ -106,6 +107,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     this.csvWriter.createFile(
         String.format("node_%s_credibility", this.nodeType.getNodeId())
       );
+    this.csvWriter.writeData(this.credibilityHeader.split(","));
   }
 
   /**
@@ -1297,5 +1299,13 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
   ) {
     this.changeDisturbingNodeBehaviorTaskTime =
       changeDisturbingNodeBehaviorTaskTime;
+  }
+
+  public String getCredibilityHeader() {
+    return credibilityHeader;
+  }
+
+  public void setCredibilityHeader(String credibilityHeader) {
+    this.credibilityHeader = credibilityHeader;
   }
 }
