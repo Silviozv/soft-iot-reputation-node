@@ -618,8 +618,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
         evaluationValue = serviceEvaluation * nodeCredibility;
       }
 
-      logger.info("EVALUATION VALUE"); // TODO: Remover
-      logger.info(String.valueOf(evaluationValue)); // TODO: Remover
+      logger.info("EVALUATION VALUE");
+      logger.info(String.valueOf(evaluationValue));
 
       this.nodeType.getNode()
         .evaluateServiceProvider(
@@ -780,8 +780,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
           currentServiceEvaluation
         );
 
-    logger.info("CONSISTENCY"); // TODO: Remover
-    logger.info(String.valueOf(consistency)); // TODO: Remover
+    logger.info("CONSISTENCY");
+    logger.info(String.valueOf(consistency));
 
     /**
      * Calculando a confiabilidade do nó (Tr(n)).
@@ -798,11 +798,11 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     this.csvData[3] = String.valueOf(trustworthiness);
     this.csvData[4] = String.valueOf(nodeCredibility);
 
-    logger.info("TRUSTWORTHINESS"); // TODO: Remover
-    logger.info(String.valueOf(trustworthiness)); // TODO: Remover
+    logger.info("TRUSTWORTHINESS");
+    logger.info(String.valueOf(trustworthiness));
 
-    logger.info("LATEST NODE CREDIBILITY"); // TODO: Remover
-    logger.info(String.valueOf(nodeCredibility)); // TODO: Remover
+    logger.info("LATEST NODE CREDIBILITY");
+    logger.info(String.valueOf(nodeCredibility));
 
     /**
      * Calculando a credibilidade do nó avaliador, somente se o provedor de 
@@ -842,8 +842,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     /* Salvando a nova credibilidade. */
     this.csvData[5] = String.valueOf(nodeCredibility);
 
-    logger.info("NEW NODE CREDIBILITY"); // TODO: Remover
-    logger.info(String.valueOf(nodeCredibility)); // TODO: Remover
+    logger.info("NEW NODE CREDIBILITY");
+    logger.info(String.valueOf(nodeCredibility));
 
     /* Salvando o tempo da primeira vez que calculou a nova credibilidade. */
     if (flagStartedExperiment) {
@@ -923,8 +923,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
         );
 
     if (!nodesCredibilityWithSource.isEmpty()) {
-      logger.info("CREDIBILITIES"); // TODO: Remover
-      logger.info(nodesCredibilityWithSource.toString()); // TODO: Remover
+      logger.info("CREDIBILITIES");
+      logger.info(nodesCredibilityWithSource.toString());
 
       /* Obtendo somente o valor da credibilidade dos nós avaliadores. */
       List<Float> nodesCredibility = nodesCredibilityWithSource
@@ -935,8 +935,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       /* Executando o algoritmo KMeans. */
       List<Float> kMeansResult = kMeans.execute(nodesCredibility);
 
-      logger.info("K-MEANS RESULT"); // TODO: Remover
-      logger.info(kMeansResult.toString()); // TODO: Remover
+      logger.info("K-MEANS RESULT");
+      logger.info(kMeansResult.toString());
 
       /* Obtendo somente os nós que possuem as credibilidades calculadas pelo algoritmo KMeans. */
       List<SourceCredibility> nodesWithHighestCredibilities = nodesCredibilityWithSource
@@ -944,8 +944,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
         .filter(node -> kMeansResult.contains(node.getCredibility()))
         .collect(Collectors.toList());
 
-      logger.info("NODES"); // TODO: Remover
-      logger.info(nodesWithHighestCredibilities.toString()); // TODO: Remover
+      logger.info("NODES");
+      logger.info(nodesWithHighestCredibilities.toString());
 
       /* Calculando a média das avaliações dos nós calculadas pelo algoritmo KMeans. */
       OptionalDouble temp = serviceProviderEvaluationTransactions
@@ -970,8 +970,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       /* Salvando R. */
       this.csvData[2] = String.valueOf(R);
 
-      logger.info("R VALUE"); // TODO: Remover
-      logger.info(String.valueOf(R)); // TODO: Remover
+      logger.info("R VALUE");
+      logger.info(String.valueOf(R));
     }
 
     this.isAverageEvaluationZero = (R == 0.0) ? true : false;
