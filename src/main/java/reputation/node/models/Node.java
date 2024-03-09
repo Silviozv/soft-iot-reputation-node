@@ -83,7 +83,9 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
   private double reputationValue;
   private NodeCredibility nodeCredibility;
   private CsvWriterService csvWriter;
-  private String[] csvData = new String[6];
+  private String[] csvData = new String[8];
+  private long startedExperiment;
+  private boolean flagStartedExperiment = true;
   private static final Logger logger = Logger.getLogger(Node.class.getName());
 
   public Node() {}
@@ -843,6 +845,15 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
     logger.info("NEW NODE CREDIBILITY"); // TODO: Remover
     logger.info(String.valueOf(nodeCredibility)); // TODO: Remover
+
+    /* Salvando o tempo da primeira vez que calculou a nova credibilidade. */
+    if (flagStartedExperiment) {
+      startedExperiment = System.currentTimeMillis();
+      flagStartedExperiment = false;
+    }
+    this.csvData[6] = String.valueOf(startedExperiment);
+    /* Salvando o tempo em que calculou a nova credibilidade. */
+    this.csvData[7] = String.valueOf(System.currentTimeMillis());
 
     /* Escrevendo na blockchain a credibilidade calculado do nó avaliador */
     try {
