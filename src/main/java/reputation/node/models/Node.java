@@ -805,13 +805,10 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     logger.info(String.valueOf(nodeCredibility)); // TODO: Remover
 
     /**
-     * Calculando a credibilidade do nó avaliador.
+     * Calculando a credibilidade do nó avaliador, somente se o provedor de 
+     * serviço tenha recebido avaliações previamente.
      */
-    if (this.isAverageEvaluationZero) {
-      /* Caso o provedor de serviço não tenha recebido avaliações, deve-se
-      considerar a credibilidade inicial do nó avaliador. */
-      nodeCredibility = (float) 0.5;
-    } else {
+    if (!this.isAverageEvaluationZero) {
       if (
         consistency <= consistencyThreshold &&
         trustworthiness <= trustworthinessThreshold
