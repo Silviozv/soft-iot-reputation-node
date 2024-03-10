@@ -835,8 +835,12 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
         );
       }
 
-      /* Limitando o valor máximo da credibilidade. */
-      nodeCredibility = (nodeCredibility > 1) ? 1 : nodeCredibility;
+      /* Limitando o valor máximo e mínimo da credibilidade. */
+      if (nodeCredibility > 1) {
+        nodeCredibility = 1;
+      } else if (nodeCredibility < -10) {
+        nodeCredibility = -10;
+      }
     }
 
     /* Salvando a nova credibilidade. */
