@@ -77,7 +77,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
   private String lastNodeServiceTransactionType = null;
   private boolean isRequestingNodeServices = false;
   private boolean canReceiveNodesResponse = false;
-  private boolean isAverageEvaluationZero = false;
+  private boolean isNodesCredibilityWithSourceEmpty = true;
   private boolean useCredibility;
   private boolean useLatestCredibility;
   private double reputationValue;
@@ -805,10 +805,10 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     logger.info(String.valueOf(nodeCredibility));
 
     /**
-     * Calculando a credibilidade do nó avaliador, somente se o provedor de 
+     * Calculando a credibilidade do nó avaliador, somente se o provedor de
      * serviço tenha recebido avaliações previamente.
      */
-    if (!this.isAverageEvaluationZero) {
+    if (!this.isNodesCredibilityWithSourceEmpty) {
       if (
         consistency <= consistencyThreshold &&
         trustworthiness <= trustworthinessThreshold
@@ -974,7 +974,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       logger.info(String.valueOf(R));
     }
 
-    this.isAverageEvaluationZero = (R == 0.0) ? true : false;
+    this.isNodesCredibilityWithSourceEmpty =
+      nodesCredibilityWithSource.isEmpty();
 
     return Math.abs(currentServiceEvaluation - R);
   }
