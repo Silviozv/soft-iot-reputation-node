@@ -84,7 +84,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
   private NodeCredibility nodeCredibility;
   private CsvWriterService csvWriter;
   private String credibilityHeader;
-  private String[] csvData = new String[8];
+  private String[] csvData = new String[9];
   private long startedExperiment;
   private boolean flagStartedExperiment = true;
   private static final Logger logger = Logger.getLogger(Node.class.getName());
@@ -806,11 +806,13 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
           currentServiceEvaluation
         );
 
-    /* Salvando o ID, consistência, confiabilidade e credibilidade mais recente. */
+    /* Salvando o ID, tipo, consistência, confiabilidade e credibilidade mais 
+    recente. */
     this.csvData[0] = String.valueOf(this.nodeType.getNodeId());
-    this.csvData[1] = String.valueOf(consistency);
-    this.csvData[3] = String.valueOf(trustworthiness);
-    this.csvData[4] = String.valueOf(nodeCredibility);
+    this.csvData[1] = this.getNodeType().getType().toString();
+    this.csvData[2] = String.valueOf(consistency);
+    this.csvData[4] = String.valueOf(trustworthiness);
+    this.csvData[5] = String.valueOf(nodeCredibility);
 
     logger.info("TRUSTWORTHINESS");
     logger.info(String.valueOf(trustworthiness));
@@ -858,7 +860,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     }
 
     /* Salvando a nova credibilidade. */
-    this.csvData[5] = String.valueOf(nodeCredibility);
+    this.csvData[6] = String.valueOf(nodeCredibility);
 
     logger.info("NEW NODE CREDIBILITY");
     logger.info(String.valueOf(nodeCredibility));
@@ -868,9 +870,9 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       startedExperiment = System.currentTimeMillis();
       flagStartedExperiment = false;
     }
-    this.csvData[6] = String.valueOf(startedExperiment);
+    this.csvData[7] = String.valueOf(startedExperiment);
     /* Salvando o tempo em que calculou a nova credibilidade. */
-    this.csvData[7] = String.valueOf(System.currentTimeMillis());
+    this.csvData[8] = String.valueOf(System.currentTimeMillis());
 
     /* Escrevendo na blockchain a credibilidade calculado do nó avaliador */
     try {
@@ -986,7 +988,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       }
 
       /* Salvando R. */
-      this.csvData[2] = String.valueOf(R);
+      this.csvData[3] = String.valueOf(R);
 
       logger.info("R VALUE");
       logger.info(String.valueOf(R));
