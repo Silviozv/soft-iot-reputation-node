@@ -204,14 +204,28 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
         this.mutex.unlock();
       }
 
-      for (Device d : tempDevices) {
-        d
-          .getSensors()
-          .stream()
-          .filter(s -> s.getType().equals(serviceType))
-          .forEach(s ->
-            deviceSensorIdList.add(new DeviceSensorId(d.getId(), s.getId()))
-          );
+      /* Se o nó estiver com o comportamento malicioso, irá oferecer um 
+      dispositivo e sensor inexistente. */
+      if (
+        this.getNodeType()
+          .getNode()
+          .getConductType()
+          .toString()
+          .equals("MALICIOUS")
+      ) {
+        deviceSensorIdList.add(
+          new DeviceSensorId("nonexistentDevice", "nonexistentSensor")
+        );
+      } else {
+        for (Device d : tempDevices) {
+          d
+            .getSensors()
+            .stream()
+            .filter(s -> s.getType().equals(serviceType))
+            .forEach(s ->
+              deviceSensorIdList.add(new DeviceSensorId(d.getId(), s.getId()))
+            );
+        }
       }
 
       if (
