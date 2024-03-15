@@ -84,7 +84,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
   private NodeCredibility nodeCredibility;
   private CsvWriterService csvWriter;
   private String credibilityHeader;
-  private String[] csvData = new String[9];
+  private String[] csvData = new String[10];
   private long startedExperiment;
   private boolean flagStartedExperiment = true;
   private static final Logger logger = Logger.getLogger(Node.class.getName());
@@ -634,6 +634,9 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
       logger.info("EVALUATION VALUE");
       logger.info(String.valueOf(evaluationValue));
+
+      /* Salvando o ID do prestador do serviço. */
+      this.csvData[9] = nodeId;
 
       this.nodeType.getNode()
         .evaluateServiceProvider(
