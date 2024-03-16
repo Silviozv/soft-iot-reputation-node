@@ -18,7 +18,7 @@ O `soft-iot-reputation-node` é o *bundle* responsável pelo gerenciamento dos n
 | changeDisturbingNodeBehaviorTaskTime | Tempo (segundos) para o nó do tipo Perturbador verificar a própria reputação para alterar o seu comportamento. | 30 |
 | useCredibility | Determina se deseja usar (true) ou não (false) a credibilidade no sistema. | true |
 | useLatestCredibility | Determina se é para usar (true) ou não (false) a credibilidade mais recente para o cálculo da reputação. | true |
-| credibilityHeader<sup>1</sup> | Cabeçalho do arquivo .csv | `Node_ID,C(n),R,Tr(n),Cr_old(n),Cr_new(n),Started_experiment_time,wrote_file_time` |
+| credibilityHeader<sup>1</sup> | Cabeçalho do arquivo .csv | `Node_ID,Type,C(n),R,Tr(n),Cr_old(n),Cr_new(n),Started_experiment_time,wrote_file_time,Node_provider_ID` |
 | debugModeValue | Modo depuração. | true |
 
 ###### Obs<sup>1</sup>: O cabeçalho deve ser separado por vírgulas e sem espaço. ######
