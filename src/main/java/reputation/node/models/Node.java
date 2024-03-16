@@ -3,6 +3,8 @@ package reputation.node.models;
 import br.uefs.larsid.extended.mapping.devices.services.IDevicePropertiesManager;
 import br.ufba.dcc.wiser.soft_iot.entities.Device;
 import br.ufba.dcc.wiser.soft_iot.entities.Sensor;
+
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import dlt.client.tangle.hornet.enums.TransactionType;
 import dlt.client.tangle.hornet.model.DeviceSensorId;
@@ -543,6 +545,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     boolean isNullable = false;
     String response = null;
     String sensorValue = null;
+    JsonElement valueJsonElement = null;
     int serviceEvaluation = 0;
     float nodeCredibility = 0;
 
@@ -587,7 +590,11 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
       JsonObject jsonObject = JsonStringToJsonObject.convert(response);
 
-      sensorValue = jsonObject.get("value").getAsString();
+      valueJsonElement = jsonObject.get("value");
+
+      if (valueJsonElement != null) {
+        sensorValue = valueJsonElement.getAsString();
+      }
     } catch (MalformedURLException mue) {
       logger.severe(mue.getMessage());
     } catch (IOException ioe) {
