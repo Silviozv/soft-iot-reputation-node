@@ -329,6 +329,13 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
         this.setRequestingNodeServices(false);
         this.setLastNodeServiceTransactionType(null);
       }
+
+      try {
+        this.mutexNodesServices.lock();
+        this.nodesWithServices.clear();
+      } finally {
+        this.mutexNodesServices.unlock();
+      }
     }
   }
 
@@ -1142,7 +1149,6 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
           if (receivedTransaction.getType() == expectedTransactionType) {
             try {
               this.mutexNodesServices.lock();
-              this.nodesWithServices.clear();
               this.nodesWithServices.add(receivedTransaction);
             } finally {
               this.mutexNodesServices.unlock();
