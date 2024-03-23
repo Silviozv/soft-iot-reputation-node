@@ -88,6 +88,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
   private String[] csvData = new String[10];
   private long startedExperiment;
   private boolean flagStartedExperiment = true;
+  private boolean changeDisturbingNodeBehaviorFlag = false;
   private static final Logger logger = Logger.getLogger(Node.class.getName());
 
   public Node() {}
@@ -278,8 +279,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
               new IndexTransaction(transactionTypeInString, transaction)
             );
 
-          /* Alterando o comportamento, caso seja um nó malicioso. */
-          this.changeMaliciousNodeBehavior();
+          /* Alterando o comportamento, caso seja um nó malicioso ou perturbador. */
+          this.changeNodeBehavior();
         } catch (InterruptedException ie) {
           logger.warning(
             "Error trying to create a " +
@@ -672,8 +673,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     /* Escrevendo os dados no arquivo .csv. */
     this.csvWriter.writeData(this.csvData);
 
-    /* Alterando o comportamento, caso seja um nó malicioso. */
-    this.changeMaliciousNodeBehavior();
+    /* Alterando o comportamento, caso seja um nó malicioso ou perturbador. */
+    this.changeNodeBehavior();
   }
 
   /**
@@ -1055,15 +1056,27 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
   }
 
   /**
-   * Altera o comportamento do nó, caso seja um nó malicioso.
+   * Altera o comportamento do nó, caso seja um nó malicioso ou perturbador.
    */
-  private void changeMaliciousNodeBehavior() {
+  private void changeNodeBehavior() {
     if (this.getNodeType().getType().toString().equals("MALICIOUS")) {
       this.getNodeType().getNode().defineConduct();
 
       logger.info(
         String.format(
           "Changing Malicious node behavior to '%s'.",
+          this.getNodeType().getNode().getConductType().toString()
+        )
+      );
+    } else if (
+      this.getNodeType().getType().toString().equals("DISTURBING") &&
+      this.changeDisturbingNodeBehaviorFlag
+    ) {
+      this.getNodeType().getNode().defineConduct();
+
+      logger.info(
+        String.format(
+          "Changing Disturbing node behavior to '%s'.",
           this.getNodeType().getNode().getConductType().toString()
         )
       );
@@ -1344,5 +1357,15 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
   public void setCredibilityHeader(String credibilityHeader) {
     this.credibilityHeader = credibilityHeader;
+  }
+
+  public boolean isChangeDisturbingNodeBehaviorFlag() {
+    return changeDisturbingNodeBehaviorFlag;
+  }
+
+  public void setChangeDisturbingNodeBehaviorFlag(
+    boolean changeDisturbingNodeBehaviorFlag
+  ) {
+    this.changeDisturbingNodeBehaviorFlag = changeDisturbingNodeBehaviorFlag;
   }
 }
