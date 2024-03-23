@@ -54,16 +54,8 @@ public class ChangeDisturbingNodeBehaviorTask extends TimerTask {
     );
 
     if (this.changeBehaviorFlag && reputationValue > REPUTATION_THRESHOLD) {
-      this.node.getNodeType().getNode().defineConduct();
+      this.node.setChangeDisturbingNodeBehaviorFlag(true);
       this.changeBehaviorFlag = false;
-    }
-
-    /**
-     * Quando o nó alcançar uma reputação negativa, ele está habilitado a
-     * poder alterar novamente seu comportamento.
-     */
-    if (reputationValue <= 0) {
-      this.changeBehaviorFlag = true;
     }
   }
 }
