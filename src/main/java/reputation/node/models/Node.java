@@ -388,13 +388,20 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
     final Double innerHighestReputation = Double.valueOf(highestReputation);
 
-    /**
-     * Verificando quais nós possuem a maior reputação.
-     */
-    List<ThingReputation> temp = nodesReputations
-      .stream()
-      .filter(nr -> nr.getReputation().equals(innerHighestReputation))
-      .collect(Collectors.toList());
+    List<ThingReputation> temp;
+
+    if (this.useReputation) {
+      /**
+       * Verificando quais nós possuem a maior reputação.
+       */
+      temp =
+        nodesReputations
+          .stream()
+          .filter(nr -> nr.getReputation().equals(innerHighestReputation))
+          .collect(Collectors.toList());
+    } else {
+      temp = nodesReputations;
+    }
 
     /**
      * Obtendo o ID de um dos nós com a maior reputação.
@@ -470,7 +477,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
       List<ThingReputation> temp;
 
-      if (this.useCredibility) {
+      if (this.useReputation) {
         /**
          * Verificando quais dispositivos possuem a maior reputação.
          */
