@@ -90,6 +90,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
   private long startedExperiment;
   private boolean flagStartedExperiment = true;
   private boolean changeDisturbingNodeBehaviorFlag = false;
+  private double currentReputation;
   private static final Logger logger = Logger.getLogger(Node.class.getName());
 
   public Node() {}
@@ -1394,5 +1395,13 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
   public void setUseReputation(boolean useReputation) {
     this.useReputation = useReputation;
+  }
+
+  public double getCurrentReputation() {
+    return currentReputation;
+  }
+
+  public void setCurrentReputation(double currentReputation) {
+    this.currentReputation = currentReputation;
   }
 }
