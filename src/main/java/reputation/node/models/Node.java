@@ -66,6 +66,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
   private int checkNodesServicesTaskTime;
   private int waitNodesResponsesTaskTime;
   private int changeDisturbingNodeBehaviorTaskTime;
+  private int calculateNodeReputationTaskTime;
   private List<Device> devices;
   private List<Transaction> nodesWithServices;
   private LedgerConnector ledgerConnector;
@@ -1403,5 +1404,15 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
   public void setCurrentReputation(double currentReputation) {
     this.currentReputation = currentReputation;
+  }
+
+  public int getCalculateNodeReputationTaskTime() {
+    return calculateNodeReputationTaskTime;
+  }
+
+  public void setCalculateNodeReputationTaskTime(
+    int calculateNodeReputationTaskTime
+  ) {
+    this.calculateNodeReputationTaskTime = calculateNodeReputationTaskTime;
   }
 }
