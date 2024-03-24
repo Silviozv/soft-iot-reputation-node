@@ -344,6 +344,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
   /**
    * Obtém o ID do nó com a maior reputação dentre aqueles que reponderam a
    * requisição.
+   * Obs: Se o sistema não estiver utilizando reputação, então será escolhido um
+   * nó provedor de serviço de maneira aleatória.
    *
    * @return String
    */
