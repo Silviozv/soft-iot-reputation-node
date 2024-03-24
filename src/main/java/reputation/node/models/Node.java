@@ -81,6 +81,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
   private boolean isNodesCredibilityWithSourceEmpty = true;
   private boolean useCredibility;
   private boolean useLatestCredibility;
+  private boolean useReputation;
   private double reputationValue;
   private NodeCredibility nodeCredibility;
   private CsvWriterService csvWriter;
@@ -1376,5 +1377,13 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     boolean changeDisturbingNodeBehaviorFlag
   ) {
     this.changeDisturbingNodeBehaviorFlag = changeDisturbingNodeBehaviorFlag;
+  }
+
+  public boolean isUseReputation() {
+    return useReputation;
+  }
+
+  public void setUseReputation(boolean useReputation) {
+    this.useReputation = useReputation;
   }
 }
