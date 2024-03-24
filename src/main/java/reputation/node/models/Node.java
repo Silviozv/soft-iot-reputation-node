@@ -88,7 +88,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
   private NodeCredibility nodeCredibility;
   private CsvWriterService csvWriter;
   private String credibilityHeader;
-  private String[] csvData = new String[10];
+  private String[] csvData = new String[11];
   private long startedExperiment;
   private boolean flagStartedExperiment = true;
   private boolean changeDisturbingNodeBehaviorFlag = false;
@@ -780,7 +780,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
         0,
         this.calculateNodeReputationTaskTime * 1000
       );
-      
+
     /* Somente se um nó do tipo perturbador. */
     if (this.getNodeType().getType().toString().equals("DISTURBING")) {
       new Timer()
@@ -930,6 +930,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     this.csvData[7] = String.valueOf(startedExperiment);
     /* Salvando o tempo em que calculou a nova credibilidade. */
     this.csvData[8] = String.valueOf(System.currentTimeMillis());
+    /* Salvando a reputação do nó */
+    this.csvData[10] = String.valueOf(this.reputationValue);
 
     /* Escrevendo na blockchain a credibilidade calculado do nó avaliador */
     try {
