@@ -81,7 +81,6 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
   private boolean isNodesCredibilityWithSourceEmpty = true;
   private boolean useCredibility;
   private boolean useLatestCredibility;
-  private boolean useReputation;
   private double reputationValue;
   private NodeCredibility nodeCredibility;
   private CsvWriterService csvWriter;
@@ -303,31 +302,18 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       this.setRequestingNodeServices(false);
       this.setLastNodeServiceTransactionType(null);
     } else {
-      String nodeId = null;
+      String highestReputationNodeId = this.getNodeIdWithHighestReputation();
 
-      if (this.useReputation) {
-        nodeId = this.getNodeIdWithHighestReputation();
-      } else {
-        if (this.nodesWithServices.size() == 1) {
-          nodeId = this.nodesWithServices.get(0).getSource();
-        } else if (this.nodesWithServices.size() > 1) {
-          /* Escolhendo o provedor do serviço de maneira aleatória. */
-          int randomIndex = new Random().nextInt(this.nodesWithServices.size());
-
-          nodeId = this.nodesWithServices.get(randomIndex).getSource();
-        } else {
-          logger.severe("Invalid amount of service provider nodes.");
-        }
-      }
-
-      if (nodeId != null) {
-        final String innerNodeId = String.valueOf(nodeId);
+      if (highestReputationNodeId != null) {
+        final String innerHighestReputationNodeId = String.valueOf(
+          highestReputationNodeId
+        );
 
         /**
-         * Obtendo a transação do nó que prestará o serviço.
+         * Obtendo a transação do nó com a maior reputação.
          */
         ReputationService nodeWithService = (ReputationService) this.nodesWithServices.stream()
-          .filter(nws -> nws.getSource().equals(innerNodeId))
+          .filter(nws -> nws.getSource().equals(innerHighestReputationNodeId))
           .collect(Collectors.toList())
           .get(0);
 
@@ -1390,13 +1376,5 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     boolean changeDisturbingNodeBehaviorFlag
   ) {
     this.changeDisturbingNodeBehaviorFlag = changeDisturbingNodeBehaviorFlag;
-  }
-
-  public boolean isUseReputation() {
-    return useReputation;
-  }
-
-  public void setUseReputation(boolean useReputation) {
-    this.useReputation = useReputation;
   }
 }
