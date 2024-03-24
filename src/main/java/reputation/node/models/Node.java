@@ -81,6 +81,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
   private boolean isNodesCredibilityWithSourceEmpty = true;
   private boolean useCredibility;
   private boolean useLatestCredibility;
+  private boolean useReputation;
   private double reputationValue;
   private NodeCredibility nodeCredibility;
   private CsvWriterService csvWriter;
@@ -343,6 +344,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
   /**
    * Obtém o ID do nó com a maior reputação dentre aqueles que reponderam a
    * requisição.
+   * Obs: Se o sistema não estiver utilizando reputação, então será escolhido um
+   * nó provedor de serviço de maneira aleatória.
    *
    * @return String
    */
@@ -387,13 +390,20 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
     final Double innerHighestReputation = Double.valueOf(highestReputation);
 
-    /**
-     * Verificando quais nós possuem a maior reputação.
-     */
-    List<ThingReputation> temp = nodesReputations
-      .stream()
-      .filter(nr -> nr.getReputation().equals(innerHighestReputation))
-      .collect(Collectors.toList());
+    List<ThingReputation> temp;
+
+    if (this.useReputation) {
+      /**
+       * Verificando quais nós possuem a maior reputação.
+       */
+      temp =
+        nodesReputations
+          .stream()
+          .filter(nr -> nr.getReputation().equals(innerHighestReputation))
+          .collect(Collectors.toList());
+    } else {
+      temp = nodesReputations;
+    }
 
     /**
      * Obtendo o ID de um dos nós com a maior reputação.
@@ -413,6 +423,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
   /**
    * Obtém os IDs do dispositivo e do sensor, com a maior reputação.
+   * Obs: Se o sistema não estiver utilizando reputação, então será escolhido
+   * um dispositivo de maneira aleatória.
    *
    * @param deviceSensorIdList List<DeviceSensorId> - Lista com os IDs do
    * dispositivo e sensor que se deseja obter o maior.
@@ -465,13 +477,20 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
       final Double innerHighestReputation = Double.valueOf(highestReputation);
 
-      /**
-       * Verificando quais dispositivos possuem a maior reputação.
-       */
-      List<ThingReputation> temp = devicesReputations
-        .stream()
-        .filter(nr -> nr.getReputation().equals(innerHighestReputation))
-        .collect(Collectors.toList());
+      List<ThingReputation> temp;
+
+      if (this.useReputation) {
+        /**
+         * Verificando quais dispositivos possuem a maior reputação.
+         */
+        temp =
+          devicesReputations
+            .stream()
+            .filter(nr -> nr.getReputation().equals(innerHighestReputation))
+            .collect(Collectors.toList());
+      } else {
+        temp = devicesReputations;
+      }
 
       int index = -1;
 
@@ -1367,5 +1386,13 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     boolean changeDisturbingNodeBehaviorFlag
   ) {
     this.changeDisturbingNodeBehaviorFlag = changeDisturbingNodeBehaviorFlag;
+  }
+
+  public boolean isUseReputation() {
+    return useReputation;
+  }
+
+  public void setUseReputation(boolean useReputation) {
+    this.useReputation = useReputation;
   }
 }
