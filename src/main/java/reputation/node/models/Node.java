@@ -427,6 +427,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
   /**
    * Obtém os IDs do dispositivo e do sensor, com a maior reputação.
+   * Obs: Se o sistema não estiver utilizando reputação, então será escolhido
+   * um dispositivo de maneira aleatória.
    *
    * @param deviceSensorIdList List<DeviceSensorId> - Lista com os IDs do
    * dispositivo e sensor que se deseja obter o maior.
@@ -479,13 +481,20 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
       final Double innerHighestReputation = Double.valueOf(highestReputation);
 
-      /**
-       * Verificando quais dispositivos possuem a maior reputação.
-       */
-      List<ThingReputation> temp = devicesReputations
-        .stream()
-        .filter(nr -> nr.getReputation().equals(innerHighestReputation))
-        .collect(Collectors.toList());
+      List<ThingReputation> temp;
+
+      if (this.useCredibility) {
+        /**
+         * Verificando quais dispositivos possuem a maior reputação.
+         */
+        temp =
+          devicesReputations
+            .stream()
+            .filter(nr -> nr.getReputation().equals(innerHighestReputation))
+            .collect(Collectors.toList());
+      } else {
+        temp = devicesReputations;
+      }
 
       int index = -1;
 
