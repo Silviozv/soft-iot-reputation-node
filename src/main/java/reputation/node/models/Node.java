@@ -41,6 +41,7 @@ import reputation.node.reputation.ReputationUsingKMeans;
 import reputation.node.reputation.credibility.NodeCredibility;
 import reputation.node.services.NodeTypeService;
 import reputation.node.tangle.LedgerConnector;
+import reputation.node.tasks.CalculateNodeReputationTask;
 import reputation.node.tasks.ChangeDisturbingNodeBehaviorTask;
 import reputation.node.tasks.CheckDevicesTask;
 import reputation.node.tasks.CheckNodesServicesTask;
@@ -766,6 +767,20 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
         0,
         this.checkNodesServicesTaskTime * 1000
       );
+    new Timer()
+      .scheduleAtFixedRate(
+        new CalculateNodeReputationTask(
+          this,
+          new ReputationUsingKMeans(
+            this.kMeans,
+            this.nodeCredibility,
+            this.getNodeType().getNodeId()
+          )
+        ),
+        0,
+        this.calculateNodeReputationTaskTime * 1000
+      );
+      
     /* Somente se um nó do tipo perturbador. */
     if (this.getNodeType().getType().toString().equals("DISTURBING")) {
       new Timer()
