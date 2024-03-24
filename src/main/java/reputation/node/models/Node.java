@@ -41,6 +41,7 @@ import reputation.node.reputation.ReputationUsingKMeans;
 import reputation.node.reputation.credibility.NodeCredibility;
 import reputation.node.services.NodeTypeService;
 import reputation.node.tangle.LedgerConnector;
+import reputation.node.tasks.CalculateNodeReputationTask;
 import reputation.node.tasks.ChangeDisturbingNodeBehaviorTask;
 import reputation.node.tasks.CheckDevicesTask;
 import reputation.node.tasks.CheckNodesServicesTask;
@@ -66,6 +67,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
   private int checkNodesServicesTaskTime;
   private int waitNodesResponsesTaskTime;
   private int changeDisturbingNodeBehaviorTaskTime;
+  private int calculateNodeReputationTaskTime;
   private List<Device> devices;
   private List<Transaction> nodesWithServices;
   private LedgerConnector ledgerConnector;
@@ -86,10 +88,11 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
   private NodeCredibility nodeCredibility;
   private CsvWriterService csvWriter;
   private String credibilityHeader;
-  private String[] csvData = new String[10];
+  private String[] csvData = new String[11];
   private long startedExperiment;
   private boolean flagStartedExperiment = true;
   private boolean changeDisturbingNodeBehaviorFlag = false;
+  private double currentReputation;
   private static final Logger logger = Logger.getLogger(Node.class.getName());
 
   public Node() {}
@@ -764,6 +767,20 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
         0,
         this.checkNodesServicesTaskTime * 1000
       );
+    new Timer()
+      .scheduleAtFixedRate(
+        new CalculateNodeReputationTask(
+          this,
+          new ReputationUsingKMeans(
+            this.kMeans,
+            this.nodeCredibility,
+            this.getNodeType().getNodeId()
+          )
+        ),
+        0,
+        this.calculateNodeReputationTaskTime * 1000
+      );
+
     /* Somente se um nó do tipo perturbador. */
     if (this.getNodeType().getType().toString().equals("DISTURBING")) {
       new Timer()
@@ -913,6 +930,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     this.csvData[7] = String.valueOf(startedExperiment);
     /* Salvando o tempo em que calculou a nova credibilidade. */
     this.csvData[8] = String.valueOf(System.currentTimeMillis());
+    /* Salvando a reputação do nó */
+    this.csvData[10] = String.valueOf(this.reputationValue);
 
     /* Escrevendo na blockchain a credibilidade calculado do nó avaliador */
     try {
@@ -1394,5 +1413,23 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
   public void setUseReputation(boolean useReputation) {
     this.useReputation = useReputation;
+  }
+
+  public double getCurrentReputation() {
+    return currentReputation;
+  }
+
+  public void setCurrentReputation(double currentReputation) {
+    this.currentReputation = currentReputation;
+  }
+
+  public int getCalculateNodeReputationTaskTime() {
+    return calculateNodeReputationTaskTime;
+  }
+
+  public void setCalculateNodeReputationTaskTime(
+    int calculateNodeReputationTaskTime
+  ) {
+    this.calculateNodeReputationTaskTime = calculateNodeReputationTaskTime;
   }
 }
