@@ -59,7 +59,7 @@ public class ReputationUsingKMeans implements IReputation {
     boolean useLatestCredibility,
     boolean useCredibility
   ) {
-    double reputation = 0.0;
+    double reputation = 0.5;
 
     List<SourceCredibility> nodesCredibilityWithSource =
       this.nodeCredibility.getNodesEvaluatorsCredibility(

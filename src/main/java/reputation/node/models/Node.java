@@ -84,7 +84,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
   private boolean useCredibility;
   private boolean useLatestCredibility;
   private boolean useReputation;
-  private double reputationValue = 0.0;
+  private double reputationValue = 0.5;
   private NodeCredibility nodeCredibility;
   private CsvWriterService csvWriter;
   private String credibilityHeader;

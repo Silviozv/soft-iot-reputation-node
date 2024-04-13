@@ -33,6 +33,6 @@ public class Reputation implements IReputation {
       .stream()
       .mapToDouble(et -> ((Evaluation) et).getServiceEvaluation())
       .average()
-      .orElse(0.0);
+      .orElse(0.5);
   }
 }
