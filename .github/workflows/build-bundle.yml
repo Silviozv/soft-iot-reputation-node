@@ -42,7 +42,7 @@ jobs:
       - name: Getting SOFT-IoT-Python-to-Java dependency
         uses: wei/wget@v1
         with:
-          args: https://github.com/AllanCapistrano/soft-iot-python-to-java/releases/download/v1.1.1/soft-iot-python-to-java-1.0-SNAPSHOT.jar
+          args: https://github.com/larsid/soft-iot-python-to-java/releases/download/v1.0.0/soft-iot-python-to-java-1.0-SNAPSHOT.jar
 
       - name: Getting SOFT-IoT-Write-CSV dependency
         uses: wei/wget@v1
