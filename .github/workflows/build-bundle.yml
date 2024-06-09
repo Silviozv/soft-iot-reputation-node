@@ -37,7 +37,7 @@ jobs:
       - name: Getting SOFT-IoT-DLT-Client-Tangle-Hornet dependency
         uses: wei/wget@v1
         with:
-          args: https://github.com/AllanCapistrano/soft-iot-dlt-client-tangle-hornet/releases/download/v1.4.0/soft-iot-dlt-client-tangle-hornet-1.0-SNAPSHOT.jar
+          args: https://github.com/larsid/soft-iot-dlt-client-tangle-hornet-rep/releases/download/v1.0.0/soft-iot-dlt-client-tangle-hornet-1.0-SNAPSHOT.jar
 
       - name: Getting SOFT-IoT-Python-to-Java dependency
         uses: wei/wget@v1
