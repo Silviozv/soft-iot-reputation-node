@@ -886,7 +886,10 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
      * Calculando a credibilidade do nó avaliador, somente se o provedor de
      * serviço tenha recebido avaliações previamente.
      */
-    if (!this.isNodesCredibilityWithSourceEmpty) {
+    if (
+      !this.isNodesCredibilityWithSourceEmpty &&
+      !this.getNodeType().getType().toString().equals("SELFISH")
+    ) {
       if (
         consistency <= consistencyThreshold &&
         trustworthiness <= trustworthinessThreshold
@@ -938,15 +941,19 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
     /* Escrevendo na blockchain a credibilidade calculado do nó avaliador */
     try {
-      Transaction credibilityTransaction = new Credibility(
-        sourceId,
-        this.getNodeType().getNodeGroup(),
-        TransactionType.REP_CREDIBILITY,
-        nodeCredibility
-      );
+      if (!this.getNodeType().getType().toString().equals("SELFISH")) {
+        Transaction credibilityTransaction = new Credibility(
+          sourceId,
+          this.getNodeType().getNodeGroup(),
+          TransactionType.REP_CREDIBILITY,
+          nodeCredibility
+        );
 
-      this.ledgerConnector.getLedgerWriter()
-        .put(new IndexTransaction("cred_" + sourceId, credibilityTransaction));
+        this.ledgerConnector.getLedgerWriter()
+          .put(
+            new IndexTransaction("cred_" + sourceId, credibilityTransaction)
+          );
+      }
     } catch (InterruptedException ie) {
       logger.warning("Unable to write the node credibility on blockchain");
       logger.warning(ie.getMessage());
