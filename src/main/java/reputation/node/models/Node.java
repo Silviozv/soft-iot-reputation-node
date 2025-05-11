@@ -51,6 +51,8 @@ import reputation.node.utils.JsonStringToJsonObject;
 import reputation.node.utils.MQTTClient;
 import write.csv.services.CsvWriterService;
 
+import reputation.node.utils.WriteDataTest;
+
 /**
  *
  * @author Allan Capistrano
@@ -1023,6 +1025,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
       /* Executando o algoritmo KMeans. */
       List<Float> kMeansResult = kMeans.execute(nodesCredibility);
+
+      WriteDataTest.writelistDebug(nodesCredibility, kMeansResult);
 
       logger.info("K-MEANS RESULT");
       logger.info(kMeansResult.toString());

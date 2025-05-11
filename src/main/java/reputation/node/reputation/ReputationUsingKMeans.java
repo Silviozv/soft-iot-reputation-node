@@ -10,6 +10,9 @@ import reputation.node.models.SourceCredibility;
 import reputation.node.reputation.credibility.INodeCredibility;
 import reputation.node.reputation.credibility.NodeCredibility;
 
+import reputation.node.utils.WriteDataTest;
+
+
 /**
  * Responsável por calcular a reputação de uma coisa, com o uso do algoritmo
  * KMeans.
@@ -77,6 +80,8 @@ public class ReputationUsingKMeans implements IReputation {
 
       /* Executando o algoritmo KMeans. */
       List<Float> kMeansResult = this.kMeans.execute(nodesCredibility);
+
+      WriteDataTest.writelistDebug(nodesCredibility, kMeansResult);
 
       /* Obtendo somente os nós que possuem as credibilidades calculadas pelo algoritmo KMeans. */
       List<SourceCredibility> nodesWithHighestCredibilities = nodesCredibilityWithSource
