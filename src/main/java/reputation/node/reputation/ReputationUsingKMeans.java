@@ -80,13 +80,10 @@ public class ReputationUsingKMeans implements IReputation {
       /* Executando o algoritmo KMeans. */
       List<Float> kMeansResult = this.kMeans.execute(nodesCredibility);
 
-<<<<<<< Updated upstream
-=======
       long endTime = System.nanoTime();
 
       WriteDataTest.writeListWithElapsedTime(nodesCredibility, kMeansResult, startTime, endTime);
 
->>>>>>> Stashed changes
       /* Obtendo somente os nós que possuem as credibilidades calculadas pelo algoritmo KMeans. */
       List<SourceCredibility> nodesWithHighestCredibilities = nodesCredibilityWithSource
         .stream()
