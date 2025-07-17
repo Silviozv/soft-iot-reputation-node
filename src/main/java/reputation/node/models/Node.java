@@ -88,7 +88,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
   private NodeCredibility nodeCredibility;
   private CsvWriterService csvWriter;
   private String credibilityHeader;
-  private String[] csvData = new String[11];
+  private String[] csvData = new String[13];
   private long startedExperiment;
   private boolean flagStartedExperiment = true;
   private boolean changeDisturbingNodeBehaviorFlag = false;
@@ -324,11 +324,21 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
         DeviceSensorId deviceSensorId =
           this.getDeviceWithHighestReputation(nodeWithService.getServices());
 
+        List<String> nodeIds = new ArrayList<>();
+
+        for (Transaction node : nodesWithServices) {
+            String nodeId = node.getSource();
+            nodeIds.add(nodeId);
+        }
+
+        String nodeIdsString = nodeIds.toString();
+
         this.requestAndEvaluateNodeService(
             nodeWithService.getSource(),
             nodeWithService.getSourceIp(),
             deviceSensorId.getDeviceId(),
-            deviceSensorId.getSensorId()
+            deviceSensorId.getSensorId(),
+            nodeIdsString
           );
       } else {
         this.setRequestingNodeServices(false);
@@ -573,7 +583,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     String nodeId,
     String nodeIp,
     String deviceId,
-    String sensorId
+    String sensorId,
+    String nodesIdsResponse
   ) {
     boolean isNullable = false;
     String response = null;
@@ -584,6 +595,8 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
     this.enableDevicesPage(nodeIp, deviceId, sensorId);
 
+    this.csvData[12] = nodesIdsResponse;
+
     try {
       URL url = new URL(
         String.format(
@@ -593,6 +606,10 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
           sensorId
         )
       );
+
+      // Tempo de envio da requisição //
+      long start_request_time = System.currentTimeMillis();
+
       HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 
       if (conn.getResponseCode() != HttpURLConnection.HTTP_OK) {
@@ -620,6 +637,15 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       }
 
       conn.disconnect();
+
+      // Tempo de recebimento da resposta //
+      long end_request_time = System.currentTimeMillis();
+
+      // Intervalo de tempo para receber a resposta do nó //
+      long response_time = end_request_time - start_request_time;
+
+      // Nova atualização do csv//
+      this.csvData[6] = String.valueOf(response_time);
 
       JsonObject jsonObject = JsonStringToJsonObject.convert(response);
 
@@ -654,7 +680,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
 
     if (this.useReputation) {
       /* Salvando a reputação do nó */
-      this.csvData[10] = String.valueOf(this.reputationValue);
+      this.csvData[2] = String.valueOf(this.reputationValue);
     }
 
     if (this.useCredibility) {
@@ -681,7 +707,7 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       logger.info(String.valueOf(evaluationValue));
 
       /* Salvando o ID do prestador do serviço. */
-      this.csvData[9] = nodeId;
+      this.csvData[3] = nodeId;
 
       this.nodeType.getNode()
         .evaluateServiceProvider(
@@ -835,6 +861,9 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     String targetId,
     int currentServiceEvaluation
   ) {
+
+    long start_request_time = System.currentTimeMillis();
+
     float consistencyThreshold = (float) 0.4;
     float trustworthinessThreshold = (float) 0.4;
     float nodeCredibility = this.getNodeCredibility(sourceId);
@@ -872,9 +901,9 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     recente. */
     this.csvData[0] = String.valueOf(this.nodeType.getNodeId());
     this.csvData[1] = this.getNodeType().getType().toString();
-    this.csvData[2] = String.valueOf(consistency);
-    this.csvData[4] = String.valueOf(trustworthiness);
-    this.csvData[5] = String.valueOf(nodeCredibility);
+    this.csvData[8] = String.valueOf(consistency);
+    this.csvData[9] = String.valueOf(trustworthiness);
+    this.csvData[10] = String.valueOf(nodeCredibility);
 
     logger.info("TRUSTWORTHINESS");
     logger.info(String.valueOf(trustworthiness));
@@ -924,8 +953,17 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       }
     }
 
+    // Tempo de recebimento da resposta //
+    long end_request_time = System.currentTimeMillis();
+
+    // Intervalo de tempo para receber a resposta do nó //
+    long response_time = end_request_time - start_request_time;
+
+    // Nova atualização do csv//
+    this.csvData[7] = String.valueOf(response_time);
+
     /* Salvando a nova credibilidade. */
-    this.csvData[6] = String.valueOf(nodeCredibility);
+    this.csvData[11] = String.valueOf(nodeCredibility);
 
     logger.info("NEW NODE CREDIBILITY");
     logger.info(String.valueOf(nodeCredibility));
@@ -935,9 +973,9 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
       startedExperiment = System.currentTimeMillis();
       flagStartedExperiment = false;
     }
-    this.csvData[7] = String.valueOf(startedExperiment);
+    //this.csvData[7] = String.valueOf(startedExperiment);
     /* Salvando o tempo em que calculou a nova credibilidade. */
-    this.csvData[8] = String.valueOf(System.currentTimeMillis());
+    //this.csvData[8] = String.valueOf(System.currentTimeMillis());
 
     /* Escrevendo na blockchain a credibilidade calculado do nó avaliador */
     try {
@@ -1000,8 +1038,11 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
     List<Transaction> serviceProviderEvaluationTransactions,
     float currentServiceEvaluation
   ) {
+
     /* Inicializando o valor de R */
     float R = (float) 0.0;
+
+    long start_request_time = System.currentTimeMillis();
 
     /* Obtendo a credibilidade dos nós que já avaliaram o provedor do serviço. */
     List<SourceCredibility> nodesCredibilityWithSource =
@@ -1021,9 +1062,18 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
         .map(SourceCredibility::getCredibility)
         .collect(Collectors.toList());
 
+      long startTime = System.nanoTime();
+
       /* Executando o algoritmo KMeans. */
       List<Float> kMeansResult = kMeans.execute(nodesCredibility);
 
+<<<<<<< Updated upstream
+=======
+      long endTime = System.nanoTime();
+
+      WriteDataTest.writeListWithElapsedTime(nodesCredibility, kMeansResult, startTime, endTime);
+
+>>>>>>> Stashed changes
       logger.info("K-MEANS RESULT");
       logger.info(kMeansResult.toString());
 
@@ -1051,13 +1101,22 @@ public class Node implements NodeTypeService, ILedgerSubscriber {
         )
         .average();
 
+      // Tempo de recebimento da resposta //
+      long end_request_time = System.currentTimeMillis();
+
+      // Intervalo de tempo para receber a resposta do nó //
+      long response_time = end_request_time - start_request_time;
+
+      // Nova atualização do csv//
+      this.csvData[5] = String.valueOf(response_time);
+
       /* Caso existam transações de avaliação, atualiza o valor de R como a média dessas avaliações. */
       if (temp.isPresent()) {
         R = (float) temp.getAsDouble();
       }
 
       /* Salvando R. */
-      this.csvData[3] = String.valueOf(R);
+      this.csvData[4] = String.valueOf(R);
 
       logger.info("R VALUE");
       logger.info(String.valueOf(R));

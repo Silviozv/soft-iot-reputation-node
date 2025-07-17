@@ -78,7 +78,7 @@
             <cm:property name="useLatestCredibility" value="true" />
             <cm:property name="useReputation" value="true" />
             <cm:property name="debugModeValue" value="true" />
-            <cm:property name="credibilityHeader" value="Node_ID,Type,C(n),R,Tr(n),Cr_old(n),Cr_new(n),Started_experiment_time,wrote_file_time,Node_provider_ID,Reputation" />
+            <cm:property name="credibilityHeader" value="req_ID,req_Type,req_R,pro_ID,pro_R,pro_R_calculation_time,response_time,calc_new_cred_time,C(n),Tr(n),Cr_old(n),Cr_new(n),nodes_with_services" />
         </cm:default-properties>
     </cm:property-placeholder>
 </blueprint>
